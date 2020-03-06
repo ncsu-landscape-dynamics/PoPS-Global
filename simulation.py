@@ -51,10 +51,10 @@
 
 
 
-
+## this is a function to determine the similarity between country of origin and country of introduction
 def host_similarity(source, country_introduction):
-    ## this is a function to determine the similarity between country of origin and country of introduction
-    print(s)
+    print(source)
+
 
 def introduction(s):
     print(s)
