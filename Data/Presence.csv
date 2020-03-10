@@ -1,0 +1,243 @@
+﻿Country,Presence
+Afghanistan,TRUE
+Albania,TRUE
+Algeria,FALSE
+American Samoa,FALSE
+Andorra,TRUE
+Angola,FALSE
+Anguilla,FALSE
+Antarctica,TRUE
+Antigua And Barbuda,FALSE
+Argentina,FALSE
+Armenia,FALSE
+Aruba,TRUE
+Australia,FALSE
+Austria,TRUE
+Azerbaijan,TRUE
+Bahamas,FALSE
+Bahrain,FALSE
+Bangladesh,TRUE
+Barbados,FALSE
+Belarus,TRUE
+Belgium,FALSE
+Belize,TRUE
+Benin,TRUE
+Bermuda,FALSE
+Bhutan,TRUE
+Bolivia,TRUE
+Bosnia And Herzegovina,FALSE
+Botswana,TRUE
+Bouvet Island,FALSE
+Brazil,FALSE
+British Indian Ocean Territory,TRUE
+Brunei Darussalam,TRUE
+Bulgaria,TRUE
+Burkina Faso,FALSE
+Burundi,TRUE
+Cambodia,TRUE
+Cameroon,FALSE
+Canada,TRUE
+Cape Verde,FALSE
+Cayman Islands,TRUE
+Central African Republic,FALSE
+Chad,TRUE
+Chile,TRUE
+China,FALSE
+Christmas Island,FALSE
+Cocos (keeling) Islands,FALSE
+Colombia,TRUE
+Comoros,FALSE
+Congo,FALSE
+"Congo, The Democratic Republic Of The",TRUE
+Cook Islands,TRUE
+Costa Rica,TRUE
+Cote D\'ivoire,TRUE
+Croatia,TRUE
+Cuba,FALSE
+Cyprus,FALSE
+Czech Republic,FALSE
+Denmark,TRUE
+Djibouti,FALSE
+Dominica,TRUE
+Dominican Republic,FALSE
+East Timor,TRUE
+Ecuador,FALSE
+Egypt,TRUE
+El Salvador,TRUE
+Equatorial Guinea,FALSE
+Eritrea,FALSE
+Estonia,FALSE
+Ethiopia,TRUE
+Falkland Islands (malvinas),FALSE
+Faroe Islands,FALSE
+Fiji,FALSE
+Finland,TRUE
+France,TRUE
+French Guiana,TRUE
+French Polynesia,FALSE
+French Southern Territories,FALSE
+Gabon,TRUE
+Gambia,TRUE
+Georgia,FALSE
+Germany,FALSE
+Ghana,FALSE
+Gibraltar,TRUE
+Greece,TRUE
+Greenland,FALSE
+Grenada,TRUE
+Guadeloupe,TRUE
+Guam,TRUE
+Guatemala,FALSE
+Guinea,TRUE
+Guinea-bissau,TRUE
+Guyana,FALSE
+Haiti,TRUE
+Heard Island And Mcdonald Islands,FALSE
+Holy See (vatican City State),TRUE
+Honduras,TRUE
+Hong Kong,TRUE
+Hungary,TRUE
+Iceland,TRUE
+India,TRUE
+Indonesia,TRUE
+"Iran, Islamic Republic Of",TRUE
+Iraq,TRUE
+Ireland,FALSE
+Israel,FALSE
+Italy,FALSE
+Jamaica,TRUE
+Japan,TRUE
+Jordan,FALSE
+Kazakstan,TRUE
+Kenya,FALSE
+Kiribati,FALSE
+"Korea, Democratic People\'s Republic Of",TRUE
+"Korea, Republic Of",FALSE
+Kosovo,FALSE
+Kuwait,TRUE
+Kyrgyzstan,TRUE
+Lao People\'s Democratic Republic,FALSE
+Latvia,TRUE
+Lebanon,FALSE
+Lesotho,TRUE
+Liberia,FALSE
+Libyan Arab Jamahiriya,TRUE
+Liechtenstein,FALSE
+Lithuania,TRUE
+Luxembourg,FALSE
+Macau,FALSE
+"Macedonia, The Former Yugoslav Republic Of",TRUE
+Madagascar,FALSE
+Malawi,TRUE
+Malaysia,FALSE
+Maldives,TRUE
+Mali,TRUE
+Malta,FALSE
+Marshall Islands,FALSE
+Martinique,FALSE
+Mauritania,TRUE
+Mauritius,TRUE
+Mayotte,TRUE
+Mexico,TRUE
+"Micronesia, Federated States Of",TRUE
+"Moldova, Republic Of",TRUE
+Monaco,TRUE
+Mongolia,FALSE
+Montserrat,TRUE
+Montenegro,FALSE
+Morocco,FALSE
+Mozambique,TRUE
+Myanmar,FALSE
+Namibia,FALSE
+Nauru,TRUE
+Nepal,TRUE
+Netherlands,FALSE
+Netherlands Antilles,TRUE
+New Caledonia,TRUE
+New Zealand,TRUE
+Nicaragua,TRUE
+Niger,TRUE
+Nigeria,FALSE
+Niue,FALSE
+Norfolk Island,TRUE
+Northern Mariana Islands,TRUE
+Norway,TRUE
+Oman,TRUE
+Pakistan,TRUE
+Palau,FALSE
+"Palestinian Territory, Occupied",TRUE
+Panama,TRUE
+Papua New Guinea,TRUE
+Paraguay,TRUE
+Peru,FALSE
+Philippines,TRUE
+Pitcairn,TRUE
+Poland,TRUE
+Portugal,TRUE
+Puerto Rico,TRUE
+Qatar,FALSE
+Reunion,FALSE
+Romania,TRUE
+Russian Federation,FALSE
+Rwanda,FALSE
+Saint Helena,TRUE
+Saint Kitts And Nevis,FALSE
+Saint Lucia,TRUE
+Saint Pierre And Miquelon,TRUE
+Saint Vincent And The Grenadines,FALSE
+Samoa,FALSE
+San Marino,FALSE
+Sao Tome And Principe,TRUE
+Saudi Arabia,TRUE
+Senegal,FALSE
+Serbia,TRUE
+Seychelles,FALSE
+Sierra Leone,TRUE
+Singapore,TRUE
+Slovakia,FALSE
+Slovenia,FALSE
+Solomon Islands,TRUE
+Somalia,FALSE
+South Africa,FALSE
+South Georgia And The South Sandwich Islands,TRUE
+Spain,FALSE
+Sri Lanka,TRUE
+Sudan,TRUE
+Suriname,TRUE
+Svalbard And Jan Mayen,FALSE
+Swaziland,TRUE
+Sweden,TRUE
+Switzerland,FALSE
+Syrian Arab Republic,FALSE
+"Taiwan, Province Of China",FALSE
+Tajikistan,FALSE
+"Tanzania, United Republic Of",FALSE
+Thailand,TRUE
+Togo,FALSE
+Tokelau,TRUE
+Tonga,TRUE
+Trinidad And Tobago,FALSE
+Tunisia,TRUE
+Turkey,FALSE
+Turkmenistan,FALSE
+Turks And Caicos Islands,FALSE
+Tuvalu,FALSE
+Uganda,TRUE
+Ukraine,TRUE
+United Arab Emirates,TRUE
+United Kingdom,FALSE
+United States,TRUE
+United States Minor Outlying Islands,TRUE
+Uruguay,TRUE
+Uzbekistan,FALSE
+Vanuatu,TRUE
+Venezuela,TRUE
+Viet Nam,TRUE
+"Virgin Islands, British",TRUE
+"Virgin Islands, U.s.",TRUE
+Wallis And Futuna,TRUE
+Western Sahara,TRUE
+Yemen,TRUE
+Zambia,TRUE
+Zimbabwe,TRUE
+0,FALSE
