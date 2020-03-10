@@ -1,0 +1,5 @@
+-i https://pypi.org/simple
+country-list==0.1.5
+decorator==4.4.2
+networkx==2.4
+numpy==1.18.1
