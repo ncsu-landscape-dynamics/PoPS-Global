@@ -7,8 +7,14 @@ verify_ssl = true
 
 [packages]
 country-list = "*"
-networkx = "*"
 numpy = "*"
+networkx = "*"
+matplotlib = "*"
+graphviz = "*"
+pydot = "*"
+pandas = "*"
+scipy = "*"
+idw = "*"
 
 [requires]
 python_version = "3.7"
