@@ -3,15 +3,6 @@ import numpy as np
 import scipy as sp
 # This runs the loop across the functions in the simulation
 
-def arrival(arrivals, trades, distances, locations, index):
-    for ind in range(len(locations)):
-        location = locations.iloc[index,:]
-        #print(location['phytosanitary_compliance'])
-        #print(trades[index,ind])
-        #print(type(distances))
-        arrivals[index, ind] = trades[index, ind] * distances[index, ind] #* location['phytosanitary_compliance'] # * locations.establishment
-    return(arrivals)
-
 #locations = pd.DataFrame({'name': ["United States", "China", "Brazil"], 'phytosanitary_compliance': [0.25, 0.50, 0.75], 'Presence': [True, False, True]})
 #trades = np.array([[0, 50, 15], [50, 0, 10], [20, 30, 0]])
 
@@ -26,6 +17,13 @@ locations = pd.read_csv("Data/Presence.csv")
 arrivals = np.empty(shape=(len(trades),len(trades)), dtype='object')
 distances = np.ones_like(arrivals)
 #locations = locations.iloc[0:241,]
+
+def arrival(arrivals, trades, distances, locations, index):
+    for ind in range(len(locations)):
+        location = locations.iloc[index,:]
+        arrivals[index, ind] = trades[index, ind] * distances[index, ind] #* location['phytosanitary_compliance'] # * locations.establishment
+    return(arrivals)
+
 
 def invasion(arrivals, trades, distances, locations):
     for ind in range(len(locations)):
