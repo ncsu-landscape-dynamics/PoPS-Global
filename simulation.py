@@ -39,7 +39,6 @@
 # Seasonality
 # 
 
-
 # Trade function
     #1 total volume
     #2 commodity type (ag, forest, manufactured, waste)
@@ -47,8 +46,11 @@
 
 
 
-
-
+# Function to calculate probability of arrival from one location to another given a 
+# matrix of trade volume, matrix of distances, and locations with attribute information such as species presence and phytosanitary compliance
+def arrival(arrivals, trades, locations, distances, index):
+    for location in locations:
+        arrivals[index, location] = trades[index, location] * distances[index, location] * locations.phytosanitary_compliance[location] # * locations.establishment
 
 
 ## this is a function to determine the similarity between country of origin and country of introduction
