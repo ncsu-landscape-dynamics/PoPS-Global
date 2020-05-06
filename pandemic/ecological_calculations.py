@@ -16,6 +16,8 @@ http://www.opensource.org/licenses/gpl-license.html
 http://www.gnu.org/copyleft/gpl.html
 """
 
+import numpy as np
+
 
 def climate_similarity(origin_climates, destination_climates):
     """
@@ -42,7 +44,7 @@ def climate_similarity(origin_climates, destination_climates):
 
     similarity = 0.00
     for clim in range(len(origin_climates)):
-        if (origin_climates[clim] > 0) and destination_climates[clim] > 0:
+        if origin_climates[clim] > 0 and destination_climates[clim] > 0:
             similarity += destination_climates[clim]
 
     return similarity
