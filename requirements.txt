@@ -1,4 +1,5 @@
 -i https://pypi.org/simple
+.
 country-list==0.1.5
 cycler==0.10.0
 decorator==4.4.2
@@ -9,7 +10,7 @@ networkx==2.4
 numpy==1.18.4
 pandas==1.0.3
 pydot==1.4.1
-pyparsing==2.4.7
+pyparsing==3.0.0a1
 python-dateutil==2.8.1
 pytz==2020.1
 scipy==1.4.1
