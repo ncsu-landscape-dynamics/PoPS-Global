@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "50dd97c0c7f746cd11e35d2856d9a52332393d30f47ab4843a454d7639e586a1"
+            "sha256": "b446d89841ad4448efd270c554fa1d91ae05d61d92a5ee36b05c9bd6c75bc363"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -143,6 +143,9 @@
             ],
             "index": "pypi",
             "version": "==1.0.3"
+        },
+        "pandemic": {
+            "path": "."
         },
         "pydot": {
             "hashes": [

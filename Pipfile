@@ -17,6 +17,7 @@ graphviz = "*"
 pydot = "*"
 pandas = "*"
 scipy = "*"
+pandemic = {path = "."}
 
 [requires]
 python_version = "3.7"
