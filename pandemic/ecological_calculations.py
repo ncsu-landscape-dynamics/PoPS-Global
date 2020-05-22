@@ -37,8 +37,8 @@ def climate_similarity(origin_climates, destination_climates):
 
     Returns
     -------
-    probability_of_entry : float
-        The probability of a pest to enter the origin location
+    similarity : float
+        What percentage of the total area of the origin country
 
     """
 
