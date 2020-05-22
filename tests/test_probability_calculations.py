@@ -101,3 +101,53 @@ def test_probability_of_establishment():
         )
         == 0
     )
+
+    assert (
+        0.0
+        <= probability_of_establishment(
+            alpha=0.4,
+            beta=1,
+            delta_kappa_ijt=1,
+            sigma_kappa=1,
+            h_jt=1,
+            sigma_h=1,
+            epsilon_jt=1,
+            sigma_epsilon=1,
+            phi=1,
+            sigma_phi=2,
+        )
+        <= 1.0
+    )
+
+    assert (
+        0.0
+        <= probability_of_establishment(
+            alpha=0.4,
+            beta=1,
+            delta_kappa_ijt=0.5,
+            sigma_kappa=0.5,
+            h_jt=1,
+            sigma_h=1,
+            epsilon_jt=1,
+            sigma_epsilon=1,
+            phi=5,
+            sigma_phi=2,
+        )
+        <= 1.0
+    )
+
+
+def test_probability_of_introduction():
+    assert (
+        probability_of_introduction(
+            probability_of_entry_ijct=0, probability_of_establishment_ijt=1
+        )
+        == 0
+    )
+
+    assert (
+        probability_of_introduction(
+            probability_of_entry_ijct=1, probability_of_establishment_ijt=1
+        )
+        == 1
+    )
