@@ -151,3 +151,11 @@ def test_probability_of_introduction():
         )
         == 1
     )
+
+    assert (
+        0
+        <= probability_of_introduction(
+            probability_of_entry_ijct=0.5, probability_of_establishment_ijt=0.25
+        )
+        <= 1
+    )
