@@ -1,7 +1,7 @@
 -i https://pypi.org/simple
 .
-./wheels/Fiona-1.8.13-cp37-cp37m-win_amd64.whl
-./wheels/Rtree-0.9.4-cp37-cp37m-win_amd64.whl
+Fiona==1.8.13
+Rtree==0.9.4
 argparse==1.4.0
 attrs==19.3.0
 certifi==2020.4.5.1

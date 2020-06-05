@@ -15,11 +15,7 @@ http://www.opensource.org/licenses/gpl-license.html
 http://www.gnu.org/copyleft/gpl.html
 """
 
-import numpy as np
-import geopandas as gp
 from scipy.spatial import distance
-import itertools
-from math import cos
 
 
 def distance_between(shapefile):
