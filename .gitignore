@@ -27,3 +27,6 @@ share/python-wheels/
 *.egg
 MANIFEST
 .coverage
+
+# Environmental variables
+*.env

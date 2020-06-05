@@ -19,6 +19,19 @@ pydot = "*"
 pandas = "*"
 scipy = "*"
 pandemic = {path = "."}
+shapely = "*"
+pyproj = "*"
+geopy = "*"
+psycopg2 = "*"
+rtree = {path = "./wheels/Rtree-0.9.4-cp37-cp37m-win_amd64.whl"}
+munch = "*"
+cligj = "*"
+six = "*"
+enum34 = "*"
+argparse = "*"
+fiona = {path = "./wheels/Fiona-1.8.13-cp37-cp37m-win_amd64.whl"}
+geopandas = "*"
+requests = "*"
 
 [requires]
 python_version = "3.7"
