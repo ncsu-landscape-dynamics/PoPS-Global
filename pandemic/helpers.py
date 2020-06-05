@@ -45,7 +45,7 @@ def distance_between(shapefile):
     centroids = centroids.to_crs(epsg=3395)
     shapefile["centroid_lon"] = centroids.x
     shapefile["centroid_lat"] = centroids.y
-    centroids_array = shapefile.loc[:,["centroid_lon","centroid_lat"]].values
+    centroids_array = shapefile.loc[:, ["centroid_lon","centroid_lat"]].values
     distance_array = distance.cdist(centroids_array, centroids_array, "euclidean")
 
     return distance_array
