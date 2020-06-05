@@ -1,4 +1,3 @@
-
 """
 PoPS Pandemic - Simulation
 
