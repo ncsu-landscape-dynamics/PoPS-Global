@@ -71,7 +71,8 @@ else:  # else if file does not exist, create it
 # Imports
 # ************************************************************************
 
-auth_code = "jXIKwJ2httdcPDHwwJCj7GzbDh8fva23HYV17lyN+BeKrxX3fSviSAT9vgH5zQ+XnKj75SBnqPn25kXrwD1viUgtdDMNhpjrw4ZPcpdznaYq1nH8F/wxSoUBSMUzwVVb3YsoqruN04qDiJU/NleTCA=="
+# get token from Comtrade account
+auth_code = ""
 
 # add lines to import HS list and loop through codes of interest at 4 digits
 #hs = "6801"
