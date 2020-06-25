@@ -6,6 +6,7 @@
 
 import pandas as pd
 import numpy as np
+import math
 import os
 import json
 from urllib.request import urlopen
@@ -34,26 +35,6 @@ country_code['id']=country_code['id'].astype(str)
 country_code = country_code.drop([0, 1])
 # drop areas that are "nes" or "Fmr"
 #country_code = country_code[~country_code['text'].str.contains(', nes|Fmr')]
-# drop some specific countries
-# country_code = country_code[country_code['text'] != 'Czechoslovakia']
-# country_code = country_code[country_code['text'] != 'East and West Pakistan']
-# country_code = country_code[country_code['text'] != 'Fr. South Antarctic Terr.']
-# country_code = country_code[country_code['text'] != 'Free Zones']
-# country_code = country_code[country_code['text'] != 'Belgium-Luxembourg']
-# country_code = country_code[country_code['text'] != 'Antarctica']
-# country_code = country_code[country_code['text'] != 'Br. Antarctic Terr.']
-# country_code = country_code[country_code['text'] != 'Br. Indian Ocean Terr.']
-# country_code = country_code[country_code['text'] != 'India, excl. Sikkim']
-# country_code = country_code[country_code['text'] != 'Peninsula Malaysia']
-# country_code = country_code[country_code['text'] != 'Ryukyu Isd']
-# country_code = country_code[country_code['text'] != 'Sabah']
-# country_code = country_code[country_code['text'] != 'Sarawak']
-# country_code = country_code[country_code['text'] != 'Sikkim']
-# country_code = country_code[country_code['text'] != 'So. African Customs Union']
-# country_code = country_code[country_code['text'] != 'Special Categories']
-# country_code = country_code[country_code['text'] != 'USA (before 1981)']
-# country_code = country_code[country_code['text'] != 'Serbia and Montenegro']
-
 
 # ************************************************************************
 # Error log file
@@ -70,55 +51,78 @@ else:  # else if file does not exist, create it
 # ************************************************************************
 # Imports
 # ************************************************************************
+def nested_list(original_list, list_length):
+    '''Split long list into nested list of lists at specified length. Returns nested list.
+    Ex: Create short lists of years or country codes for API calls.'''
+    nested_list = []
+    start = 0
+    for i in range(math.ceil(len(original_list) / list_length)):
+        x = original_list[start:start + list_length]
+        nested_list.append(x)
+        start += list_length
+    return nested_list
 
-# get token from Comtrade account
-auth_code = ""
+auth_code = "jXIKwJ2httdcPDHwwJCj7GzbDh8fva23HYV17lyN+BeKrxX3fSviSAT9vgH5zQ+XnKj75SBnqPn25kXrwD1viUgtdDMNhpjrw4ZPcpdznaYq1nH8F/wxSoUBSMUzwVVb3YsoqruN04qDiJU/NleTCA=="
 
 # add lines to import HS list and loop through codes of interest at 4 digits
-#hs = "6801"
-hs_68 = np.arange(6802, 6815+1, 1)
-for hs in hs_68:
+hs_69 = np.arange(6902, 6903 + 1, 1)
+for hs in hs_69:
     start_year = 1994
     end_year = 2018
-    years = np.arange(start_year, end_year+1, 1)
-    for year in years:
-        HS_matrix = country_code[['id']]
-        for i in country_code['id']:  # loop over all countries
-            #time.sleep(45)  # prob not needed
-
+    years = np.arange(start_year, end_year + 1, 1)
+    nested_years = nested_list(years, 5)
+    nested_country_codes = nested_list(list(country_code['id']), 5)
+    for year_list in nested_years:
+        years_str = "%2C".join(map(str, year_list))
+        data = pd.DataFrame()
+        for country_code_list in nested_country_codes:  # loop over all countries
+            # time.sleep(45)  # prob not needed
+            country_code_str = "%2C".join(country_code_list)
             try:
-                url = urlopen('http://comtrade.un.org/api/get?max=250000&type=C&px=HS&cc=' + str(hs) + '&r=' + str(i) + '&rg=1&p=all&freq=A&ps=' + str(year) + '&fmt=json&token=' + str(auth_code))
+                url = urlopen('http://comtrade.un.org/api/get/plus?max=250000&type=C&px=HS&cc=' + str(hs) + '&r=' + country_code_str + '&rg=1&p=all&freq=A&ps=' + years_str + '&fmt=json') #'&fmt=json&token=' + str(auth_code))
                 raw = json.loads(url.read().decode())
                 url.close()
             except:  # if did not load, try again
                 try:
-                    url = urlopen('http://comtrade.un.org/api/get?max=250000&type=C&px=HS&cc=' + str(hs) + '&r=' + str(i) + '&rg=1&p=all&freq=A&ps=' + str(year) + '&fmt=json&token=' + str(auth_code))
+                    url = urlopen('http://comtrade.un.org/api/get/plus?max=250000&type=C&px=HS&cc=' + str(hs) + '&r=' + country_code_str + '&rg=1&p=all&freq=A&ps=' + years_str + '&fmt=json') #'&fmt=json&token=' + str(auth_code))
                     raw = json.loads(url.read().decode())
                     url.close()
                 except:  # if did not load again, move on to the next country in the loop
-                    error_log.writerow([country_code[country_code['id'] == str(i)]['text'].tolist()[0], i, hs, year, 'Fail', raw['validation']['message'], time.ctime()])
-                    print('Fail: country ' + str(i) + ', ' + str(year) + ", " + str(hs) + '. Message: ' + str(raw['validation']['message']))
+                    #error_log.writerow([country_code[country_code['id'] == str(i)]['text'].tolist()[0], i, hs, year, 'Fail', raw['validation']['message'], time.ctime()])
+                    print('Fail: country ' + country_code_str + ', ' + years_str + ", " + str(hs))
                     continue
 
-            # if no data was downloaded, add column of zeros to commodity/year df and move to next country
             if len(raw['dataset']) == 0:
-                HS_matrix.assign(x = 0)
-                HS_matrix.rename(columns={"x": i}, inplace=True)
-                error_log.writerow([country_code[country_code['id'] == str(i)]['text'].tolist()[0], i, hs, year, 'no data', raw['validation']['message'], time.ctime()])
-                print('No data: country ' + str(i) + '. Message: ' + str(raw['validation']['message']))
+                print('No data downloaded for:' + years_str + ' ' + country_code_str + '. Message: ' + str(raw['validation']['message']))
                 continue
 
-            # Merge quantity to commodity/year df
-            data = pd.DataFrame(raw['dataset'])
-            data['ptCode']=data['ptCode'].astype(str)        
-            data = data[['ptCode', 'NetWeight']]
-            HS_matrix = pd.merge(HS_matrix, data, how = 'left', left_on='id', right_on='ptCode')
-            HS_matrix.drop("ptCode", axis=1, inplace=True)
-            HS_matrix.rename(columns={"NetWeight": i}, inplace=True)
-            print(str(i) + ": finished")
+            data = data.append(raw['dataset'])          
+            data['ptCode']=data['ptCode'].astype(str)
 
 
-        HS_matrix.fillna(0, inplace=True)
-        HS_matrix.to_csv('data/' + str(hs) + '_' + str(year) + '.csv', index=False)
+        for year in year_list:
+            yr_data = data[data.yr.eq(year)]
+            HS_matrix = country_code[['id']]
+            for reporter in list(country_code['id']):
+                reporter_data = yr_data[yr_data.rtCode.eq(int(reporter))]
+                reporter_data = reporter_data[['ptCode', 'NetWeight']]
+
+                # if no data was downloaded for reporter/year, add column of zeros to commodity/year df and move to next country
+                if len(reporter_data) == 0:
+                    HS_matrix = HS_matrix.assign(x = 0)
+                    HS_matrix.rename(columns={"x": reporter}, inplace=True)
+                    error_log.writerow([country_code[country_code['id'] == reporter]['text'].tolist()[0], reporter, hs, year, 'no data', raw['validation']['message'], time.ctime()])
+                    print('No data: country ' + reporter + ' ' + str(year))
+                    continue
+
+                # Merge to commodity/year df
+
+                HS_matrix = pd.merge(HS_matrix, reporter_data, how = 'left', left_on='id', right_on='ptCode')
+                HS_matrix.drop("ptCode", axis=1, inplace=True)
+                HS_matrix.rename(columns={"NetWeight": reporter}, inplace=True)
+                print(reporter + " " + str(year) + ": finished")
+
+            HS_matrix.fillna(0, inplace=True)
+            HS_matrix.to_csv('data/' + str(hs) + '_' + str(year) + '.csv', index=False)
 
 csv_file.close()
