@@ -62,7 +62,7 @@ def nested_list(original_list, list_length):
         start += list_length
     return nested_list
 
-auth_code = "jXIKwJ2httdcPDHwwJCj7GzbDh8fva23HYV17lyN+BeKrxX3fSviSAT9vgH5zQ+XnKj75SBnqPn25kXrwD1viUgtdDMNhpjrw4ZPcpdznaYq1nH8F/wxSoUBSMUzwVVb3YsoqruN04qDiJU/NleTCA=="
+auth_code = ""
 
 # add lines to import HS list and loop through codes of interest at 4 digits
 # hs = '6801'
