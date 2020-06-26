@@ -13,12 +13,12 @@ from urllib.request import urlopen
 import time
 import csv
 
-# print(os.getcwd())
-# os.chdir('.')  # set your current directory
+print(os.getcwd())
+os.chdir('.')  # set your current directory
 
 # create a directory where to save downloaded data
-if not os.path.exists('data'):
-    os.makedirs('data')
+if not os.path.exists('csv'):
+    os.makedirs('csv')
 
 # ************************************************************************
 # Obtain Comtrade country codes
@@ -62,12 +62,30 @@ def nested_list(original_list, list_length):
         start += list_length
     return nested_list
 
-auth_code = ""
+auth_code = "jXIKwJ2httdcPDHwwJCj7GzbDh8fva23HYV17lyN+BeKrxX3fSviSAT9vgH5zQ+XnKj75SBnqPn25kXrwD1viUgtdDMNhpjrw4ZPcpdznaYq1nH8F/wxSoUBSMUzwVVb3YsoqruN04qDiJU/NleTCA=="
 
 # add lines to import HS list and loop through codes of interest at 4 digits
-hs_69 = np.arange(6902, 6903 + 1, 1)
-for hs in hs_69:
-    start_year = 1994
+# hs = '2501'
+
+# hs_list = np.arange(2501, 2530 + 1, 1)
+# hs_code_str = "%2C".join(map(str, hs_list))
+
+# start_year = 2000
+# end_year = 2018
+# years = np.arange(start_year, end_year + 1, 1)
+# years_str = "%2C".join(map(str, years))
+
+# country_code_list = list(country_code['id'])
+# country_code_str = "%2C".join(country_code_list)
+
+# url = urlopen('http://comtrade.un.org/api/get/plus?max=250000&type=C&px=HS&cc=' + hs + '&r=' + country_code_str + '&rg=1&p=all&freq=A&ps=' + years_str + '&fmt=json&token=' + str(auth_code))
+# raw = json.loads(url.read().decode())
+# url.close()
+
+
+hs_list = np.arange(6801, 6815 + 1, 1)
+for hs in hs_list:
+    start_year = 2000
     end_year = 2018
     years = np.arange(start_year, end_year + 1, 1)
     nested_years = nested_list(years, 5)
@@ -79,16 +97,16 @@ for hs in hs_69:
             # time.sleep(45)  # prob not needed
             country_code_str = "%2C".join(country_code_list)
             try:
-                url = urlopen('http://comtrade.un.org/api/get/plus?max=250000&type=C&px=HS&cc=' + str(hs) + '&r=' + country_code_str + '&rg=1&p=all&freq=A&ps=' + years_str + '&fmt=json') #'&fmt=json&token=' + str(auth_code))
+                url = urlopen('http://comtrade.un.org/api/get?max=250000&type=C&px=HS&cc=' + str(hs) + '&r=' + country_code_str + '&rg=1&p=all&freq=A&ps=' + years_str + '&fmt=json&token=' + str(auth_code))
                 raw = json.loads(url.read().decode())
                 url.close()
             except:  # if did not load, try again
                 try:
-                    url = urlopen('http://comtrade.un.org/api/get/plus?max=250000&type=C&px=HS&cc=' + str(hs) + '&r=' + country_code_str + '&rg=1&p=all&freq=A&ps=' + years_str + '&fmt=json') #'&fmt=json&token=' + str(auth_code))
+                    url = urlopen('http://comtrade.un.org/api/get?max=250000&type=C&px=HS&cc=' + str(hs) + '&r=' + country_code_str + '&rg=1&p=all&freq=A&ps=' + years_str + '&fmt=json&token=' + str(auth_code))
                     raw = json.loads(url.read().decode())
                     url.close()
                 except:  # if did not load again, move on to the next country in the loop
-                    #error_log.writerow([country_code[country_code['id'] == str(i)]['text'].tolist()[0], i, hs, year, 'Fail', raw['validation']['message'], time.ctime()])
+                    error_log.writerow(['', country_code_str, hs, years_str, 'Fail', '', time.ctime()])
                     print('Fail: country ' + country_code_str + ', ' + years_str + ", " + str(hs))
                     continue
 
@@ -123,6 +141,6 @@ for hs in hs_69:
                 print(reporter + " " + str(year) + ": finished")
 
             HS_matrix.fillna(0, inplace=True)
-            HS_matrix.to_csv('data/' + str(hs) + '_' + str(year) + '.csv', index=False)
+            HS_matrix.to_csv('csv/' + str(hs) + '_' + str(year) + '.csv', index=False)
 
 csv_file.close()
