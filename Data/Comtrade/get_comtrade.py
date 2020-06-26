@@ -64,9 +64,6 @@ def nested_list(original_list, list_length):
 
 auth_code = ""
 
-# add lines to import HS list and loop through codes of interest at 4 digits
-# hs = '6801'
-
 freq = "M" # Set time step, options are A (annual) or M (monthly)
 start_year = 2000
 end_year = 2018
@@ -78,15 +75,16 @@ if freq == "M":
         months = ['01', '02', '03', '04', '05','06', '07', '08', '09', '10', '11', '12']
         for month in months:
             timesteps.append(str(year) + month)
-    else:
-        timesteps = years
+else:
+    timesteps = years
 
-hs_list = np.arange(6801, 6815 + 1, 1)
-for hs in hs_list:
+hs_list = np.arange(6801, 6815 + 1, 1) # list of HS commodity codes
+
+for hs in hs_list: # loop over commodities, 1 at a time (could do more at once)
     nested_country_codes = nested_list(list(country_code['id']), 5)
     years_str = "%2C".join(map(str, years))
     data = pd.DataFrame()
-    for country_code_list in nested_country_codes:  # loop over all countries
+    for country_code_list in nested_country_codes:  # loop over all countries, 5 at a time (could do more at once)
         # time.sleep(45)  # prob not needed
         country_code_str = "%2C".join(country_code_list)
         try:
@@ -111,7 +109,7 @@ for hs in hs_list:
         data['ptCode']=data['ptCode'].astype(str)
 
 
-    for timestep in timesteps:
+    for timestep in timesteps: # loop over timesteps (YYYY or YYYYMM) and save a country x country matrix per timestep per HS code as csv
         timestep_data = data[data.period.eq(int(timestep))]
         HS_matrix = country_code[['id']]
         for reporter in list(country_code['id']):
