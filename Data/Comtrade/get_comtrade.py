@@ -92,14 +92,6 @@ for hs in hs_68:
 
                     continue
 
-            # if no data was downloaded, add column of zeros to commodity/year df and move to next country
-            if len(raw['dataset']) == 0:
-                HS_matrix = HS_matrix.assign(x = 0)
-                HS_matrix.rename(columns={"x": i}, inplace=True)
-                error_log.writerow([country_code[country_code['id'] == str(i)]['text'].tolist()[0], i, hs, year, 'no data', raw['validation']['message'], time.ctime()])
-                print('No data: country ' + str(i) + '. Message: ' + str(raw['validation']['message']))
-                continue
-
             # Merge quantity to commodity/year df
             data = pd.DataFrame(raw['dataset'])
             data['ptCode']=data['ptCode'].astype(str)        
