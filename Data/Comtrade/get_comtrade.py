@@ -1,7 +1,5 @@
 # ************************************************************************
-# Downloading data from Comtrade API, keeping a log of successful downloads and errors.
-# Example: ice cream imports and exports
-# https://github.com/evpu
+# Download and format data from Comtrade API, keeping a log of successful downloads and errors.
 # ************************************************************************
 
 import pandas as pd
@@ -91,13 +89,7 @@ for hs in hs_68:
                 raw = json.loads(url.read().decode())
                 url.close()
             except:  # if did not load, try again
-                try:
-                    url = urlopen('http://comtrade.un.org/api/get?max=250000&type=C&px=HS&cc=' + str(hs) + '&r=' + str(i) + '&rg=1&p=all&freq=A&ps=' + str(year) + '&fmt=json&token=' + str(auth_code))
-                    raw = json.loads(url.read().decode())
-                    url.close()
-                except:  # if did not load again, move on to the next country in the loop
-                    error_log.writerow([country_code[country_code['id'] == str(i)]['text'].tolist()[0], i, hs, year, 'Fail', raw['validation']['message'], time.ctime()])
-                    print('Fail: country ' + str(i) + ', ' + str(year) + ", " + str(hs) + '. Message: ' + str(raw['validation']['message']))
+
                     continue
 
             # if no data was downloaded, add column of zeros to commodity/year df and move to next country
