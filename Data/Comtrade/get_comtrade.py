@@ -83,11 +83,9 @@ for hs in hs_68:
         HS_matrix = country_code[['id']]
         for i in country_code['id']:  # loop over all countries
             #time.sleep(45)  # prob not needed
-
-            try:
-                url = urlopen('http://comtrade.un.org/api/get?max=250000&type=C&px=HS&cc=' + str(hs) + '&r=' + str(i) + '&rg=1&p=all&freq=A&ps=' + str(year) + '&fmt=json&token=' + str(auth_code))
-                raw = json.loads(url.read().decode())
-                url.close()
+            url = urlopen('http://comtrade.un.org/api/get?max=250000&type=C&px=HS&cc=' + str(hs) + '&r=' + str(i) + '&rg=1&p=all&freq=A&ps=' + str(year) + '&fmt=json&token=' + str(auth_code))
+            raw = json.loads(url.read().decode())
+            url.close()
 
             # Merge quantity to commodity/year df
             data = pd.DataFrame(raw['dataset'])
