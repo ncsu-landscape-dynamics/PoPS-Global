@@ -88,9 +88,6 @@ for hs in hs_68:
                 url = urlopen('http://comtrade.un.org/api/get?max=250000&type=C&px=HS&cc=' + str(hs) + '&r=' + str(i) + '&rg=1&p=all&freq=A&ps=' + str(year) + '&fmt=json&token=' + str(auth_code))
                 raw = json.loads(url.read().decode())
                 url.close()
-            except:  # if did not load, try again
-
-                    continue
 
             # Merge quantity to commodity/year df
             data = pd.DataFrame(raw['dataset'])
