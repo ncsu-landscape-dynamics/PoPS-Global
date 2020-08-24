@@ -99,7 +99,7 @@ def pandemic(
         for i in range(len(locations)):
             origin = locations.iloc[i, :]
             # check that Phytosanitary capacity data is available if not
-            # set value to 0to 0 to remove this aspect of the equation
+            # set value to 0 to remove this aspect of the equation
             if "Phytosanitary capacity" in origin:
                 rho_i = origin["Phytosanitary capacity"]
             else:
@@ -110,7 +110,7 @@ def pandemic(
             d_ij = distances[i, j]
             chi_it = 1  # need to pull this in from data (TO DO)
             h_jt = origin["Host Percent Area"]
-            if origin["Presence"]:
+            if origin["Presence"] and h_jt > 0:
                 zeta_it = int(origin["Presence"])
                 if "Ecological Disturbance" in origin:
                     epsilon_jt = origin["Ecological Disturbance"]
