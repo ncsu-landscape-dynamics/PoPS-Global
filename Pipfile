@@ -18,7 +18,7 @@ graphviz = "*"
 pydot = "*"
 pandas = "*"
 scipy = "*"
-pandemic = {path = "."}
+pandemic = {editable = true, path = "."}
 shapely = "*"
 pyproj = "*"
 geopy = "*"
