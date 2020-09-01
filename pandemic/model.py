@@ -1,13 +1,20 @@
+import os 
+import sys 
+import glob
 import pandas as pd
 import numpy as np
+import geopandas
 from datetime import datetime
 
+from pandemic.helpers import (
+    distance_between,
+    row_mode
+)
 from pandemic.probability_calculations import (
     probability_of_entry,
     probability_of_establishment,
     probability_of_introduction,
 )
-
 from pandemic.ecological_calculations import (
     climate_similarity
 )
@@ -408,27 +415,100 @@ def pandemic_multiple_time_steps(
 # locations = pd.DataFrame(
 #     {
 #         "name": ["United States", "China", "Brazil"],
-#         "phytosanitary_compliance": [0.00, 0.00, 0.00],
+#         "Phytosanitary Capacity": [0.00, 0.00, 0.00],
 #         "Presence": [True, False, True],
 #         "Host Percent Area": [0.25, 0.50, 0.35],
 #     }
 # )
 
-# e = pandemic(
-#     trade=trade,
-#     distances=distances,
-#     locations=locations,
-#     alpha=0.2,
-#     beta=1,
-#     mu=0.0002,
-#     lamda_c=1,
-#     phi=5,
-#     sigma_epsilon=0.5,
-#     sigma_h=0.5,
-#     sigma_kappa=0.5,
-#     sigma_phi=2,
-#     sigma_T=20,
-# )
+data_dir = sys.argv[1]
+countries = geopandas.read_file(sys.argv[2], driver='GPKG')
+distances = distance_between(countries)
+
+gdp_data = pd.read_csv(sys.argv[3], index_col = 0)
+gdp_data_with_mode = row_mode(dataframe = gdp_data, 
+                              mode_col_name = 'pc_mode', 
+                              input_columns = gdp_data.columns[3:-1], 
+                              column_prefix = 'Phytosanitary Capacity '
+)
+countries = countries.merge(gdp_data_with_mode, how='left', on='UN', suffixes = [None, '_y'])
+gdp_dict = {
+    'low': sys.argv[4],
+    'mid': sys.argv[5],
+    'high': sys.argv[6],
+    np.nan: 0
+}
+countries.replace(gdp_dict, inplace=True)
+
+## TO DO: increase flexibility to select specific years from directory
+commodity_path = sys.argv[7]
+file_list_historical = glob.glob(commodity_path)
+file_list_historical.sort()
+file_list_forecast = glob.glob(sys.argv[8])
+file_list_forecast.sort()
+file_list = file_list_historical + file_list_forecast
+
+trades = np.zeros(shape = (len(file_list), 
+                           distances.shape[0], 
+                           distances.shape[0]))
+for i in range(len(file_list)):
+    trades[i] = pd.read_csv(file_list[i], 
+                            sep = ",", 
+                            header= 0, 
+                            index_col=0, 
+                            encoding='latin1').values
+
+traded = pd.read_csv(file_list[1], 
+                     sep = ",",
+                     header= 0, 
+                     index_col=0, 
+                     encoding='latin1')
+
+#Native range to start presence = True at T0
+native_countries_list = sys.argv[9]
+
+# Run Model for Selected Time Steps
+trades = trades
+distances = distances
+locations = countries
+prob = np.zeros(len(countries.index))
+pres_ts0 = [False] *len(prob)
+for country in native_countries_list:
+    country_index = countries.index[countries['NAME'] == country][0]
+    pres_ts0[country_index] = True
+locations["Presence"] = pres_ts0
+
+alpha = float(sys.argv[10])
+beta = float(sys.argv[11])
+mu = float(sys.argv[12])
+lamda_c = 1
+phi = float(sys.argv[13])
+sigma_epsilon = 0.5
+sigma_h = 1 - countries['Host Percent Area'].mean()
+sigma_kappa = 1 - 0.3 #mean koppen climate matches
+sigma_phi =  int(sys.argv[14])
+sigma_T = np.mean(trades)
+start_year = int(sys.argv[15])
+
+random_seed = sys.argv[16] 
+
+e = pandemic_multiple_time_steps(
+    trades=trades,
+    distances=distances,
+    locations=locations,
+    alpha=alpha,
+    beta=beta,
+    mu=mu,
+    lamda_c=lamda_c,
+    phi=phi,
+    sigma_epsilon=sigma_epsilon,
+    sigma_h=sigma_h,
+    sigma_kappa=sigma_kappa,
+    sigma_phi=sigma_phi,
+    sigma_T=sigma_T,
+    start_year=start_year,
+    random_seed=random_seed
+)
 
 # # print("Ecological" in locations)
 # print(np.all(e[0] >= 0) | (e[0] <= 1))

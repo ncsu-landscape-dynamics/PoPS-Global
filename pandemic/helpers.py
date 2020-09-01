@@ -14,7 +14,8 @@ Version 3 or later at the following locations:
 http://www.opensource.org/licenses/gpl-license.html
 http://www.gnu.org/copyleft/gpl.html
 """
-
+import pandas as pd 
+import numpy as np
 from scipy.spatial import distance
 
 
@@ -44,3 +45,14 @@ def distance_between(shapefile):
     distance_array = distance.cdist(centroids_array, centroids_array, "euclidean")
 
     return distance_array
+
+
+def row_mode(dataframe, mode_col_name, input_columns, column_prefix):
+    dataframe[mode_col_name] = dataframe[[input_columns]].mode(axis=1)[0]
+    dataframe.columns = np.where(
+        dataframe.columns.isin(input_columns),
+        column_prefix + dataframe.columns,
+        dataframe.columns
+    )
+
+    return dataframe
