@@ -19,7 +19,6 @@ sigma_epsilon = 0.5
 sigma_phi = 1
 start_year = 2000
 random_seed = None
-run_num = 1
 out_dir = 'G:/Shared drives/APHIS  Projects/Pandemic/Data/slf_model/outputs/'
 columns_to_drop = [
                    'AREA_x', 

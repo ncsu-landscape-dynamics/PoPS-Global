@@ -1,17 +1,18 @@
 #%%# 
+print('model script running')
 import os 
 import sys
 import glob
 import json
+import time
 import numpy as np
 import pandas as pd
 import geopandas
 from datetime import datetime
 from shapely.geometry.polygon import Polygon
 from shapely.geometry.multipolygon import MultiPolygon
-import multiprocessing as mp
 #%%#
-sys.path.append('C:/Users/cwald/Documents/GitHub/Pandemic_Model/')
+sys.path.append(os.path.split(os.getcwd())[0])
 from pandemic.helpers import (
     distance_between
 )
@@ -42,7 +43,6 @@ from pandemic.config import (
     sigma_phi,
     start_year,
     random_seed,
-    run_num,
     out_dir,
     columns_to_drop
 )
@@ -234,7 +234,7 @@ def pandemic(
                 locations.iloc[j, locations.columns.get_loc("Presence")] = (
                     bool(introduced)
                 )
-                # print('\t', origin['NAME'], '-->', destination['NAME'])
+                print('\t', origin['NAME'], '-->', destination['NAME'])
                 
                 if origin_destination.empty:
                     origin_destination = pd.DataFrame([[origin['NAME'], 
@@ -254,13 +254,13 @@ def pandemic(
         locations.iloc[j, locations.columns.get_loc("Probability of introduction")] = 1 - combined_probability_no_introduction
 
     return (
-        entry_probabilities, 
-        establishment_probabilities,
-        introduction_probabilities,
-        introduction_country,
-        locations,
-        origin_destination
-    )
+            entry_probabilities, 
+            establishment_probabilities,
+            introduction_probabilities,
+            introduction_country,
+            locations,
+            origin_destination
+        )
 
 def pandemic_multiple_time_steps(
     trades,
@@ -344,7 +344,7 @@ def pandemic_multiple_time_steps(
     probability_of_introduction : Calculates the probability of introduction
         from the probability_of_establishment and probability_of_entry
     """
-
+    model_start = time.perf_counter()
     time_steps = trades.shape[0]
     
     entry_probabilities = np.empty_like(trades, dtype=float)
@@ -361,6 +361,7 @@ def pandemic_multiple_time_steps(
                               freq='MS').strftime('%Y%m').to_list() 
     
     for t in range(trades.shape[0]):
+        ts_time_start = time.perf_counter()
         ts = date_list[t]
         print('TIME STEP: ', ts)
         trade = trades[t]
@@ -393,6 +394,8 @@ def pandemic_multiple_time_steps(
             sigma_T=sigma_T,
             time_step=ts
         )
+        ts_time_end = time.perf_counter()
+        print('\tcalculation time: ', round(ts_time_end - ts_time_start, 2))
 
         establishment_probabilities[t] = ts_out[1]
         entry_probabilities[t] = ts_out[0]
@@ -408,7 +411,8 @@ def pandemic_multiple_time_steps(
 
     locations["Presence " + str(ts)] = locations["Presence"]
     locations["Probability of introduction "  + str(ts)] = locations["Probability of introduction"]
-
+    model_end = time.perf_counter()
+    print('***model run time: ', model_end - model_start)
     return (
         locations, 
         entry_probabilities, 
@@ -446,7 +450,7 @@ def create_model_dirs(
     
     for key in output_dict.keys():
         os.makedirs(outpath + key, exist_ok = True)
-        print(outpath + key)
+        # print(outpath + key)
 
 def save_model_output(
     model_output_object, 
@@ -659,7 +663,6 @@ def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
 #     }
 # )
 #%%#
-run_iter = 0
 data_dir = data_dir
 countries = geopandas.read_file(
     countries_path,
@@ -708,7 +711,7 @@ traded = pd.read_csv(file_list[1],
                      header= 0, 
                      index_col=0, 
                      encoding='latin1')
-
+#%%# 
 # Run Model for Selected Time Steps
 trades = trades
 distances = distances
@@ -721,7 +724,7 @@ for country in native_countries_list:
 locations["Presence"] = pres_ts0
 
 sigma_h = 1 - countries['Host Percent Area'].mean()
-sigma_kappa = 1 - 0.3 # mean koppen climate matches
+sigma_kappa = 1 - 0.3 # mean koppen climate matches, TO DO: automate
 sigma_T = np.mean(trades)
 
 np.random.seed(random_seed)
@@ -750,13 +753,14 @@ e = pandemic_multiple_time_steps(
 # print((e[1] >= 0).all() and (e[1] <= 1).all())
 # print((e[2] >= 0).all() and (e[2] <= 1).all())
 
-
 # %%
+run_num = sys.argv[0]
+run_iter = sys.argv[2] 
 arr_dict = {'prob_entry': 'probability_of_entry',
            'prob_intro': 'probability_of_introduction',
            'prob_est': 'probability_of_establishment',
            'country_introduction': 'country_introduction'}
-outpath = out_dir + f'/run{run_num}/{run_iter}/'
+outpath = out_dir + f'/run{run_num}/iter{run_iter}/'
 create_model_dirs(
     outpath = outpath,
     output_dict=arr_dict
@@ -769,8 +773,45 @@ full_out_df, date_list_out = save_model_output(
     example_trade_matrix = traded,
     outpath = outpath
     )
-
+#%%
 aggregate_monthly_output_to_annual(
     formatted_geojson = full_out_df,
     outpath = outpath
+    )
+
+#%% 
+def generate_model_metadata(
+    outpath, 
+    run_num, 
+    native_countries_list,
+    gdp_dict, 
+    main_model_output
+    ):
+    
+    final_presence_col = sorted(
+        [c for c in main_model_output.columns if c.startswith('Presence')]
+        )[-1]
+
+    with open(f'{outpath}run{run_num}_meta.txt', 'w') as file:
+        file.write(f'PARAMETER VALS:\talpha: {alpha}' \
+                   f'\n\tbeta: {beta}\n\tmu: {mu}' \
+                   f'\tsigma_h: {sigma_h}\n\tsigma_kappa: {sigma_kappa}\n\t' \
+                   f'sigma_T: {sigma_T}\n\n')
+        file.write(f'NATIVE COUNTRIES AT T0:\n\t{native_countries_list}\n\n')
+        file.write(f'COMMODITIES: {commodity_path}')
+        file.write(f'\tForecasted: {commodity_forecast_path}')
+        file.write(f'PHYTOSANITARY CAPACITY:\n\t {gdp_path}')
+        file.write(f'\tGPD vals:{gdp_dict}\n\n')
+        file.write('COUNTRY INTRODUCTIONS:')
+        file.write(f'\nTotal Number of Countries: ' \
+                   f'{main_model_output[final_presence_col].value_counts()[1]}')
+        file.close()
+        print(f'saving: {outpath}run{run_num}_meta.txt')
+
+generate_model_metadata(
+    outpath = out_dir + f'/run{run_num}',
+    run_num = run_num,
+    native_countries_list = native_countries_list,
+    gdp_dict = gdp_dict, 
+    main_model_output = e[0]
     )
