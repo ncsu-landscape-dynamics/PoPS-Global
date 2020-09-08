@@ -1,3 +1,5 @@
+# Run in parallel 
+
 import multiprocessing
 import subprocess
 import os
