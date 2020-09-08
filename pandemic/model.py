@@ -12,6 +12,7 @@ from datetime import datetime
 from shapely.geometry.polygon import Polygon
 from shapely.geometry.multipolygon import MultiPolygon
 #%%#
+print('appending ', os.path.split(os.getcwd())[0])
 sys.path.append(os.path.split(os.getcwd())[0])
 from pandemic.helpers import (
     distance_between
@@ -505,9 +506,9 @@ def save_model_output(
     out_df = model_output_df.drop(columns_to_drop, axis=1)
     out_df["geometry"] = [MultiPolygon([feature]) if type(feature) == Polygon 
                           else feature for feature in out_df["geometry"]]
-    out_df.to_file(outpath + f'pandemic_output.geojson', driver='GeoJSON')
+    out_df.to_file(outpath + 'pandemic_output.geojson', driver='GeoJSON')
 
-    origin_dst.to_csv(outpath + f'origin_destination.csv')
+    origin_dst.to_csv(outpath + 'origin_destination.csv')
     
     for i in range(0, len(date_list_out)):
         ts = date_list_out[i]
@@ -695,7 +696,7 @@ file_list_historical.sort()
 file_list_forecast = glob.glob(commodity_forecast_path + '/*.csv')
 file_list_forecast.sort()
 file_list = file_list_historical + file_list_forecast
-print('Number of time steps: ', len(file_list))
+
 trades = np.zeros(shape = (len(file_list), 
                            distances.shape[0], 
                            distances.shape[0]))
@@ -713,7 +714,11 @@ traded = pd.read_csv(file_list[1],
                      encoding='latin1')
 #%%# 
 # Run Model for Selected Time Steps
-trades = trades
+#trades = trades
+trades = trades[:10,:,:]
+print(trades.shape)
+#%% 
+print('Number of time steps: ', trades.shape[0])
 distances = distances
 locations = countries
 prob = np.zeros(len(countries.index))
@@ -754,8 +759,8 @@ e = pandemic_multiple_time_steps(
 # print((e[2] >= 0).all() and (e[2] <= 1).all())
 
 # %%
-run_num = sys.argv[0]
-run_iter = sys.argv[2] 
+run_num = 3 # sys.argv[0]
+run_iter = 0 # sys.argv[2] 
 arr_dict = {'prob_entry': 'probability_of_entry',
            'prob_intro': 'probability_of_introduction',
            'prob_est': 'probability_of_establishment',
