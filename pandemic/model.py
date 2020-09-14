@@ -1,5 +1,3 @@
-#%%# 
-print('model script running')
 import os 
 import sys
 import glob
@@ -11,9 +9,9 @@ import geopandas
 from datetime import datetime
 from shapely.geometry.polygon import Polygon
 from shapely.geometry.multipolygon import MultiPolygon
-#%%#
-print('appending ', os.path.split(os.getcwd())[0])
-sys.path.append(os.path.split(os.getcwd())[0])
+
+sys.path.append(os.getcwd())
+
 from pandemic.helpers import (
     distance_between
 )
@@ -47,7 +45,7 @@ from pandemic.config import (
     out_dir,
     columns_to_drop
 )
-#%%#
+
 def pandemic(
     trade,
     distances,
@@ -170,27 +168,28 @@ def pandemic(
             if origin["Presence"] and h_jt > 0:
                 zeta_it = int(origin["Presence"])
 
-                origin_climates = origin.loc[['Af', 'Am',	'Aw',	'BWh', 'BWk', 
-                                              'BSh', 'BSk', 'Csa',	'Csb', 
-                                              'Csc', 'Cwa', 'Cwb', 'Cwc', 
-                                              'Cfa',	'Cfb', 'Cfc',	'Dsa', 
-                                              'Dsb',	'Dsc', 'Dsd',	'Dwa', 
-                                              'Dwb',	'Dwc', 'Dwd',	'Dfa', 
-                                              'Dfb',	'Dfc', 'Dfd',	'ET', 'EF']]
+                # origin_climates = origin.loc[['Af', 'Am',	'Aw',	'BWh', 'BWk', 
+                #                               'BSh', 'BSk', 'Csa',	'Csb', 
+                #                               'Csc', 'Cwa', 'Cwb', 'Cwc', 
+                #                               'Cfa',	'Cfb', 'Cfc',	'Dsa', 
+                #                               'Dsb',	'Dsc', 'Dsd',	'Dwa', 
+                #                               'Dwb',	'Dwc', 'Dwd',	'Dfa', 
+                #                               'Dfb',	'Dfc', 'Dfd',	'ET', 'EF']]
 
-                destination_climates = destination.loc[['Af', 'Am',	'Aw',	
-                                                        'BWh', 'BWk', 'BSh',
-                                                        'BSk', 'Csa',	'Csb',
-                                                        'Csc', 'Cwa', 'Cwb',
-                                                        'Cwc', 'Cfa',	'Cfb',
-                                                        'Cfc',	'Dsa', 'Dsb',
-                                                        'Dsc', 'Dsd',	'Dwa', 
-                                                        'Dwb',	'Dwc', 'Dwd',
-                                                        'Dfa', 'Dfb',	'Dfc',
-                                                        'Dfd',	'ET', 'EF']]
+                # destination_climates = destination.loc[['Af', 'Am',	'Aw',	
+                #                                         'BWh', 'BWk', 'BSh',
+                #                                         'BSk', 'Csa',	'Csb',
+                #                                         'Csc', 'Cwa', 'Cwb',
+                #                                         'Cwc', 'Cfa',	'Cfb',
+                #                                         'Cfc',	'Dsa', 'Dsb',
+                #                                         'Dsc', 'Dsd',	'Dwa', 
+                #                                         'Dwb',	'Dwc', 'Dwd',
+                #                                         'Dfa', 'Dfb',	'Dfc',
+                #                                         'Dfd',	'ET', 'EF']]
                 
-                delta_kappa_ijt = climate_similarity(
-                    origin_climates, destination_climates)
+                # delta_kappa_ijt = climate_similarity(
+                #     origin_climates, destination_climates)
+                delta_kappa_ijt = climate_similarities[j, i]
 
                 if "Ecological Disturbance" in origin:
                     epsilon_jt = origin["Ecological Disturbance"]
@@ -663,7 +662,7 @@ def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
 #         "Host Percent Area": [0.25, 0.50, 0.35],
 #     }
 # )
-#%%#
+
 data_dir = data_dir
 countries = geopandas.read_file(
     countries_path,
@@ -712,12 +711,41 @@ traded = pd.read_csv(file_list[1],
                      header= 0, 
                      index_col=0, 
                      encoding='latin1')
-#%%# 
+
+climate_similarities = np.empty_like(traded, dtype=float)
+
+for j in range(len(countries)):
+  destination = countries.iloc[j, :]
+  for i in range(len(countries)):
+    origin = countries.iloc[i, :]
+    
+    origin_climates = origin.loc[['Af', 'Am',	'Aw',	'BWh', 'BWk',
+                                  'BSh', 'BSk', 'Csa',	'Csb',
+                                  'Csc', 'Cwa', 'Cwb', 'Cwc', 
+                                  'Cfa',	'Cfb', 'Cfc',	'Dsa', 
+                                  'Dsb',	'Dsc', 'Dsd',	'Dwa', 
+                                  'Dwb',	'Dwc', 'Dwd',	'Dfa', 
+                                  'Dfb',	'Dfc', 'Dfd',	'ET', 'EF']]
+
+    destination_climates = destination.loc[['Af', 'Am',	'Aw',	
+                                            'BWh', 'BWk', 'BSh',
+                                            'BSk', 'Csa',	'Csb',
+                                            'Csc', 'Cwa', 'Cwb',
+                                            'Cwc', 'Cfa',	'Cfb',
+                                            'Cfc',	'Dsa', 'Dsb',
+                                            'Dsc', 'Dsd',	'Dwa', 
+                                            'Dwb',	'Dwc', 'Dwd',
+                                            'Dfa', 'Dfb',	'Dfc',
+                                            'Dfd',	'ET', 'EF']]
+                
+    delta_kappa_ij = climate_similarity(
+        origin_climates, destination_climates)
+    
+    climate_similarities[j, i] = delta_kappa_ij
+
 # Run Model for Selected Time Steps
-#trades = trades
-trades = trades[:10,:,:]
-print(trades.shape)
-#%% 
+trades = trades
+
 print('Number of time steps: ', trades.shape[0])
 distances = distances
 locations = countries
@@ -757,10 +785,8 @@ e = pandemic_multiple_time_steps(
 # print((e[0] >= 0).all() and (e[0] <= 1).all())
 # print((e[1] >= 0).all() and (e[1] <= 1).all())
 # print((e[2] >= 0).all() and (e[2] <= 1).all())
-
-# %%
-run_num = 3 # sys.argv[0]
-run_iter = 0 # sys.argv[2] 
+run_num = sys.argv[1]
+run_iter = sys.argv[2]
 arr_dict = {'prob_entry': 'probability_of_entry',
            'prob_intro': 'probability_of_introduction',
            'prob_est': 'probability_of_establishment',
@@ -771,20 +797,19 @@ create_model_dirs(
     output_dict=arr_dict
     )
 
-#%%#
 full_out_df, date_list_out = save_model_output(
     model_output_object = e,
     columns_to_drop = columns_to_drop,
     example_trade_matrix = traded,
     outpath = outpath
     )
-#%%
+
 aggregate_monthly_output_to_annual(
     formatted_geojson = full_out_df,
     outpath = outpath
     )
 
-#%% 
+
 def generate_model_metadata(
     outpath, 
     run_num, 
@@ -797,7 +822,7 @@ def generate_model_metadata(
         [c for c in main_model_output.columns if c.startswith('Presence')]
         )[-1]
 
-    with open(f'{outpath}run{run_num}_meta.txt', 'w') as file:
+    with open(f'{outpath}/run{run_num}_meta.txt', 'w') as file:
         file.write(f'PARAMETER VALS:\talpha: {alpha}' \
                    f'\n\tbeta: {beta}\n\tmu: {mu}' \
                    f'\tsigma_h: {sigma_h}\n\tsigma_kappa: {sigma_kappa}\n\t' \
