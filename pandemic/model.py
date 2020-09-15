@@ -712,6 +712,7 @@ traded = pd.read_csv(file_list[1],
                      index_col=0, 
                      encoding='latin1')
 
+# Create an n x n array of climate similarity calculations
 climate_similarities = np.empty_like(traded, dtype=float)
 
 for j in range(len(countries)):
@@ -823,20 +824,21 @@ def generate_model_metadata(
         )[-1]
 
     with open(f'{outpath}/run{run_num}_meta.txt', 'w') as file:
-        file.write(f'PARAMETER VALS:\talpha: {alpha}' \
+        file.write(f'PARAMETER VALS:' \
+                   f'\n\talpha: {alpha}'
                    f'\n\tbeta: {beta}\n\tmu: {mu}' \
-                   f'\tsigma_h: {sigma_h}\n\tsigma_kappa: {sigma_kappa}\n\t' \
-                   f'sigma_T: {sigma_T}\n\n')
-        file.write(f'NATIVE COUNTRIES AT T0:\n\t{native_countries_list}\n\n')
-        file.write(f'COMMODITIES: {commodity_path}')
-        file.write(f'\tForecasted: {commodity_forecast_path}')
-        file.write(f'PHYTOSANITARY CAPACITY:\n\t {gdp_path}')
-        file.write(f'\tGPD vals:{gdp_dict}\n\n')
-        file.write('COUNTRY INTRODUCTIONS:')
+                   f'\n\tsigma_h: {sigma_h}\n\tsigma_kappa: {sigma_kappa}' \
+                   f'\n\tsigma_T: {sigma_T}')
+        file.write(f'\n\nNATIVE COUNTRIES AT T0:\n\t{native_countries_list}')
+        file.write(f'\n\nCOMMODITIES: {commodity_path}')
+        file.write(f'\n\tForecasted: {commodity_forecast_path}')
+        file.write(f'\n\nPHYTOSANITARY CAPACITY:\n\t{gdp_path}')
+        file.write(f'\n\tGPD vals:{gdp_dict}')
+        file.write('\n\nCOUNTRY INTRODUCTIONS:')
         file.write(f'\nTotal Number of Countries: ' \
-                   f'{main_model_output[final_presence_col].value_counts()[1]}')
+                   f'\n\t{main_model_output[final_presence_col].value_counts()[1]}')
         file.close()
-        print(f'saving: {outpath}run{run_num}_meta.txt')
+        print(f'saving: {outpath}/run{run_num}_meta.txt')
 
 generate_model_metadata(
     outpath = out_dir + f'/run{run_num}',
