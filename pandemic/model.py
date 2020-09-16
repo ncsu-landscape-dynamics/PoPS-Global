@@ -1,4 +1,3 @@
-#%% 
 import os 
 import sys
 import glob
@@ -369,11 +368,6 @@ def pandemic_multiple_time_steps(
     locations["Probability of introduction"] = np.zeros(shape=len(locations))
     origin_destination = pd.DataFrame(columns=['Origin', 'Destination', 'Year'])
     
-    ## TO DO: Adapt to dynamic annual or monthly date list
-    # date_list = pd.date_range(f'{str(start_year)}-01', 
-    #                           f'{str(start_year + int(time_steps/12)-1)}-12', 
-    #                           freq='MS').strftime('%Y%m').to_list() 
-    
     for t in range(trades.shape[0]):
         ts_time_start = time.perf_counter()
         ts = date_list[t]
@@ -437,7 +431,6 @@ def pandemic_multiple_time_steps(
         introduction_countries
     )
 
-#%%
 # trade = np.array(
 #     [
 #         [
@@ -493,38 +486,44 @@ phyto_dict = {
 }
 countries.replace(phyto_dict, inplace=True)
 
-## TO DO: increase flexibility to select specific years from directory
+# Read in trade data 
 file_list_historical = glob.glob(commodity_path + '/*.csv')
 file_list_historical.sort()
 file_list_forecast = glob.glob(commodity_forecast_path + '/*.csv')
 file_list_forecast.sort()
 file_list = file_list_historical + file_list_forecast
 
-date_list = []
+# Filter list based on selected start year
+for i, f in enumerate(file_list):
+    date_tag = str.split(os.path.splitext(os.path.split(f)[1])[0], '_')[-1][:4]
+    if int(date_tag) < int(start_year):
+        file_list[i] = None
+file_list_filtered = [f for f in file_list if f is not None]
 
-for f in file_list:
+# Create list of unique time steps from trade data 
+date_list = []
+for f in file_list_filtered:
     fn = os.path.split(f)[1]
     ts = str.split(os.path.splitext(fn)[0], '_')[-1]
     date_list.append(ts)
-
 date_list.sort()
-#%%
-trades = np.zeros(shape = (len(file_list), 
+
+trades = np.zeros(shape = (len(file_list_filtered), 
                            distances.shape[0], 
                            distances.shape[0]))
-for i in range(len(file_list)):
-    trades[i] = pd.read_csv(file_list[i], 
+for i in range(len(file_list_filtered)):
+    trades[i] = pd.read_csv(file_list_filtered[i], 
                             sep = ",", 
                             header= 0, 
                             index_col=0, 
                             encoding='latin1').values
 
-traded = pd.read_csv(file_list[1], 
+traded = pd.read_csv(file_list_filtered[1], 
                      sep = ",",
                      header= 0, 
                      index_col=0, 
                      encoding='latin1')
-#%%
+
 # Create an n x n array of climate similarity calculations
 climate_similarities = np.empty_like(traded, dtype=float)
 
@@ -558,7 +557,9 @@ for j in range(len(countries)):
     climate_similarities[j, i] = delta_kappa_ij
 
 # Run Model for Selected Time Steps
-trades = trades
+# trades = trades
+trades = trades[-5:,:,:]
+date_list = date_list[-5:]
 print('Number of time steps: ', trades.shape[0])
 distances = distances
 locations = countries
@@ -643,7 +644,8 @@ meta['PARAMETERS'].append({
         'sigma_kappa': str(sigma_kappa),
         'sigma_phi': str(sigma_phi),
         'sigma_T': str(sigma_T),
-        'start_year': str(start_year)
+        'start_year': str(start_year),
+        'random_seed': str(random_seed)
     })
 meta['NATIVE_COUNTRIES_T0'] = native_countries_list 
 meta['COMMODITIES'] = commodity_path
@@ -652,4 +654,4 @@ meta['PHYTOSANITARY_CAPACITY_WEIGHTS'] = phyto_dict
 meta['TOTAL COUNTRIES INTRODUCTED'] = str(main_model_output[final_presence_col].value_counts()[1])
 
 with open(f'{outpath}/run{run_num}_meta.txt', 'w') as file:
-    json.dump(meta, file)
+    json.dump(meta, file, indent=4)
