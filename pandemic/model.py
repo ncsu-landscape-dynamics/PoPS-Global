@@ -1,3 +1,4 @@
+#%% 
 import os 
 import sys
 import glob
@@ -23,13 +24,23 @@ from pandemic.probability_calculations import (
 from pandemic.ecological_calculations import (
     climate_similarity
 )
+from pandemic.output_files import (
+    create_model_dirs,
+    save_model_output,
+    agg_prob,
+    get_feature_cols,
+    create_feature_dict,
+    add_dict_to_geojson,
+    aggregate_monthly_output_to_annual
+)
+
 from pandemic.config import (
     data_dir,
     countries_path,
-    gdp_path,
-    gdp_low,
-    gdp_mid,
-    gdp_high,
+    phyto_path,
+    phyto_low,
+    phyto_mid,
+    phyto_high,
     commodity_path,
     commodity_forecast_path,
     native_countries_list,
@@ -61,7 +72,7 @@ def pandemic(
     sigma_phi,
     sigma_T,
     time_step
-):
+    ):
     """
     Returns the probability of establishment, probability of entry, and
     probability of introduction as an n x n matrices betweem every origin (i)
@@ -277,8 +288,9 @@ def pandemic_multiple_time_steps(
     sigma_phi,
     sigma_T,
     start_year,
+    date_list,
     random_seed = None
-):
+    ):
     """
     Returns the probability of establishment, probability of entry, and
     probability of introduction as an n x n matrices betweem every origin (i)
@@ -328,6 +340,8 @@ def pandemic_multiple_time_steps(
         The trade volume normalizing constant
     start_year : int
         The year in which to start the simulation
+    date_list : list
+        List of unique time step values (YYYY or YYYYMM)
     random_seed : int (optional)
         The number to use for initializing random values. If not provided, a new
         value will be used for every simulation and results may differ for the
@@ -356,9 +370,9 @@ def pandemic_multiple_time_steps(
     origin_destination = pd.DataFrame(columns=['Origin', 'Destination', 'Year'])
     
     ## TO DO: Adapt to dynamic annual or monthly date list
-    date_list = pd.date_range(f'{str(start_year)}-01', 
-                              f'{str(start_year + int(time_steps/12)-1)}-12', 
-                              freq='MS').strftime('%Y%m').to_list() 
+    # date_list = pd.date_range(f'{str(start_year)}-01', 
+    #                           f'{str(start_year + int(time_steps/12)-1)}-12', 
+    #                           freq='MS').strftime('%Y%m').to_list() 
     
     for t in range(trades.shape[0]):
         ts_time_start = time.perf_counter()
@@ -413,227 +427,17 @@ def pandemic_multiple_time_steps(
     locations["Probability of introduction "  + str(ts)] = locations["Probability of introduction"]
     model_end = time.perf_counter()
     print('***model run time: ', model_end - model_start)
+
     return (
         locations, 
         entry_probabilities, 
         establishment_probabilities, 
         introduction_probabilities, 
         origin_destination, 
-        introduction_countries, 
-        date_list
+        introduction_countries
     )
 
-def create_model_dirs(
-    outpath, 
-    output_dict
-    ):
-    """
-    Creates directory and folders for model output files. 
-
-    Parameters
-    ----------
-    run_num : Integer
-        Number identifying the model run
-    outpath : String
-        Absolute path of directory where model output are saved
-    output_dict : Dictionary
-        Key-value pairs identifying the object name and folder name
-        of model output components. 
-
-    Returns
-    -------
-    None
-
-    """
-
-    os.makedirs(outpath, exist_ok = True)
-    
-    for key in output_dict.keys():
-        os.makedirs(outpath + key, exist_ok = True)
-        # print(outpath + key)
-
-def save_model_output(
-    model_output_object, 
-    columns_to_drop,
-    example_trade_matrix, 
-    outpath
-    ):
-    """
-    Saves model output, including probabilities for entry, establishment,
-    and introduction. Full forecast dataframe, origin-destination pairs,
-    and list of time steps formatted as YYYYMM. 
-
-    Parameters
-    ----------
-    model_output_object : numpy array
-        List of 7 n x n arrays created by running pandemic model, ordered as 
-        1) full forecast dataframe; 2) probability of entry; 
-        3) probability of establishment; 4) probability of introduction;
-        5) origin - destination pairs; 6) list of countries where pest is
-        predicted to be introduced; and 7) list of time steps used in the 
-        model formatted as YearMonth (i.e., YYYYMM). 
-
-    columns_to_drop : list
-        List of columns used or created by the model that are to be dropped
-        from the final output (e.g., Koppen climate classifications). 
-
-    example_trade_matrix : numpy array
-        Array of trade data from one time step as example to format
-        output dataframe columns and indices. 
-
-    outpath : string
-        String specifying absolute path of output directory
-
-    Returns
-    -------
-    out_df : geodataframe
-        Geodataframe of model outputs
-    date_list_out : list
-        List of time steps used in the model formatted 
-        as YearMonth (i.e., YYYYMM)
-
-    """
-    
-    model_output_df = model_output_object[0] 
-    prob_entry = model_output_object[1]
-    prob_est = model_output_object[2] 
-    prob_intro = model_output_object[3]
-    origin_dst = model_output_object[4] 
-    country_intro = model_output_object[5]
-    date_list_out = model_output_object[6]
-    
-    out_df = model_output_df.drop(columns_to_drop, axis=1)
-    out_df["geometry"] = [MultiPolygon([feature]) if type(feature) == Polygon 
-                          else feature for feature in out_df["geometry"]]
-    out_df.to_file(outpath + 'pandemic_output.geojson', driver='GeoJSON')
-
-    origin_dst.to_csv(outpath + 'origin_destination.csv')
-    
-    for i in range(0, len(date_list_out)):
-        ts = date_list_out[i]
-        
-        pro_entry_pd = pd.DataFrame(prob_entry[i])
-        pro_entry_pd.columns = example_trade_matrix.columns
-        pro_entry_pd.index = example_trade_matrix.index
-        pro_entry_pd.to_csv(outpath 
-                            + f"prob_entry/probability_of_entry_{str(ts)}.csv", 
-                            float_format='%.2f', 
-                            na_rep="NAN!")
-        
-        pro_intro_pd = pd.DataFrame(prob_intro[i])
-        pro_intro_pd.columns = example_trade_matrix.columns
-        pro_intro_pd.index = example_trade_matrix.index
-        pro_intro_pd.to_csv(outpath 
-                            + f"prob_intro/probability_of_introduction_{str(ts)}.csv", 
-                            float_format='%.2f', 
-                            na_rep="NAN!")
-        
-        pro_est_pd = pd.DataFrame(prob_est[i])
-        pro_est_pd.columns = example_trade_matrix.columns
-        pro_est_pd.index = example_trade_matrix.index
-        pro_est_pd.to_csv(outpath 
-                          + f"prob_est/probability_of_establishment_{str(ts)}.csv", 
-                          float_format='%.2f', 
-                          na_rep="NAN!")
-        
-        country_int_pd = pd.DataFrame(country_intro[i])
-        country_int_pd.columns = example_trade_matrix.columns
-        country_int_pd.index = example_trade_matrix.index
-        country_int_pd.to_csv(outpath 
-                              + f"country_introduction/country_introduction_{str(ts)}.csv", 
-                              float_format='%.2f', 
-                              na_rep="NAN!")
-    
-    return out_df, date_list_out
-
-def cumulative_prob(row, column_list):
-   non_neg = []
-   for i in range(0, len(column_list)):
-     if row[column_list[i]] > 0.:
-       non_neg.append(row[column_list[i]])
-   sub_list = list(map(lambda x: 1 - x, non_neg))
-   prod_out = np.prod(sub_list)
-   final_prob = 1 - prod_out
-   return final_prob
-
-def get_feature_cols(geojson_obj, feature_chars):
-    feature_cols = [c for c in geojson_obj.columns if 
-                    c.startswith(feature_chars)]
-    feature_cols_monthly = [c for c in feature_cols if 
-                            len(c.split(' ')[-1]) > 5]
-    feature_cols_annual = [c for c in feature_cols if 
-                           c not in feature_cols_monthly]
-    
-    return feature_cols, feature_cols_monthly, feature_cols_annual   
-
-def create_feature_dict(geojson_obj, column_list, chars_to_strip):
-    d = geojson_obj[column_list].to_dict('index')
-    for key in d.keys():
-        d[key] = {k.strip(chars_to_strip): v for k, v in d[key].items()}
-    
-    return d
-
-def add_dict_to_geojson(geojson_obj, new_col_name, dictionary_obj):
-    geojson_obj[new_col_name] = geojson_obj.index.map(dictionary_obj)
-    
-    return geojson_obj
-
-def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
-  presence_cols = [c for c in formatted_geojson.columns 
-                   if c.startswith('Presence')]
-  prob_intro_cols = [c for c in formatted_geojson.columns 
-                     if c.startswith('Probability of introduction')]
-  annual_ts_list = sorted(set([y.split(' ')[-1][:4] 
-                               for y in prob_intro_cols]))
-  for year in annual_ts_list:
-    prob_cols = [c for c in prob_intro_cols if str(year) in c]
-    formatted_geojson[f'Agg Prob Intro {year}'] = (
-        formatted_geojson.apply(lambda row: 
-                                cumulative_prob(row = row,
-                                                column_list = prob_cols),
-                                axis=1)
-    )
-    formatted_geojson[f'Presence {year}'] = formatted_geojson[f'Presence {year}12']
-    
-  formatted_geojson.to_file(outpath + f'pandemic_output_aggregated.geojson', 
-                            driver='GeoJSON')
-  out_csv = pd.DataFrame(formatted_geojson)
-  out_csv.drop(['geometry'], axis=1, inplace=True)
-  out_csv.to_csv(outpath + f'pandemic_output_aggregated.csv', 
-                float_format='%.2f', 
-                na_rep="NAN!")
-  presence_cols_monthly =  [c for c in presence_cols 
-                            if len(c.split(' ')[-1]) > 5]
-  presence_cols_annual = [c for c in presence_cols 
-                          if c not in presence_cols_monthly]
-  agg_prob_cols_annual = [c for c in formatted_geojson.columns 
-                          if c.startswith('Agg')]
-  
-  presence_d = create_feature_dict(geojson_obj = formatted_geojson,
-                                   column_list = presence_cols_annual,
-                                   chars_to_strip = 'Presence ')
-  agg_prob_d = create_feature_dict(geojson_obj = formatted_geojson,
-                                   column_list = agg_prob_cols_annual,
-                                   chars_to_strip = 'Agg Prob Intro ')
-  new_gdf = add_dict_to_geojson(geojson_obj = formatted_geojson,
-                              new_col_name = 'Presence',
-                              dictionary_obj = presence_d)
-  new_gdf = add_dict_to_geojson(geojson_obj = new_gdf,
-                              new_col_name = 'Agg Prob Intro',
-                              dictionary_obj = agg_prob_d)
-  cols_to_drop = [c for c in new_gdf.columns if
-                  c in presence_cols_monthly or
-                  c.startswith('Probability')]
-
-  sm_gdf = new_gdf.drop(cols_to_drop, axis=1)
-  sm_gdf.to_file(outpath + f'pandemic_output_aggregated_select.geojson', 
-                  driver='GeoJSON')
-  sm_csv = pd.DataFrame(sm_gdf)
-  sm_csv.drop(['geometry'], axis=1, inplace=True)
-  sm_csv.to_csv(outpath + f'pandemic_output_aggregated_select.csv', 
-                float_format='%.2f', 
-                na_rep="NAN!")
-
+#%%
 # trade = np.array(
 #     [
 #         [
@@ -668,26 +472,26 @@ countries = geopandas.read_file(
     countries_path,
     driver='GPKG')
 distances = distance_between(countries)
-gdp_data = pd.read_csv(gdp_path, index_col = 0)
-gdp_year_cols = gdp_data.columns[3:].to_list()
+phyto_data = pd.read_csv(phyto_path, index_col = 0)
+phyto_year_cols = phyto_data.columns[3:].to_list()
 
-gdp_data['pc_mode'] = gdp_data[gdp_year_cols].mode(axis=1)[0]
+phyto_data['pc_mode'] = phyto_data[phyto_year_cols].mode(axis=1)[0]
 
-gdp_data.columns = (np.where(
-    gdp_data.columns.isin(gdp_year_cols),
-    'Phytosanitary Capacity ' + gdp_data.columns,
-    gdp_data.columns
+phyto_data.columns = (np.where(
+    phyto_data.columns.isin(phyto_year_cols),
+    'Phytosanitary Capacity ' + phyto_data.columns,
+    phyto_data.columns
     )
 )
 
-countries = countries.merge(gdp_data, how='left', on='UN', suffixes = [None, '_y'])
-gdp_dict = {
-    'low': gdp_low,
-    'mid': gdp_mid,
-    'high': gdp_high,
+countries = countries.merge(phyto_data, how='left', on='UN', suffixes = [None, '_y'])
+phyto_dict = {
+    'low': phyto_low,
+    'mid': phyto_mid,
+    'high': phyto_high,
     np.nan: 0
 }
-countries.replace(gdp_dict, inplace=True)
+countries.replace(phyto_dict, inplace=True)
 
 ## TO DO: increase flexibility to select specific years from directory
 file_list_historical = glob.glob(commodity_path + '/*.csv')
@@ -696,6 +500,15 @@ file_list_forecast = glob.glob(commodity_forecast_path + '/*.csv')
 file_list_forecast.sort()
 file_list = file_list_historical + file_list_forecast
 
+date_list = []
+
+for f in file_list:
+    fn = os.path.split(f)[1]
+    ts = str.split(os.path.splitext(fn)[0], '_')[-1]
+    date_list.append(ts)
+
+date_list.sort()
+#%%
 trades = np.zeros(shape = (len(file_list), 
                            distances.shape[0], 
                            distances.shape[0]))
@@ -711,7 +524,7 @@ traded = pd.read_csv(file_list[1],
                      header= 0, 
                      index_col=0, 
                      encoding='latin1')
-
+#%%
 # Create an n x n array of climate similarity calculations
 climate_similarities = np.empty_like(traded, dtype=float)
 
@@ -746,7 +559,6 @@ for j in range(len(countries)):
 
 # Run Model for Selected Time Steps
 trades = trades
-
 print('Number of time steps: ', trades.shape[0])
 distances = distances
 locations = countries
@@ -763,6 +575,7 @@ sigma_T = np.mean(trades)
 
 np.random.seed(random_seed)
 
+
 e = pandemic_multiple_time_steps(
     trades=trades,
     distances=distances,
@@ -778,6 +591,7 @@ e = pandemic_multiple_time_steps(
     sigma_phi=sigma_phi,
     sigma_T=sigma_T,
     start_year=start_year,
+    date_list=date_list,
     random_seed=random_seed
 )
 
@@ -793,16 +607,18 @@ arr_dict = {'prob_entry': 'probability_of_entry',
            'prob_est': 'probability_of_establishment',
            'country_introduction': 'country_introduction'}
 outpath = out_dir + f'/run{run_num}/iter{run_iter}/'
+
 create_model_dirs(
     outpath = outpath,
     output_dict=arr_dict
     )
 
-full_out_df, date_list_out = save_model_output(
+full_out_df = save_model_output(
     model_output_object = e,
     columns_to_drop = columns_to_drop,
     example_trade_matrix = traded,
-    outpath = outpath
+    outpath = outpath,
+    date_list = date_list
     )
 
 aggregate_monthly_output_to_annual(
@@ -810,40 +626,30 @@ aggregate_monthly_output_to_annual(
     outpath = outpath
     )
 
-
-def generate_model_metadata(
-    outpath, 
-    run_num, 
-    native_countries_list,
-    gdp_dict, 
-    main_model_output
-    ):
-    
-    final_presence_col = sorted(
+main_model_output = e[0]
+final_presence_col = sorted(
         [c for c in main_model_output.columns if c.startswith('Presence')]
         )[-1]
+meta = {}
+meta['PARAMETERS'] = []
+meta['PARAMETERS'].append({
+        'alpha': str(alpha),
+        'beta': str(beta),
+        'mu': str(mu),
+        'lamda_c': str(lamda_c),
+        'phi': str(phi),
+        'sigma_epsilon': str(sigma_epsilon),
+        'sigma_h': str(sigma_h),
+        'sigma_kappa': str(sigma_kappa),
+        'sigma_phi': str(sigma_phi),
+        'sigma_T': str(sigma_T),
+        'start_year': str(start_year)
+    })
+meta['NATIVE_COUNTRIES_T0'] = native_countries_list 
+meta['COMMODITIES'] = commodity_path
+meta['FORECASTED'] = commodity_forecast_path
+meta['PHYTOSANITARY_CAPACITY_WEIGHTS'] = phyto_dict
+meta['TOTAL COUNTRIES INTRODUCTED'] = str(main_model_output[final_presence_col].value_counts()[1])
 
-    with open(f'{outpath}/run{run_num}_meta.txt', 'w') as file:
-        file.write(f'PARAMETER VALS:' \
-                   f'\n\talpha: {alpha}'
-                   f'\n\tbeta: {beta}\n\tmu: {mu}' \
-                   f'\n\tsigma_h: {sigma_h}\n\tsigma_kappa: {sigma_kappa}' \
-                   f'\n\tsigma_T: {sigma_T}')
-        file.write(f'\n\nNATIVE COUNTRIES AT T0:\n\t{native_countries_list}')
-        file.write(f'\n\nCOMMODITIES: {commodity_path}')
-        file.write(f'\n\tForecasted: {commodity_forecast_path}')
-        file.write(f'\n\nPHYTOSANITARY CAPACITY:\n\t{gdp_path}')
-        file.write(f'\n\tGPD vals:{gdp_dict}')
-        file.write('\n\nCOUNTRY INTRODUCTIONS:')
-        file.write(f'\nTotal Number of Countries: ' \
-                   f'\n\t{main_model_output[final_presence_col].value_counts()[1]}')
-        file.close()
-        print(f'saving: {outpath}/run{run_num}_meta.txt')
-
-generate_model_metadata(
-    outpath = out_dir + f'/run{run_num}',
-    run_num = run_num,
-    native_countries_list = native_countries_list,
-    gdp_dict = gdp_dict, 
-    main_model_output = e[0]
-    )
+with open(f'{outpath}/run{run_num}_meta.txt', 'w') as file:
+    json.dump(meta, file)
