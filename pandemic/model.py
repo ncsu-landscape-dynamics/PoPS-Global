@@ -33,29 +33,6 @@ from pandemic.output_files import (
     aggregate_monthly_output_to_annual
 )
 
-from pandemic.config import (
-    data_dir,
-    countries_path,
-    phyto_path,
-    phyto_low,
-    phyto_mid,
-    phyto_high,
-    commodity_path,
-    commodity_forecast_path,
-    native_countries_list,
-    alpha,
-    beta,
-    mu, 
-    lamda_c,
-    phi, 
-    sigma_epsilon,
-    sigma_phi,
-    start_year,
-    random_seed,
-    out_dir,
-    columns_to_drop
-)
-
 def pandemic(
     trade,
     distances,
@@ -459,6 +436,32 @@ def pandemic_multiple_time_steps(
 #         "Host Percent Area": [0.25, 0.50, 0.35],
 #     }
 # )
+path_to_config_json = sys.argv[1]
+
+with open(path_to_config_json) as json_file:
+    data = json.load(json_file)
+
+data_dir = data['data_dir']
+countries_path = data['countries_path']
+phyto_path = data['phyto_path']
+phyto_low = data['phyto_low']
+phyto_mid = data['phyto_mid']
+phyto_high = data['phyto_high']
+commodity_path = data['commodity_path']
+commodity_forecast_path = data['commodity_forecast_path']
+native_countries_list = data['native_countries_list']
+alpha = data['alpha']
+beta = data['beta']
+mu = data['mu']
+lamda_c = data['lamda_c']
+phi = data['phi']
+sigma_epsilon = data['sigma_epsilon']
+sigma_phi = data['sigma_phi']
+start_year = data['start_year']
+random_seed = data['random_seed']
+out_dir = data['out_dir']
+columns_to_drop = data['columns_to_drop']
+
 
 data_dir = data_dir
 countries = geopandas.read_file(
@@ -558,8 +561,8 @@ for j in range(len(countries)):
 
 # Run Model for Selected Time Steps
 # trades = trades
-trades = trades[-5:,:,:]
-date_list = date_list[-5:]
+trades = trades[-2:,:,:]
+date_list = date_list[-2:]
 print('Number of time steps: ', trades.shape[0])
 distances = distances
 locations = countries
@@ -601,8 +604,8 @@ e = pandemic_multiple_time_steps(
 # print((e[0] >= 0).all() and (e[0] <= 1).all())
 # print((e[1] >= 0).all() and (e[1] <= 1).all())
 # print((e[2] >= 0).all() and (e[2] <= 1).all())
-run_num = sys.argv[1]
-run_iter = sys.argv[2]
+run_num = sys.argv[2]
+run_iter = sys.argv[3]
 arr_dict = {'prob_entry': 'probability_of_entry',
            'prob_intro': 'probability_of_introduction',
            'prob_est': 'probability_of_establishment',
