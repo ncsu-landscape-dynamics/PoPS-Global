@@ -10,7 +10,7 @@ from datetime import datetime
 from shapely.geometry.polygon import Polygon
 from shapely.geometry.multipolygon import MultiPolygon
 
-sys.path.append(os.getcwd())
+sys.path.append('C:/Users/cawalden/Documents/GitHub/Pandemic_Model/')
 
 from pandemic.helpers import (
     distance_between
@@ -32,6 +32,7 @@ from pandemic.output_files import (
     add_dict_to_geojson,
     aggregate_monthly_output_to_annual
 )
+
 
 def pandemic(
     trade,
@@ -121,8 +122,8 @@ def pandemic(
         combined_probability_no_introduction = 1
         # check that Phytosanitary capacity data is available if not set
         # the value to 0 to remove this aspect of the equation
-        if "Phytosanitary capacity" in destination:
-            rho_j = destination["Phytosanitary capacity"]
+        if "Phytosanitary Capacity" in destination:
+            rho_j = destination["Phytosanitary Capacity"]
         else:
             rho_j = 0
 
@@ -138,44 +139,22 @@ def pandemic(
             T_ijct = trade[j, i]
             d_ij = distances[j, i]
 
-            # TO DO: Need to generalize -- this is for SLF 
-            # Northern Hemisphere & Fall/Winter Months
-            if (origin['centroid_lat'] >= 0 and time_step[-2:] in
-                    ['09', '10', '11', '12', '01', '02', '03', '04']):
-                chi_it = 1
-            # Southern Hemisphere & Fall/Winter Months
-            elif (origin['centroid_lat'] < 0 and time_step[-2:] in
-                      ['04', '05', '06', '07', '08', '09', '10']):
-                chi_it = 1
+
+            if len(time_step) > 4:
+                if (origin['centroid_lat'] >= 0 and time_step[-2:] not in season_dict['NH_season']):
+                    chi_it = 0
+                elif (origin['centroid_lat'] < 0 and time_step[-2:] not in season_dict['SH_season']):
+                    chi_it = 0
+                else:
+                    chi_it = 1
             else:
-                chi_it = 0
+                chi_it = 1
 
             h_jt = destination["Host Percent Area"]
 
             if origin["Presence"] and h_jt > 0:
                 zeta_it = int(origin["Presence"])
-
-                # origin_climates = origin.loc[['Af', 'Am',	'Aw',	'BWh', 'BWk', 
-                #                               'BSh', 'BSk', 'Csa',	'Csb', 
-                #                               'Csc', 'Cwa', 'Cwb', 'Cwc', 
-                #                               'Cfa',	'Cfb', 'Cfc',	'Dsa', 
-                #                               'Dsb',	'Dsc', 'Dsd',	'Dwa', 
-                #                               'Dwb',	'Dwc', 'Dwd',	'Dfa', 
-                #                               'Dfb',	'Dfc', 'Dfd',	'ET', 'EF']]
-
-                # destination_climates = destination.loc[['Af', 'Am',	'Aw',	
-                #                                         'BWh', 'BWk', 'BSh',
-                #                                         'BSk', 'Csa',	'Csb',
-                #                                         'Csc', 'Cwa', 'Cwb',
-                #                                         'Cwc', 'Cfa',	'Cfb',
-                #                                         'Cfc',	'Dsa', 'Dsb',
-                #                                         'Dsc', 'Dsd',	'Dwa', 
-                #                                         'Dwb',	'Dwc', 'Dwd',
-                #                                         'Dfa', 'Dfb',	'Dfc',
-                #                                         'Dfd',	'ET', 'EF']]
                 
-                # delta_kappa_ijt = climate_similarity(
-                #     origin_climates, destination_climates)
                 delta_kappa_ijt = climate_similarities[j, i]
 
                 if "Ecological Disturbance" in origin:
@@ -351,17 +330,18 @@ def pandemic_multiple_time_steps(
         print('TIME STEP: ', ts)
         trade = trades[t]
         
-        ##TO DO: generalize for changing host percent area
-        locations["Host Percent Area"] = locations["Host Percent Area"]
-        # if locations["Host Percent Area T" + str(t)] in locations.columns:
-        #   locations["Host Percent Area"] = locations["Host Percent Area T" + str(t)]
-        # else:
-        #   locations["Host Percent Area"] = locations["Host Percent Area"]
-        locations["Presence " + str(ts)] = locations['Presence']
-        locations["Probability of introduction "  + str(ts)] = locations["Probability of introduction"]
-        ## TO DO: increase flexibility in dynamic or static phytosanitary capacity
-        # locations["Phytosanitary Capacity"] = locations ['Phytosanitary Capacity ' + ts[:4]]
-        locations["Phytosanitary Capacity"] = locations["pc_mode"]
+        if f"Host Percent Area T{t}" in locations.columns:
+            locations["Host Percent Area"] = locations[f"Host Percent Area T{t}"]
+        else:
+            locations["Host Percent Area"] = locations["Host Percent Area"]
+        
+        locations[f"Presence {ts}"] = locations['Presence']
+        locations[f"Probability of introduction {ts}"] = locations["Probability of introduction"]
+
+        if f"Phytosanitary Capacity {ts[:4]}" in locations.columns:
+            locations["Phytosanitary Capacity"] = locations[f"Phytosanitary Capacity {ts[:4]}"]
+        else:
+            locations["Phytosanitary Capacity"] = locations["pc_mode"]
 
         ts_out = pandemic(
             trade=trade,
@@ -379,8 +359,6 @@ def pandemic_multiple_time_steps(
             sigma_T=sigma_T,
             time_step=ts
         )
-        ts_time_end = time.perf_counter()
-        print('\tcalculation time: ', round(ts_time_end - ts_time_start, 2))
 
         establishment_probabilities[t] = ts_out[1]
         entry_probabilities[t] = ts_out[0]
@@ -396,8 +374,6 @@ def pandemic_multiple_time_steps(
 
     locations["Presence " + str(ts)] = locations["Presence"]
     locations["Probability of introduction "  + str(ts)] = locations["Probability of introduction"]
-    model_end = time.perf_counter()
-    print('***model run time: ', model_end - model_start)
 
     return (
         locations, 
@@ -436,6 +412,8 @@ def pandemic_multiple_time_steps(
 #         "Host Percent Area": [0.25, 0.50, 0.35],
 #     }
 # )
+
+
 path_to_config_json = sys.argv[1]
 
 with open(path_to_config_json) as json_file:
@@ -450,6 +428,7 @@ phyto_high = data['phyto_high']
 commodity_path = data['commodity_path']
 commodity_forecast_path = data['commodity_forecast_path']
 native_countries_list = data['native_countries_list']
+season_dict = data['season_dict']
 alpha = data['alpha']
 beta = data['beta']
 mu = data['mu']
@@ -461,7 +440,6 @@ start_year = data['start_year']
 random_seed = data['random_seed']
 out_dir = data['out_dir']
 columns_to_drop = data['columns_to_drop']
-
 
 data_dir = data_dir
 countries = geopandas.read_file(
@@ -560,9 +538,7 @@ for j in range(len(countries)):
     climate_similarities[j, i] = delta_kappa_ij
 
 # Run Model for Selected Time Steps
-# trades = trades
-trades = trades[-2:,:,:]
-date_list = date_list[-2:]
+trades = trades
 print('Number of time steps: ', trades.shape[0])
 distances = distances
 locations = countries
@@ -578,7 +554,6 @@ sigma_kappa = 1 - 0.3 # mean koppen climate matches, TO DO: automate
 sigma_T = np.mean(trades)
 
 np.random.seed(random_seed)
-
 
 e = pandemic_multiple_time_steps(
     trades=trades,
@@ -654,7 +629,7 @@ meta['NATIVE_COUNTRIES_T0'] = native_countries_list
 meta['COMMODITIES'] = commodity_path
 meta['FORECASTED'] = commodity_forecast_path
 meta['PHYTOSANITARY_CAPACITY_WEIGHTS'] = phyto_dict
-meta['TOTAL COUNTRIES INTRODUCTED'] = str(main_model_output[final_presence_col].value_counts()[1])
+meta['TOTAL COUNTRIES INTRODUCTED'] = str(main_model_output[final_presence_col].value_counts()[1] - len(native_countries_list))
 
 with open(f'{outpath}/run{run_num}_meta.txt', 'w') as file:
     json.dump(meta, file, indent=4)
