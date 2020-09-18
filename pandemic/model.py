@@ -137,7 +137,8 @@ def pandemic(
             T_ijct = trade[j, i]
             d_ij = distances[j, i]
             
-            # parse dates to determine if species is in the correct life cycle
+            # check if time steps are annual (YYYY) or monthly (YYYYMM)
+            # if monthly, parse dates to determine if species is in the correct life cycle
             # to be transported (set value to 1), based on the geographic location of the origin
             # country (i.e., Northern or Southern Hemisphere)
             if len(time_step) > 4:
