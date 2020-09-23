@@ -11,7 +11,8 @@ from shapely.geometry.polygon import Polygon
 from shapely.geometry.multipolygon import MultiPolygon
 
 from pandemic.helpers import (
-    distance_between
+    distance_between,
+    locations_with_hosts
 )
 from pandemic.probability_calculations import (
     probability_of_entry,
@@ -36,6 +37,7 @@ def pandemic(
     trade,
     distances,
     locations,
+    locations_list,
     alpha,
     beta,
     mu,
@@ -62,6 +64,9 @@ def pandemic(
     locations : data_frame
         data frame of countries, species presence, phytosanitry capacity,
         koppen climate classifications % of total area for each class.
+    locations_list : list
+        list of locations with corresponding attributes where host 
+        species presence is greater than 0% 
     trade : numpy.array
         list (c) of n x n x t matrices where c is the # of commoditites,
         n is the number of locations, and t is # of time steps
@@ -95,6 +100,9 @@ def pandemic(
         The degree of polyphagy normalizing constant
     sigma_T : int
         The trade volume normalizing constant
+    time_step : str
+        string representing the name of the discrete time step (i.e., YYYYMM
+        for monthly or YYYY for annual)
 
     Returns
     -------
@@ -107,15 +115,19 @@ def pandemic(
         from the probability_of_establishment and probability_of_entry
     """
 
-    establishment_probabilities = np.empty_like(trade, dtype=float)
-    entry_probabilities = np.empty_like(trade, dtype=float)
-    introduction_probabilities = np.empty_like(trade, dtype=float)
+    establishment_probabilities = np.zeros_like(trade, dtype=float)
+    entry_probabilities = np.zeros_like(trade, dtype=float)
+    introduction_probabilities = np.zeros_like(trade, dtype=float)
     
-    introduction_country = np.empty_like(trade, dtype=float)
-    locations["Probability of introduction"] = np.empty(len(locations))
+    introduction_country = np.zeros_like(trade, dtype=float)
+    locations["Probability of introduction"] = np.zeros(len(locations))
     origin_destination = pd.DataFrame(columns=['Origin', 'Destination'])
     
-    for j in range(len(locations)):
+    for k in range(len(locations_list)):
+        # get position index of location k with known host presence
+        # in data frame with all locations for selecting attributes
+        # and populating output matrices  
+        j = locations.index[locations['UN'] == locations_list[k]['UN']][0]
         destination = locations.iloc[j, :]
         combined_probability_no_introduction = 1
         # check that Phytosanitary capacity data is available if not set
@@ -125,7 +137,11 @@ def pandemic(
         else:
             rho_j = 0
 
-        for i in range(len(locations)):
+        for l in range(len(locations_list)):
+            # get position index of location l with known host presence
+            # in data frame with all locations for selecting attributes
+            # and populating output matrices
+            i = locations.index[locations['UN'] == locations_list[l]['UN']][0]
             origin = locations.iloc[i, :]
             # check that Phytosanitary capacity data is available if not
             # set value to 0 to remove this aspect of the equation
@@ -136,7 +152,7 @@ def pandemic(
 
             T_ijct = trade[j, i]
             d_ij = distances[j, i]
-            
+
             # check if time steps are annual (YYYY) or monthly (YYYYMM)
             # if monthly, parse dates to determine if species is in the correct life cycle
             # to be transported (set value to 1), based on the geographic location of the origin
@@ -244,8 +260,7 @@ def pandemic_multiple_time_steps(
     sigma_phi,
     sigma_T,
     start_year,
-    date_list,
-    random_seed = None
+    date_list
     ):
     """
     Returns the probability of establishment, probability of entry, and
@@ -298,11 +313,6 @@ def pandemic_multiple_time_steps(
         The year in which to start the simulation
     date_list : list
         List of unique time step values (YYYY or YYYYMM)
-    random_seed : int (optional)
-        The number to use for initializing random values. If not provided, a new
-        value will be used for every simulation and results may differ for the
-        same input data and function parameters. If provided, the results of a
-        simulation can be reproduced.
 
     Returns
     -------
@@ -316,12 +326,12 @@ def pandemic_multiple_time_steps(
     """
     model_start = time.perf_counter()
     time_steps = trades.shape[0]
+
+    entry_probabilities = np.zeros_like(trades, dtype=float)
+    establishment_probabilities = np.zeros_like(trades, dtype=float)
+    introduction_probabilities = np.zeros_like(trades, dtype=float)
     
-    entry_probabilities = np.empty_like(trades, dtype=float)
-    establishment_probabilities = np.empty_like(trades, dtype=float)
-    introduction_probabilities = np.empty_like(trades, dtype=float)
-    
-    introduction_countries = np.empty_like(trades, dtype=float)
+    introduction_countries = np.zeros_like(trades, dtype=float)
     locations["Probability of introduction"] = np.zeros(shape=len(locations))
     origin_destination = pd.DataFrame(columns=['Origin', 'Destination', 'Year'])
     
@@ -344,10 +354,15 @@ def pandemic_multiple_time_steps(
         else:
             locations["Phytosanitary Capacity"] = locations["pc_mode"]
 
+        # filter locations to those where host percent area is greater
+        # than 0 and therefore with potential for pest spread
+        locations_list = locations_with_hosts(locations)
+
         ts_out = pandemic(
             trade=trade,
             distances=distances,
             locations=locations,
+            locations_list=locations_list,
             alpha=alpha,
             beta=beta,
             mu=mu,
@@ -372,9 +387,12 @@ def pandemic_multiple_time_steps(
             origin_destination = origin_destination_ts
         else:
             origin_destination = origin_destination.append(origin_destination_ts, ignore_index=True)
-
+        ts_time_end = time.perf_counter()
+        print(f'\t\tloop: {round(ts_time_end - ts_time_start, 2)} seconds')
     locations["Presence " + str(ts)] = locations["Presence"]
     locations["Probability of introduction "  + str(ts)] = locations["Probability of introduction"]
+    model_end = time.perf_counter()
+    print(f'model run: {round((model_end - model_start)/60, 2)} minutes')
 
     return (
         locations, 
@@ -471,9 +489,12 @@ countries.replace(phyto_dict, inplace=True)
 # Read in trade data 
 file_list_historical = glob.glob(commodity_path + '/*.csv')
 file_list_historical.sort()
-file_list_forecast = glob.glob(commodity_forecast_path + '/*.csv')
-file_list_forecast.sort()
-file_list = file_list_historical + file_list_forecast
+if commodity_forecast_path != None:
+    file_list_forecast = glob.glob(commodity_forecast_path + '/*.csv')
+    file_list_forecast.sort()
+    file_list = file_list_historical + file_list_forecast
+else:
+    file_list = file_list_historical
 
 # Filter list based on selected start year
 for i, f in enumerate(file_list):
@@ -507,7 +528,7 @@ traded = pd.read_csv(file_list_filtered[1],
                      encoding='latin1')
 
 # Create an n x n array of climate similarity calculations
-climate_similarities = np.empty_like(traded, dtype=float)
+climate_similarities = np.zeros_like(traded, dtype=float)
 
 for j in range(len(countries)):
   destination = countries.iloc[j, :]
@@ -571,9 +592,9 @@ e = pandemic_multiple_time_steps(
     sigma_phi=sigma_phi,
     sigma_T=sigma_T,
     start_year=start_year,
-    date_list=date_list,
-    random_seed=random_seed
+    date_list=date_list
 )
+
 
 # # print("Ecological" in locations)
 # print(np.all(e[0] >= 0) | (e[0] <= 1))
@@ -582,6 +603,7 @@ e = pandemic_multiple_time_steps(
 # print((e[2] >= 0).all() and (e[2] <= 1).all())
 run_num = sys.argv[2]
 run_iter = sys.argv[3]
+
 arr_dict = {'prob_entry': 'probability_of_entry',
            'prob_intro': 'probability_of_introduction',
            'prob_est': 'probability_of_establishment',
@@ -634,3 +656,5 @@ meta['TOTAL COUNTRIES INTRODUCTED'] = str(main_model_output[final_presence_col].
 
 with open(f'{outpath}/run{run_num}_meta.txt', 'w') as file:
     json.dump(meta, file, indent=4)
+
+

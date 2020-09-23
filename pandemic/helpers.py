@@ -48,3 +48,32 @@ def distance_between(shapefile):
     distance_array = distance.cdist(centroids_array, centroids_array, "euclidean")
 
     return distance_array
+
+def locations_with_hosts(locations):
+    """
+    Returns a list of countries that have host species
+    presence > 0%
+
+    Parameters
+    ----------
+    locations : data_frame
+        data frame of countries, species presence, phytosanitry capacity,
+        koppen climate classifications % of total area for each class.
+
+    Returns
+    --------
+    locations_list : list
+        list of countries with their corresponding attributes as a series
+        for countries with host species presence greater than 0%
+    """
+
+
+    locations_list = []
+    for i in range(len(locations)):
+        location = locations.iloc[i, :]
+        host_pct = location["Host Percent Area"]
+        if host_pct > 0:
+            locations_list.append(location)
+    
+    return locations_list
+
