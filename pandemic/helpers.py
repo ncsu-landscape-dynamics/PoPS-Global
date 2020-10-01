@@ -15,6 +15,7 @@ http://www.opensource.org/licenses/gpl-license.html
 http://www.gnu.org/copyleft/gpl.html
 """
 import os
+import glob
 import pandas as pd
 import numpy as np
 from scipy.spatial import distance
@@ -105,3 +106,100 @@ def filter_trades_list(file_list, start_year):
     file_list_filtered = [f for f in file_list if f is not None]
 
     return file_list_filtered
+
+
+def create_trades_list(commodity_path, commodity_forecast_path, start_year, distances):
+    """
+    Returns list (c) of n x n x t matrices, filtered by start year, where c is
+    the number of commodities, n is the number of locations, t is the number
+    of time steps,
+
+    Parameters:
+    -----------
+    commodity_path : str
+        path to all historical commodity trade data
+    commodity_forecast_path : str
+        path to forecasted commodity trade data
+    start_year : str
+        Simulation start year (YYYY) used to filter
+        trade data files that are prior to that year
+    distances : numpy.array
+        n x n matrix of distances from one location to another where n is
+        number of locations
+
+    Returns:
+    --------
+    trades_list: list
+        list (c) of n x n x t matrices where c is the # of commoditites,
+        n is the # of locations, and t is # of time steps
+    file_list_filtered : list
+        list of filtered commodity (historical and forecast) file paths
+    code_list : list
+        list of commodity codes available in commodity directory
+    commodities_available : list
+        list of all commodity file paths
+
+    """
+    commodities_available = glob.glob(commodity_path + "*")
+    commodities_available.sort()
+    trades_list = []
+    print("Loading and formatting trade data...")
+    # If trade data are aggregated (i.e., summed across
+    # multiple commodity codes)
+    if len(commodities_available) == 1:
+        print("\t", commodities_available)
+        file_list_historical = glob.glob(commodity_path + "/*.csv")
+        file_list_historical.sort()
+        if commodity_forecast_path != None:
+            file_list_forecast = glob.glob(commodity_forecast_path + "/*.csv")
+            file_list_forecast.sort()
+            file_list = file_list_historical + file_list_forecast
+        else:
+            file_list = file_list_historical
+
+        file_list_filtered = filter_trades_list(
+            file_list=file_list, start_year=start_year
+        )
+        trades = np.zeros(
+            shape=(len(file_list_filtered), distances.shape[0], distances.shape[0])
+        )
+        for i in range(len(file_list_filtered)):
+            trades[i] = pd.read_csv(
+                file_list_filtered[i], sep=",", header=0, index_col=0, encoding="latin1"
+            ).values
+        trades_list.append(trades)
+    # If trade data are stored by HS code
+    else:
+        for i in range(len(commodities_available)):
+            code_list = [os.path.split(f)[1] for f in commodities_available]
+            code = code_list[i]
+            print("\t", commodities_available[i])
+            file_list_historical = glob.glob(commodity_path + f"/{code}/*.csv")
+            file_list_historical.sort()
+
+            if commodity_forecast_path != None:
+                file_list_forecast = glob.glob(
+                    commodity_forecast_path + f"/{code}/*.csv"
+                )
+                file_list_forecast.sort()
+                file_list = file_list_historical + file_list_forecast
+            else:
+                file_list = file_list_historical
+
+            file_list_filtered = filter_trades_list(
+                file_list=file_list, start_year=start_year
+            )
+            trades = np.zeros(
+                shape=(len(file_list_filtered), distances.shape[0], distances.shape[0])
+            )
+            for i in range(len(file_list_filtered)):
+                trades[i] = pd.read_csv(
+                    file_list_filtered[i],
+                    sep=",",
+                    header=0,
+                    index_col=0,
+                    encoding="latin1",
+                ).values
+            trades_list.append(trades)
+
+    return trades_list, file_list_filtered, code_list, commodities_available
