@@ -51,7 +51,7 @@ def distance_between(shapefile):
     return distance_array
 
 
-def locations_with_hosts(locations):
+def location_pairs_with_host(locations):
     """
     Returns a list of countries that have host species
     presence > 0%
@@ -69,20 +69,23 @@ def locations_with_hosts(locations):
         for countries with host species presence greater than 0%
     """
 
-    locations_list = []
-    for i in range(len(locations)):
-        location = locations.iloc[i, :]
-        host_pct = location["Host Percent Area"]
-        if host_pct > 0:
-            locations_list.append(location)
+    locations_with_host_df = locations.loc[locations["Host Percent Area"] > 0]
+    origins = list(
+        locations_with_host_df.loc[locations_with_host_df["Presence"] == True]["UN"]
+    )
+    destinations = list(locations_with_host_df["UN"])
+    origins_list = [
+        country for country in origins for i in range(locations_with_host_df.shape[0])
+    ]
+    destinations_list = destinations * len(origins)
+    location_tuples = list(zip(origins_list, destinations_list))
 
-    return locations_list
+    return location_tuples
 
 
 def filter_trades_list(file_list, start_year):
     """
-    Returns filtered list of trade data based on start
-    year
+    Returns filtered list of trade data based on start year
 
     Parameters:
     -----------
@@ -147,6 +150,7 @@ def create_trades_list(commodity_path, commodity_forecast_path, start_year, dist
     # If trade data are aggregated (i.e., summed across
     # multiple commodity codes)
     if len(commodities_available) == 1:
+        code_list = ["Aggregated"]
         print("\t", commodities_available)
         file_list_historical = glob.glob(commodity_path + "/*.csv")
         file_list_historical.sort()
