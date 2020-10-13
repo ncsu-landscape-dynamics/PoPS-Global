@@ -60,7 +60,8 @@ def locations_with_hosts(locations):
     ----------
     locations : data_frame
         data frame of countries, species presence, phytosanitry capacity,
-        koppen climate classifications % of total area for each class.
+        koppen climate classifications % of total area for each class,
+        and host percent area.
 
     Returns
     --------
