@@ -47,3 +47,107 @@ def climate_similarity(origin_climates, destination_climates):
             similarity += destination_climates[clim]
 
     return similarity
+
+
+def create_climate_similarities_matrix(array_template, countries):
+    """
+    Returns the climate similarities between all origins (i) and
+    destinations (j)
+
+    Parameters
+    ----------
+    array_template : array (float)
+        n x n template matrix where n is number of locations
+    countries : data frame
+        data frame of countries, species presence, phytosanitry capacity,
+        koppen climate classifications % of total area for each class
+
+    Returns
+    -------
+    climate_similarities : numpy.array (float)
+        n x n array of percentage of climate similarities between all
+        origins (i) and destinations (j)
+
+    """
+    climate_similarities = np.zeros_like(array_template, dtype=float)
+
+    for j in range(len(countries)):
+        destination = countries.iloc[j, :]
+        for i in range(len(countries)):
+            origin = countries.iloc[i, :]
+
+            origin_climates = origin.loc[
+                [
+                    "Af",
+                    "Am",
+                    "Aw",
+                    "BWh",
+                    "BWk",
+                    "BSh",
+                    "BSk",
+                    "Csa",
+                    "Csb",
+                    "Csc",
+                    "Cwa",
+                    "Cwb",
+                    "Cwc",
+                    "Cfa",
+                    "Cfb",
+                    "Cfc",
+                    "Dsa",
+                    "Dsb",
+                    "Dsc",
+                    "Dsd",
+                    "Dwa",
+                    "Dwb",
+                    "Dwc",
+                    "Dwd",
+                    "Dfa",
+                    "Dfb",
+                    "Dfc",
+                    "Dfd",
+                    "ET",
+                    "EF",
+                ]
+            ]
+
+            destination_climates = destination.loc[
+                [
+                    "Af",
+                    "Am",
+                    "Aw",
+                    "BWh",
+                    "BWk",
+                    "BSh",
+                    "BSk",
+                    "Csa",
+                    "Csb",
+                    "Csc",
+                    "Cwa",
+                    "Cwb",
+                    "Cwc",
+                    "Cfa",
+                    "Cfb",
+                    "Cfc",
+                    "Dsa",
+                    "Dsb",
+                    "Dsc",
+                    "Dsd",
+                    "Dwa",
+                    "Dwb",
+                    "Dwc",
+                    "Dwd",
+                    "Dfa",
+                    "Dfb",
+                    "Dfc",
+                    "Dfd",
+                    "ET",
+                    "EF",
+                ]
+            ]
+
+            delta_kappa_ij = climate_similarity(origin_climates, destination_climates)
+
+            climate_similarities[j, i] = delta_kappa_ij
+
+    return climate_similarities

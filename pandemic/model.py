@@ -1,6 +1,4 @@
-#%%# 
-print('model script running')
-import os 
+import os
 import sys
 import glob
 import json
@@ -11,11 +9,13 @@ import geopandas
 from datetime import datetime
 from shapely.geometry.polygon import Polygon
 from shapely.geometry.multipolygon import MultiPolygon
-#%%#
-print('appending ', os.path.split(os.getcwd())[0])
-sys.path.append(os.path.split(os.getcwd())[0])
+
+sys.path.append("C:/Users/cawalden/Documents/GitHub/Pandemic_Model")
 from pandemic.helpers import (
-    distance_between
+    distance_between,
+    locations_with_hosts,
+    filter_trades_list,
+    create_trades_list,
 )
 from pandemic.probability_calculations import (
     probability_of_entry,
@@ -23,35 +23,26 @@ from pandemic.probability_calculations import (
     probability_of_introduction,
 )
 from pandemic.ecological_calculations import (
-    climate_similarity
+    climate_similarity,
+    create_climate_similarities_matrix,
 )
-from pandemic.config import (
-    data_dir,
-    countries_path,
-    gdp_path,
-    gdp_low,
-    gdp_mid,
-    gdp_high,
-    commodity_path,
-    commodity_forecast_path,
-    native_countries_list,
-    alpha,
-    beta,
-    mu, 
-    lamda_c,
-    phi, 
-    sigma_epsilon,
-    sigma_phi,
-    start_year,
-    random_seed,
-    out_dir,
-    columns_to_drop
+from pandemic.output_files import (
+    create_model_dirs,
+    save_model_output,
+    agg_prob,
+    get_feature_cols,
+    create_feature_dict,
+    add_dict_to_geojson,
+    aggregate_monthly_output_to_annual,
 )
-#%%#
+
+
 def pandemic(
     trade,
     distances,
     locations,
+    locations_list,
+    climate_similarities,
     alpha,
     beta,
     mu,
@@ -62,7 +53,7 @@ def pandemic(
     sigma_kappa,
     sigma_phi,
     sigma_T,
-    time_step
+    time_step,
 ):
     """
     Returns the probability of establishment, probability of entry, and
@@ -78,12 +69,18 @@ def pandemic(
     locations : data_frame
         data frame of countries, species presence, phytosanitry capacity,
         koppen climate classifications % of total area for each class.
+    locations_list : list
+        list of locations with corresponding attributes where host
+        species presence is greater than 0%
     trade : numpy.array
         list (c) of n x n x t matrices where c is the # of commoditites,
         n is the number of locations, and t is # of time steps
     distances : numpy.array
         n x n matrix of distances from one location to another where n is
         number of locations.
+    climate_similarities : data_frame
+        n x n matrix of climate similarity calculations between locations
+        where n is the number of locations
     alpha : float
         A parameter that allows the equation to be adapated to various discrete
         time steps
@@ -111,6 +108,9 @@ def pandemic(
         The degree of polyphagy normalizing constant
     sigma_T : int
         The trade volume normalizing constant
+    time_step : str
+        string representing the name of the discrete time step (i.e., YYYYMM
+        for monthly or YYYY for annual)
 
     Returns
     -------
@@ -121,27 +121,36 @@ def pandemic(
     probability_of_entry : Calculates the probability of entry
     probability_of_introduction : Calculates the probability of introduction
         from the probability_of_establishment and probability_of_entry
+
     """
 
-    establishment_probabilities = np.empty_like(trade, dtype=float)
-    entry_probabilities = np.empty_like(trade, dtype=float)
-    introduction_probabilities = np.empty_like(trade, dtype=float)
-    
-    introduction_country = np.empty_like(trade, dtype=float)
-    locations["Probability of introduction"] = np.empty(len(locations))
-    origin_destination = pd.DataFrame(columns=['Origin', 'Destination'])
-    
-    for j in range(len(locations)):
+    establishment_probabilities = np.zeros_like(trade, dtype=float)
+    entry_probabilities = np.zeros_like(trade, dtype=float)
+    introduction_probabilities = np.zeros_like(trade, dtype=float)
+
+    introduction_country = np.zeros_like(trade, dtype=float)
+    locations["Probability of introduction"] = np.zeros(len(locations))
+    origin_destination = pd.DataFrame(columns=["Origin", "Destination"])
+
+    for k in range(len(locations_list)):
+        # get position index of location k with known host presence
+        # in data frame with all locations for selecting attributes
+        # and populating output matrices
+        j = locations.index[locations["UN"] == locations_list[k]["UN"]][0]
         destination = locations.iloc[j, :]
         combined_probability_no_introduction = 1
         # check that Phytosanitary capacity data is available if not set
         # the value to 0 to remove this aspect of the equation
-        if "Phytosanitary capacity" in destination:
-            rho_j = destination["Phytosanitary capacity"]
+        if "Phytosanitary Capacity" in destination:
+            rho_j = destination["Phytosanitary Capacity"]
         else:
             rho_j = 0
 
-        for i in range(len(locations)):
+        for l in range(len(locations_list)):
+            # get position index of location l with known host presence
+            # in data frame with all locations for selecting attributes
+            # and populating output matrices
+            i = locations.index[locations["UN"] == locations_list[l]["UN"]][0]
             origin = locations.iloc[i, :]
             # check that Phytosanitary capacity data is available if not
             # set value to 0 to remove this aspect of the equation
@@ -153,47 +162,35 @@ def pandemic(
             T_ijct = trade[j, i]
             d_ij = distances[j, i]
 
-            # TO DO: Need to generalize -- this is for SLF 
-            # Northern Hemisphere & Fall/Winter Months
-            if (origin['centroid_lat'] >= 0 and time_step[-2:] in
-                    ['09', '10', '11', '12', '01', '02', '03', '04']):
-                chi_it = 1
-            # Southern Hemisphere & Fall/Winter Months
-            elif (origin['centroid_lat'] < 0 and time_step[-2:] in
-                      ['04', '05', '06', '07', '08', '09', '10']):
-                chi_it = 1
+            # check if time steps are annual (YYYY) or monthly (YYYYMM)
+            # if monthly, parse dates to determine if species is in the correct life cycle
+            # to be transported (set value to 1), based on the geographic location of the origin
+            # country (i.e., Northern or Southern Hemisphere)
+            if len(time_step) > 4:
+                if (
+                    origin["centroid_lat"] >= 0
+                    and time_step[-2:] not in season_dict["NH_season"]
+                ):
+                    chi_it = 0
+                elif (
+                    origin["centroid_lat"] < 0
+                    and time_step[-2:] not in season_dict["SH_season"]
+                ):
+                    chi_it = 0
+                else:
+                    chi_it = 1
             else:
-                chi_it = 0
+                chi_it = 1
 
             h_jt = destination["Host Percent Area"]
 
             if origin["Presence"] and h_jt > 0:
                 zeta_it = int(origin["Presence"])
 
-                origin_climates = origin.loc[['Af', 'Am',	'Aw',	'BWh', 'BWk', 
-                                              'BSh', 'BSk', 'Csa',	'Csb', 
-                                              'Csc', 'Cwa', 'Cwb', 'Cwc', 
-                                              'Cfa',	'Cfb', 'Cfc',	'Dsa', 
-                                              'Dsb',	'Dsc', 'Dsd',	'Dwa', 
-                                              'Dwb',	'Dwc', 'Dwd',	'Dfa', 
-                                              'Dfb',	'Dfc', 'Dfd',	'ET', 'EF']]
+                delta_kappa_ijt = climate_similarities[j, i]
 
-                destination_climates = destination.loc[['Af', 'Am',	'Aw',	
-                                                        'BWh', 'BWk', 'BSh',
-                                                        'BSk', 'Csa',	'Csb',
-                                                        'Csc', 'Cwa', 'Cwb',
-                                                        'Cwc', 'Cfa',	'Cfb',
-                                                        'Cfc',	'Dsa', 'Dsb',
-                                                        'Dsc', 'Dsd',	'Dwa', 
-                                                        'Dwb',	'Dwc', 'Dwd',
-                                                        'Dfa', 'Dfb',	'Dfc',
-                                                        'Dfd',	'ET', 'EF']]
-                
-                delta_kappa_ijt = climate_similarity(
-                    origin_climates, destination_climates)
-
-                if "Ecological Disturbance" in origin:
-                    epsilon_jt = origin["Ecological Disturbance"]
+                if "Ecological Disturbance" in destination:
+                    epsilon_jt = destination["Ecological Disturbance"]
                 else:
                     epsilon_jt = 0
 
@@ -210,7 +207,7 @@ def pandemic(
                     epsilon_jt,
                     sigma_epsilon,
                     phi,
-                    sigma_phi
+                    sigma_phi,
                 )
             else:
                 zeta_it = 0
@@ -227,45 +224,49 @@ def pandemic(
             # decide if an introduction happens
             introduced = np.random.binomial(1, probability_of_introduction_ijtc)
             combined_probability_no_introduction = (
-                combined_probability_no_introduction * 
-                (1 - probability_of_introduction_ijtc)
+                combined_probability_no_introduction
+                * (1 - probability_of_introduction_ijtc)
             )
             if bool(introduced):
                 introduction_country[j, i] = bool(introduced)
-                locations.iloc[j, locations.columns.get_loc("Presence")] = (
-                    bool(introduced)
+                locations.iloc[j, locations.columns.get_loc("Presence")] = bool(
+                    introduced
                 )
-                print('\t', origin['NAME'], '-->', destination['NAME'])
-                
+                print("\t", origin["NAME"], "-->", destination["NAME"])
+
                 if origin_destination.empty:
-                    origin_destination = pd.DataFrame([[origin['NAME'], 
-                                                        destination['NAME']]], 
-                                                      columns=['Origin', 
-                                                               'Destination']
-                                                      )
+                    origin_destination = pd.DataFrame(
+                        [[origin["NAME"], destination["NAME"]]],
+                        columns=["Origin", "Destination"],
+                    )
                 else:
-                    origin_destination = (origin_destination.append(
-                        pd.DataFrame([[origin['NAME'],
-                                       destination['NAME']]],
-                                     columns=['Origin', 'Destination']),
-                                     ignore_index=True)
+                    origin_destination = origin_destination.append(
+                        pd.DataFrame(
+                            [[origin["NAME"], destination["NAME"]]],
+                            columns=["Origin", "Destination"],
+                        ),
+                        ignore_index=True,
                     )
             else:
                 introduction_country[j, i] = bool(introduced)
-        locations.iloc[j, locations.columns.get_loc("Probability of introduction")] = 1 - combined_probability_no_introduction
+        locations.iloc[j, locations.columns.get_loc("Probability of introduction")] = (
+            1 - combined_probability_no_introduction
+        )
 
     return (
-            entry_probabilities, 
-            establishment_probabilities,
-            introduction_probabilities,
-            introduction_country,
-            locations,
-            origin_destination
-        )
+        entry_probabilities,
+        establishment_probabilities,
+        introduction_probabilities,
+        introduction_country,
+        locations,
+        origin_destination,
+    )
+
 
 def pandemic_multiple_time_steps(
     trades,
     distances,
+    climate_similarities,
     locations,
     alpha,
     beta,
@@ -278,7 +279,7 @@ def pandemic_multiple_time_steps(
     sigma_phi,
     sigma_T,
     start_year,
-    random_seed = None
+    date_list,
 ):
     """
     Returns the probability of establishment, probability of entry, and
@@ -300,6 +301,9 @@ def pandemic_multiple_time_steps(
     distances : numpy.array
         n x n matrix of distances from one location to another where n is
         number of locations.
+    climate_similarities : data_frame
+        n x n matrix of climate similarity calculations between locations
+        where n is the number of locations
     alpha : float
         A parameter that allows the equation to be adapated to various discrete
         time steps
@@ -329,11 +333,8 @@ def pandemic_multiple_time_steps(
         The trade volume normalizing constant
     start_year : int
         The year in which to start the simulation
-    random_seed : int (optional)
-        The number to use for initializing random values. If not provided, a new
-        value will be used for every simulation and results may differ for the
-        same input data and function parameters. If provided, the results of a
-        simulation can be reproduced.
+    date_list : list
+        List of unique time step values (YYYY or YYYYMM)
 
     Returns
     -------
@@ -347,42 +348,48 @@ def pandemic_multiple_time_steps(
     """
     model_start = time.perf_counter()
     time_steps = trades.shape[0]
-    
-    entry_probabilities = np.empty_like(trades, dtype=float)
-    establishment_probabilities = np.empty_like(trades, dtype=float)
-    introduction_probabilities = np.empty_like(trades, dtype=float)
-    
-    introduction_countries = np.empty_like(trades, dtype=float)
+
+    entry_probabilities = np.zeros_like(trades, dtype=float)
+    establishment_probabilities = np.zeros_like(trades, dtype=float)
+    introduction_probabilities = np.zeros_like(trades, dtype=float)
+
+    introduction_countries = np.zeros_like(trades, dtype=float)
     locations["Probability of introduction"] = np.zeros(shape=len(locations))
-    origin_destination = pd.DataFrame(columns=['Origin', 'Destination', 'Year'])
-    
-    ## TO DO: Adapt to dynamic annual or monthly date list
-    date_list = pd.date_range(f'{str(start_year)}-01', 
-                              f'{str(start_year + int(time_steps/12)-1)}-12', 
-                              freq='MS').strftime('%Y%m').to_list() 
-    
+    origin_destination = pd.DataFrame(columns=["Origin", "Destination", "Year"])
+
     for t in range(trades.shape[0]):
         ts_time_start = time.perf_counter()
         ts = date_list[t]
-        print('TIME STEP: ', ts)
+        print("TIME STEP: ", ts)
         trade = trades[t]
-        
-        ##TO DO: generalize for changing host percent area
-        locations["Host Percent Area"] = locations["Host Percent Area"]
-        # if locations["Host Percent Area T" + str(t)] in locations.columns:
-        #   locations["Host Percent Area"] = locations["Host Percent Area T" + str(t)]
-        # else:
-        #   locations["Host Percent Area"] = locations["Host Percent Area"]
-        locations["Presence " + str(ts)] = locations['Presence']
-        locations["Probability of introduction "  + str(ts)] = locations["Probability of introduction"]
-        ## TO DO: increase flexibility in dynamic or static phytosanitary capacity
-        # locations["Phytosanitary Capacity"] = locations ['Phytosanitary Capacity ' + ts[:4]]
-        locations["Phytosanitary Capacity"] = locations["pc_mode"]
+
+        if f"Host Percent Area T{t}" in locations.columns:
+            locations["Host Percent Area"] = locations[f"Host Percent Area T{t}"]
+        else:
+            locations["Host Percent Area"] = locations["Host Percent Area"]
+
+        locations[f"Presence {ts}"] = locations["Presence"]
+        locations[f"Probability of introduction {ts}"] = locations[
+            "Probability of introduction"
+        ]
+
+        if f"Phytosanitary Capacity {ts[:4]}" in locations.columns:
+            locations["Phytosanitary Capacity"] = locations[
+                f"Phytosanitary Capacity {ts[:4]}"
+            ]
+        else:
+            locations["Phytosanitary Capacity"] = locations["pc_mode"]
+
+        # filter locations to those where host percent area is greater
+        # than 0 and therefore with potential for pest spread
+        locations_list = locations_with_hosts(locations)
 
         ts_out = pandemic(
             trade=trade,
             distances=distances,
             locations=locations,
+            locations_list=locations_list,
+            climate_similarities=climate_similarities,
             alpha=alpha,
             beta=beta,
             mu=mu,
@@ -393,10 +400,8 @@ def pandemic_multiple_time_steps(
             sigma_kappa=sigma_kappa,
             sigma_phi=sigma_phi,
             sigma_T=sigma_T,
-            time_step=ts
+            time_step=ts,
         )
-        ts_time_end = time.perf_counter()
-        print('\tcalculation time: ', round(ts_time_end - ts_time_start, 2))
 
         establishment_probabilities[t] = ts_out[1]
         entry_probabilities[t] = ts_out[0]
@@ -404,419 +409,225 @@ def pandemic_multiple_time_steps(
         introduction_countries[t] = ts_out[3]
         locations = ts_out[4]
         origin_destination_ts = ts_out[5]
-        origin_destination_ts['TS'] = ts
+        origin_destination_ts["TS"] = ts
         if origin_destination.empty:
             origin_destination = origin_destination_ts
         else:
-            origin_destination = origin_destination.append(origin_destination_ts, ignore_index=True)
-
+            origin_destination = origin_destination.append(
+                origin_destination_ts, ignore_index=True
+            )
+        ts_time_end = time.perf_counter()
+        print(f"\t\tloop: {round(ts_time_end - ts_time_start, 2)} seconds")
     locations["Presence " + str(ts)] = locations["Presence"]
-    locations["Probability of introduction "  + str(ts)] = locations["Probability of introduction"]
+    locations["Probability of introduction " + str(ts)] = locations[
+        "Probability of introduction"
+    ]
     model_end = time.perf_counter()
-    print('***model run time: ', model_end - model_start)
+    print(f"model run: {round((model_end - model_start)/60, 2)} minutes")
+
     return (
-        locations, 
-        entry_probabilities, 
-        establishment_probabilities, 
-        introduction_probabilities, 
-        origin_destination, 
-        introduction_countries, 
-        date_list
+        locations,
+        entry_probabilities,
+        establishment_probabilities,
+        introduction_probabilities,
+        origin_destination,
+        introduction_countries,
     )
 
-def create_model_dirs(
-    outpath, 
-    output_dict
-    ):
-    """
-    Creates directory and folders for model output files. 
 
-    Parameters
-    ----------
-    run_num : Integer
-        Number identifying the model run
-    outpath : String
-        Absolute path of directory where model output are saved
-    output_dict : Dictionary
-        Key-value pairs identifying the object name and folder name
-        of model output components. 
+# Read model arguments from configuration file
+# path_to_config_json = sys.argv[1]
+path_to_config_json = (
+    "C:/Users/cawalden/Documents/GitHub/Pandemic_Model/pandemic/config.json"
+)
 
-    Returns
-    -------
-    None
+with open(path_to_config_json) as json_file:
+    config = json.load(json_file)
 
-    """
+data_dir = config["data_dir"]
+countries_path = config["countries_path"]
+phyto_path = config["phyto_path"]
+phyto_low = config["phyto_low"]
+phyto_mid = config["phyto_mid"]
+phyto_high = config["phyto_high"]
+commodity_path = config["commodity_path"]
+commodity_forecast_path = config["commodity_forecast_path"]
+native_countries_list = config["native_countries_list"]
+season_dict = config["season_dict"]
+alpha = config["alpha"]
+beta = config["beta"]
+mu = config["mu"]
+lamda_c_list = config["lamda_c_list"]
+phi = config["phi"]
+sigma_epsilon = config["sigma_epsilon"]
+sigma_phi = config["sigma_phi"]
+start_year = config["start_year"]
+random_seed = config["random_seed"]
+out_dir = config["out_dir"]
+columns_to_drop = config["columns_to_drop"]
 
-    os.makedirs(outpath, exist_ok = True)
-    
-    for key in output_dict.keys():
-        os.makedirs(outpath + key, exist_ok = True)
-        # print(outpath + key)
-
-def save_model_output(
-    model_output_object, 
-    columns_to_drop,
-    example_trade_matrix, 
-    outpath
-    ):
-    """
-    Saves model output, including probabilities for entry, establishment,
-    and introduction. Full forecast dataframe, origin-destination pairs,
-    and list of time steps formatted as YYYYMM. 
-
-    Parameters
-    ----------
-    model_output_object : numpy array
-        List of 7 n x n arrays created by running pandemic model, ordered as 
-        1) full forecast dataframe; 2) probability of entry; 
-        3) probability of establishment; 4) probability of introduction;
-        5) origin - destination pairs; 6) list of countries where pest is
-        predicted to be introduced; and 7) list of time steps used in the 
-        model formatted as YearMonth (i.e., YYYYMM). 
-
-    columns_to_drop : list
-        List of columns used or created by the model that are to be dropped
-        from the final output (e.g., Koppen climate classifications). 
-
-    example_trade_matrix : numpy array
-        Array of trade data from one time step as example to format
-        output dataframe columns and indices. 
-
-    outpath : string
-        String specifying absolute path of output directory
-
-    Returns
-    -------
-    out_df : geodataframe
-        Geodataframe of model outputs
-    date_list_out : list
-        List of time steps used in the model formatted 
-        as YearMonth (i.e., YYYYMM)
-
-    """
-    
-    model_output_df = model_output_object[0] 
-    prob_entry = model_output_object[1]
-    prob_est = model_output_object[2] 
-    prob_intro = model_output_object[3]
-    origin_dst = model_output_object[4] 
-    country_intro = model_output_object[5]
-    date_list_out = model_output_object[6]
-    
-    out_df = model_output_df.drop(columns_to_drop, axis=1)
-    out_df["geometry"] = [MultiPolygon([feature]) if type(feature) == Polygon 
-                          else feature for feature in out_df["geometry"]]
-    out_df.to_file(outpath + 'pandemic_output.geojson', driver='GeoJSON')
-
-    origin_dst.to_csv(outpath + 'origin_destination.csv')
-    
-    for i in range(0, len(date_list_out)):
-        ts = date_list_out[i]
-        
-        pro_entry_pd = pd.DataFrame(prob_entry[i])
-        pro_entry_pd.columns = example_trade_matrix.columns
-        pro_entry_pd.index = example_trade_matrix.index
-        pro_entry_pd.to_csv(outpath 
-                            + f"prob_entry/probability_of_entry_{str(ts)}.csv", 
-                            float_format='%.2f', 
-                            na_rep="NAN!")
-        
-        pro_intro_pd = pd.DataFrame(prob_intro[i])
-        pro_intro_pd.columns = example_trade_matrix.columns
-        pro_intro_pd.index = example_trade_matrix.index
-        pro_intro_pd.to_csv(outpath 
-                            + f"prob_intro/probability_of_introduction_{str(ts)}.csv", 
-                            float_format='%.2f', 
-                            na_rep="NAN!")
-        
-        pro_est_pd = pd.DataFrame(prob_est[i])
-        pro_est_pd.columns = example_trade_matrix.columns
-        pro_est_pd.index = example_trade_matrix.index
-        pro_est_pd.to_csv(outpath 
-                          + f"prob_est/probability_of_establishment_{str(ts)}.csv", 
-                          float_format='%.2f', 
-                          na_rep="NAN!")
-        
-        country_int_pd = pd.DataFrame(country_intro[i])
-        country_int_pd.columns = example_trade_matrix.columns
-        country_int_pd.index = example_trade_matrix.index
-        country_int_pd.to_csv(outpath 
-                              + f"country_introduction/country_introduction_{str(ts)}.csv", 
-                              float_format='%.2f', 
-                              na_rep="NAN!")
-    
-    return out_df, date_list_out
-
-def cumulative_prob(row, column_list):
-   non_neg = []
-   for i in range(0, len(column_list)):
-     if row[column_list[i]] > 0.:
-       non_neg.append(row[column_list[i]])
-   sub_list = list(map(lambda x: 1 - x, non_neg))
-   prod_out = np.prod(sub_list)
-   final_prob = 1 - prod_out
-   return final_prob
-
-def get_feature_cols(geojson_obj, feature_chars):
-    feature_cols = [c for c in geojson_obj.columns if 
-                    c.startswith(feature_chars)]
-    feature_cols_monthly = [c for c in feature_cols if 
-                            len(c.split(' ')[-1]) > 5]
-    feature_cols_annual = [c for c in feature_cols if 
-                           c not in feature_cols_monthly]
-    
-    return feature_cols, feature_cols_monthly, feature_cols_annual   
-
-def create_feature_dict(geojson_obj, column_list, chars_to_strip):
-    d = geojson_obj[column_list].to_dict('index')
-    for key in d.keys():
-        d[key] = {k.strip(chars_to_strip): v for k, v in d[key].items()}
-    
-    return d
-
-def add_dict_to_geojson(geojson_obj, new_col_name, dictionary_obj):
-    geojson_obj[new_col_name] = geojson_obj.index.map(dictionary_obj)
-    
-    return geojson_obj
-
-def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
-  presence_cols = [c for c in formatted_geojson.columns 
-                   if c.startswith('Presence')]
-  prob_intro_cols = [c for c in formatted_geojson.columns 
-                     if c.startswith('Probability of introduction')]
-  annual_ts_list = sorted(set([y.split(' ')[-1][:4] 
-                               for y in prob_intro_cols]))
-  for year in annual_ts_list:
-    prob_cols = [c for c in prob_intro_cols if str(year) in c]
-    formatted_geojson[f'Agg Prob Intro {year}'] = (
-        formatted_geojson.apply(lambda row: 
-                                cumulative_prob(row = row,
-                                                column_list = prob_cols),
-                                axis=1)
-    )
-    formatted_geojson[f'Presence {year}'] = formatted_geojson[f'Presence {year}12']
-    
-  formatted_geojson.to_file(outpath + f'pandemic_output_aggregated.geojson', 
-                            driver='GeoJSON')
-  out_csv = pd.DataFrame(formatted_geojson)
-  out_csv.drop(['geometry'], axis=1, inplace=True)
-  out_csv.to_csv(outpath + f'pandemic_output_aggregated.csv', 
-                float_format='%.2f', 
-                na_rep="NAN!")
-  presence_cols_monthly =  [c for c in presence_cols 
-                            if len(c.split(' ')[-1]) > 5]
-  presence_cols_annual = [c for c in presence_cols 
-                          if c not in presence_cols_monthly]
-  agg_prob_cols_annual = [c for c in formatted_geojson.columns 
-                          if c.startswith('Agg')]
-  
-  presence_d = create_feature_dict(geojson_obj = formatted_geojson,
-                                   column_list = presence_cols_annual,
-                                   chars_to_strip = 'Presence ')
-  agg_prob_d = create_feature_dict(geojson_obj = formatted_geojson,
-                                   column_list = agg_prob_cols_annual,
-                                   chars_to_strip = 'Agg Prob Intro ')
-  new_gdf = add_dict_to_geojson(geojson_obj = formatted_geojson,
-                              new_col_name = 'Presence',
-                              dictionary_obj = presence_d)
-  new_gdf = add_dict_to_geojson(geojson_obj = new_gdf,
-                              new_col_name = 'Agg Prob Intro',
-                              dictionary_obj = agg_prob_d)
-  cols_to_drop = [c for c in new_gdf.columns if
-                  c in presence_cols_monthly or
-                  c.startswith('Probability')]
-
-  sm_gdf = new_gdf.drop(cols_to_drop, axis=1)
-  sm_gdf.to_file(outpath + f'pandemic_output_aggregated_select.geojson', 
-                  driver='GeoJSON')
-  sm_csv = pd.DataFrame(sm_gdf)
-  sm_csv.drop(['geometry'], axis=1, inplace=True)
-  sm_csv.to_csv(outpath + f'pandemic_output_aggregated_select.csv', 
-                float_format='%.2f', 
-                na_rep="NAN!")
-
-# trade = np.array(
-#     [
-#         [
-#             [[0, 500, 15], [50, 0, 10], [20, 30, 0]],
-#             [[0, 500, 15], [50, 0, 10], [20, 30, 0]],
-#             [[0, 500, 15], [50, 0, 10], [20, 30, 0]],
-#             [[0, 500, 15], [50, 0, 10], [20, 30, 0]],
-#         ],
-#         [
-#             [[0, 500, 15], [50, 0, 10], [20, 30, 0]],
-#             [[0, 500, 15], [50, 0, 10], [20, 30, 0]],
-#             [[0, 500, 15], [50, 0, 10], [20, 30, 0]],
-#             [[0, 500, 15], [50, 0, 10], [20, 30, 0]],
-#         ],
-#     ]
-# )
-# trade[1, :, :, :] = trade[1, :, :, :] * 1.1
-
-# trade = np.array([[0, 500, 15], [50, 0, 10], [20, 30, 0]])
-# distances = np.array([[1, 5000, 105000], [5000, 1, 7500], [10500, 7500, 1]])
-# locations = pd.DataFrame(
-#     {
-#         "name": ["United States", "China", "Brazil"],
-#         "Phytosanitary Capacity": [0.00, 0.00, 0.00],
-#         "Presence": [True, False, True],
-#         "Host Percent Area": [0.25, 0.50, 0.35],
-#     }
-# )
-#%%#
-data_dir = data_dir
-countries = geopandas.read_file(
-    countries_path,
-    driver='GPKG')
+countries = geopandas.read_file(countries_path, driver="GPKG")
 distances = distance_between(countries)
-gdp_data = pd.read_csv(gdp_path, index_col = 0)
-gdp_year_cols = gdp_data.columns[3:].to_list()
-
-gdp_data['pc_mode'] = gdp_data[gdp_year_cols].mode(axis=1)[0]
-
-gdp_data.columns = (np.where(
-    gdp_data.columns.isin(gdp_year_cols),
-    'Phytosanitary Capacity ' + gdp_data.columns,
-    gdp_data.columns
-    )
+phyto_data = pd.read_csv(phyto_path, index_col=0)
+phyto_year_cols = phyto_data.columns[3:].to_list()
+phyto_data["pc_mode"] = phyto_data[phyto_year_cols].mode(axis=1)[0]
+phyto_data.columns = np.where(
+    phyto_data.columns.isin(phyto_year_cols),
+    "Phytosanitary Capacity " + phyto_data.columns,
+    phyto_data.columns,
 )
+# Assign value to phytosanitary capacity estimates
+countries = countries.merge(phyto_data, how="left", on="UN", suffixes=[None, "_y"])
+phyto_dict = {"low": phyto_low, "mid": phyto_mid, "high": phyto_high, np.nan: 0}
+countries.replace(phyto_dict, inplace=True)
 
-countries = countries.merge(gdp_data, how='left', on='UN', suffixes = [None, '_y'])
-gdp_dict = {
-    'low': gdp_low,
-    'mid': gdp_mid,
-    'high': gdp_high,
-    np.nan: 0
-}
-countries.replace(gdp_dict, inplace=True)
-
-## TO DO: increase flexibility to select specific years from directory
-file_list_historical = glob.glob(commodity_path + '/*.csv')
-file_list_historical.sort()
-file_list_forecast = glob.glob(commodity_forecast_path + '/*.csv')
-file_list_forecast.sort()
-file_list = file_list_historical + file_list_forecast
-
-trades = np.zeros(shape = (len(file_list), 
-                           distances.shape[0], 
-                           distances.shape[0]))
-for i in range(len(file_list)):
-    trades[i] = pd.read_csv(file_list[i], 
-                            sep = ",", 
-                            header= 0, 
-                            index_col=0, 
-                            encoding='latin1').values
-
-traded = pd.read_csv(file_list[1], 
-                     sep = ",",
-                     header= 0, 
-                     index_col=0, 
-                     encoding='latin1')
-#%%# 
-# Run Model for Selected Time Steps
-#trades = trades
-trades = trades[:10,:,:]
-print(trades.shape)
-#%% 
-print('Number of time steps: ', trades.shape[0])
-distances = distances
-locations = countries
-prob = np.zeros(len(countries.index))
-pres_ts0 = [False] *len(prob)
-for country in native_countries_list:
-    country_index = countries.index[countries['NAME'] == country][0]
-    pres_ts0[country_index] = True
-locations["Presence"] = pres_ts0
-
-sigma_h = 1 - countries['Host Percent Area'].mean()
-sigma_kappa = 1 - 0.3 # mean koppen climate matches, TO DO: automate
-sigma_T = np.mean(trades)
-
-np.random.seed(random_seed)
-
-e = pandemic_multiple_time_steps(
-    trades=trades,
-    distances=distances,
-    locations=locations,
-    alpha=alpha,
-    beta=beta,
-    mu=mu,
-    lamda_c=lamda_c,
-    phi=phi,
-    sigma_epsilon=sigma_epsilon,
-    sigma_h=sigma_h,
-    sigma_kappa=sigma_kappa,
-    sigma_phi=sigma_phi,
-    sigma_T=sigma_T,
+# Read & format trade data
+trades_list, file_list_filtered, code_list, commodities_available = create_trades_list(
+    commodity_path=commodity_path,
+    commodity_forecast_path=commodity_forecast_path,
     start_year=start_year,
-    random_seed=random_seed
+    distances=distances,
 )
 
-# # print("Ecological" in locations)
-# print(np.all(e[0] >= 0) | (e[0] <= 1))
-# print((e[0] >= 0).all() and (e[0] <= 1).all())
-# print((e[1] >= 0).all() and (e[1] <= 1).all())
-# print((e[2] >= 0).all() and (e[2] <= 1).all())
+# Create list of unique dates from trade data
+date_list = []
+for f in file_list_filtered:
+    fn = os.path.split(f)[1]
+    ts = str.split(os.path.splitext(fn)[0], "_")[-1]
+    date_list.append(ts)
+date_list.sort()
 
-# %%
-run_num = 3 # sys.argv[0]
-run_iter = 0 # sys.argv[2] 
-arr_dict = {'prob_entry': 'probability_of_entry',
-           'prob_intro': 'probability_of_introduction',
-           'prob_est': 'probability_of_establishment',
-           'country_introduction': 'country_introduction'}
-outpath = out_dir + f'/run{run_num}/iter{run_iter}/'
-create_model_dirs(
-    outpath = outpath,
-    output_dict=arr_dict
-    )
+# Example trade array for formatting outputs
+traded = pd.read_csv(
+    file_list_filtered[1], sep=",", header=0, index_col=0, encoding="latin1"
+)
+# Checking trade array shapes
+print("Length of trades list: ", len(trades_list))
+for i in range(len(trades_list)):
+    print("\tcommodity array shape: ", trades_list[i].shape)
 
-#%%#
-full_out_df, date_list_out = save_model_output(
-    model_output_object = e,
-    columns_to_drop = columns_to_drop,
-    example_trade_matrix = traded,
-    outpath = outpath
-    )
-#%%
-aggregate_monthly_output_to_annual(
-    formatted_geojson = full_out_df,
-    outpath = outpath
-    )
+# Create an n x n array of climate similarity calculations
+print(f"Calculating climate similarities for {countries.shape[0]} locations")
+climate_similarities = create_climate_similarities_matrix(
+    array_template=traded, countries=countries
+)
 
-#%% 
-def generate_model_metadata(
-    outpath, 
-    run_num, 
-    native_countries_list,
-    gdp_dict, 
-    main_model_output
-    ):
-    
-    final_presence_col = sorted(
-        [c for c in main_model_output.columns if c.startswith('Presence')]
+# Run Model for Selected Time Steps and Commodities
+print("Number of commodities: ", len([c for c in lamda_c_list if c > 0]))
+print("Number of time steps: ", trades_list[0].shape[0])
+for i in range(len(trades_list)):
+    if len(trades_list) > 1:
+        code = code_list[i]
+        print("\nRunning model for commodity: ", code)
+    else:
+        print(
+            "\nRunning model for commodity: ",
+            os.path.basename(commodities_available[0]),
+        )
+    trades = trades_list[i]
+    distances = distances
+    locations = countries
+    prob = np.zeros(len(countries.index))
+    pres_ts0 = [False] * len(prob)
+    for country in native_countries_list:
+        country_index = countries.index[countries["NAME"] == country][0]
+        pres_ts0[country_index] = True
+    locations["Presence"] = pres_ts0
+    sigma_h = 1 - countries["Host Percent Area"].mean()
+    iu1 = np.triu_indices(climate_similarities.shape[0], 1)
+    sigma_kappa = 1 - climate_similarities[iu1].mean()
+    sigma_T = np.mean(trades)
+    np.random.seed(random_seed)
+    lamda_c = lamda_c_list[i]
+
+    if lamda_c > 0:
+        e = pandemic_multiple_time_steps(
+            trades=trades,
+            distances=distances,
+            locations=locations,
+            climate_similarities=climate_similarities,
+            alpha=alpha,
+            beta=beta,
+            mu=mu,
+            lamda_c=lamda_c,
+            phi=phi,
+            sigma_epsilon=sigma_epsilon,
+            sigma_h=sigma_h,
+            sigma_kappa=sigma_kappa,
+            sigma_phi=sigma_phi,
+            sigma_T=sigma_T,
+            start_year=start_year,
+            date_list=date_list,
+        )
+
+        run_num = sys.argv[2]
+        run_iter = sys.argv[3]
+
+        arr_dict = {
+            "prob_entry": "probability_of_entry",
+            "prob_intro": "probability_of_introduction",
+            "prob_est": "probability_of_establishment",
+            "country_introduction": "country_introduction",
+        }
+
+        if len(trades_list) > 1:
+            outpath = out_dir + f"/run{run_num}/iter{run_iter}/{code}/"
+        else:
+            outpath = out_dir + f"/run{run_num}/iter{run_iter}/"
+
+        create_model_dirs(outpath=outpath, output_dict=arr_dict)
+        print("saving model outputs: ", outpath)
+        full_out_df = save_model_output(
+            model_output_object=e,
+            columns_to_drop=columns_to_drop,
+            example_trade_matrix=traded,
+            outpath=outpath,
+            date_list=date_list,
+        )
+
+        # If time steps are monthly, aggregate predictions to
+        # annual for dashboard display
+        if len(date_list[i]) > 4:
+            print("aggregating monthly predictions to annual time steps...")
+            aggregate_monthly_output_to_annual(
+                formatted_geojson=full_out_df, outpath=outpath
+            )
+
+        # Save model metadata to text file
+        print("writing model metadata...")
+        main_model_output = e[0]
+        final_presence_col = sorted(
+            [c for c in main_model_output.columns if c.startswith("Presence")]
         )[-1]
+        meta = {}
+        meta["PARAMETERS"] = []
+        meta["PARAMETERS"].append(
+            {
+                "alpha": str(alpha),
+                "beta": str(beta),
+                "mu": str(mu),
+                "lamda_c": str(lamda_c),
+                "phi": str(phi),
+                "sigma_epsilon": str(sigma_epsilon),
+                "sigma_h": str(sigma_h),
+                "sigma_kappa": str(sigma_kappa),
+                "sigma_phi": str(sigma_phi),
+                "sigma_T": str(sigma_T),
+                "start_year": str(start_year),
+                "random_seed": str(random_seed),
+            }
+        )
+        meta["NATIVE_COUNTRIES_T0"] = native_countries_list
+        meta["COMMODITY"] = commodities_available[i]
+        meta["FORECASTED"] = commodity_forecast_path
+        meta["PHYTOSANITARY_CAPACITY_WEIGHTS"] = phyto_dict
+        meta["TOTAL COUNTRIES INTRODUCTED"] = str(
+            main_model_output[final_presence_col].value_counts()[1]
+            - len(native_countries_list)
+        )
 
-    with open(f'{outpath}run{run_num}_meta.txt', 'w') as file:
-        file.write(f'PARAMETER VALS:\talpha: {alpha}' \
-                   f'\n\tbeta: {beta}\n\tmu: {mu}' \
-                   f'\tsigma_h: {sigma_h}\n\tsigma_kappa: {sigma_kappa}\n\t' \
-                   f'sigma_T: {sigma_T}\n\n')
-        file.write(f'NATIVE COUNTRIES AT T0:\n\t{native_countries_list}\n\n')
-        file.write(f'COMMODITIES: {commodity_path}')
-        file.write(f'\tForecasted: {commodity_forecast_path}')
-        file.write(f'PHYTOSANITARY CAPACITY:\n\t {gdp_path}')
-        file.write(f'\tGPD vals:{gdp_dict}\n\n')
-        file.write('COUNTRY INTRODUCTIONS:')
-        file.write(f'\nTotal Number of Countries: ' \
-                   f'{main_model_output[final_presence_col].value_counts()[1]}')
-        file.close()
-        print(f'saving: {outpath}run{run_num}_meta.txt')
+        with open(f"{outpath}/run{run_num}_meta.txt", "w") as file:
+            json.dump(meta, file, indent=4)
 
-generate_model_metadata(
-    outpath = out_dir + f'/run{run_num}',
-    run_num = run_num,
-    native_countries_list = native_countries_list,
-    gdp_dict = gdp_dict, 
-    main_model_output = e[0]
-    )
+    else:
+        print("\tskipping as pest is not transported with this commodity")

@@ -30,3 +30,8 @@ MANIFEST
 
 # Environmental variables
 *.env
+
+# Model parameter testing files
+pandemic/create_config.py
+pandemic/config.json
+pandemic/model_runs.py
