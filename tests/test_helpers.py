@@ -1,20 +1,10 @@
 import pytest
 import os
 import pandas as pd
-from pandemic.helpers import locations_with_hosts, filter_trades_list
-
-
-def test_location_filter():
-    locations = pd.DataFrame(
-        {
-            "name": ["Ecuador", "United States", "China", "Brazil"],
-            "phytosanitary_compliance": [0.00, 0.00, 0.00, 0.00],
-            "Presence": [False, True, False, True],
-            "Host Percent Area": [0.00, 0.25, 0.50, 0.35],
-        }
-    )
-
-    assert len(locations_with_hosts(locations)) == 3
+from pandemic.helpers import (
+    filter_trades_list,
+    location_pairs_with_host,
+)
 
 
 def test_filter_trades_list():
@@ -37,3 +27,17 @@ def test_filter_trades_list():
 
     assert len(filter_trades_list(monthly_file_list, start_year)) == 3
     assert len(filter_trades_list(annual_file_list, start_year)) == 4
+
+
+def test_location_pairs_with_host():
+    locations = pd.DataFrame(
+        {
+            "UN": [60, 226, 42, 23],
+            "name": ["Ecuador", "United States", "China", "Brazil"],
+            "phytosanitary_compliance": [0.00, 0.00, 0.00, 0.00],
+            "Presence": [False, False, True, False],
+            "Host Percent Area": [0.00, 0.25, 0.50, 0.35],
+        }
+    )
+
+    assert len(location_pairs_with_host(locations)) == 3
