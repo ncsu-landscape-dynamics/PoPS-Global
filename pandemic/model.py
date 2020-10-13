@@ -13,7 +13,7 @@ from shapely.geometry.multipolygon import MultiPolygon
 sys.path.append("C:/Users/cawalden/Documents/GitHub/Pandemic_Model")
 from pandemic.helpers import (
     distance_between,
-    locations_with_hosts,
+    location_pairs_with_host,
     filter_trades_list,
     create_trades_list,
 )
@@ -41,7 +41,7 @@ def pandemic(
     trade,
     distances,
     locations,
-    locations_list,
+    location_tuples,
     climate_similarities,
     alpha,
     beta,
@@ -69,9 +69,11 @@ def pandemic(
     locations : data_frame
         data frame of countries, species presence, phytosanitry capacity,
         koppen climate classifications % of total area for each class.
-    locations_list : list
-        list of locations with corresponding attributes where host
-        species presence is greater than 0%
+    location_tuples : list
+        list of possible location tuples (origin, destination) pairs with
+        corresponding attributes where the origin is capable of transmitting
+        species propagule and the destination host species presence is greater
+        than 0%
     trade : numpy.array
         list (c) of n x n x t matrices where c is the # of commoditites,
         n is the number of locations, and t is # of time steps
@@ -132,13 +134,15 @@ def pandemic(
     locations["Probability of introduction"] = np.zeros(len(locations))
     origin_destination = pd.DataFrame(columns=["Origin", "Destination"])
 
-    for k in range(len(locations_list)):
-        # get position index of location k with known host presence
-        # in data frame with all locations for selecting attributes
-        # and populating output matrices
-        j = locations.index[locations["UN"] == locations_list[k]["UN"]][0]
+    for k in range(len(location_tuples)):
+        # get destination information from locations data frame
+        # based on location tuple pair UN value
+        # and position index for populating output matrices
+        l = location_tuples[k]
+        j = locations.index[locations["UN"] == l[1]][0]
         destination = locations.iloc[j, :]
         combined_probability_no_introduction = 1
+
         # check that Phytosanitary capacity data is available if not set
         # the value to 0 to remove this aspect of the equation
         if "Phytosanitary Capacity" in destination:
@@ -146,109 +150,126 @@ def pandemic(
         else:
             rho_j = 0
 
-        for l in range(len(locations_list)):
-            # get position index of location l with known host presence
-            # in data frame with all locations for selecting attributes
-            # and populating output matrices
-            i = locations.index[locations["UN"] == locations_list[l]["UN"]][0]
-            origin = locations.iloc[i, :]
-            # check that Phytosanitary capacity data is available if not
-            # set value to 0 to remove this aspect of the equation
-            if "Phytosanitary Capacity" in origin:
-                rho_i = origin["Phytosanitary Capacity"]
-            else:
-                rho_i = 0
+        # get origin information from locations data frame
+        # based on location tuple pair UN value
+        # and position index for populating output matrices
+        i = locations.index[locations["UN"] == l[0]][0]
+        origin = locations.iloc[i, :]
 
-            T_ijct = trade[j, i]
-            d_ij = distances[j, i]
+        # check that Phytosanitary capacity data is available if not
+        # set value to 0 to remove this aspect of the equation
+        if "Phytosanitary Capacity" in origin:
+            rho_i = origin["Phytosanitary Capacity"]
+        else:
+            rho_i = 0
 
-            # check if time steps are annual (YYYY) or monthly (YYYYMM)
-            # if monthly, parse dates to determine if species is in the correct life cycle
-            # to be transported (set value to 1), based on the geographic location of the origin
-            # country (i.e., Northern or Southern Hemisphere)
-            if len(time_step) > 4:
-                if (
-                    origin["centroid_lat"] >= 0
-                    and time_step[-2:] not in season_dict["NH_season"]
-                ):
-                    chi_it = 0
-                elif (
-                    origin["centroid_lat"] < 0
-                    and time_step[-2:] not in season_dict["SH_season"]
-                ):
-                    chi_it = 0
-                else:
-                    chi_it = 1
+        T_ijct = trade[j, i]
+        d_ij = distances[j, i]
+
+        # check if time steps are annual (YYYY) or monthly (YYYYMM)
+        # if monthly, parse dates to determine if species is in the correct life cycle
+        # to be transported (set value to 1), based on the geographic location of the origin
+        # country (i.e., Northern or Southern Hemisphere)
+        if len(time_step) > 4:
+            if (
+                origin["centroid_lat"] >= 0
+                and time_step[-2:] not in season_dict["NH_season"]
+            ):
+                chi_it = 0
+            elif (
+                origin["centroid_lat"] < 0
+                and time_step[-2:] not in season_dict["SH_season"]
+            ):
+                chi_it = 0
             else:
                 chi_it = 1
+        else:
+            chi_it = 1
 
-            h_jt = destination["Host Percent Area"]
+        h_jt = destination["Host Percent Area"]
 
-            if origin["Presence"] and h_jt > 0:
-                zeta_it = int(origin["Presence"])
+        # check if species is present in origin country
+        # and sufficient time has passed to faciliate
+        # transmission
+        if (
+            (origin["Infective"] != None)
+            and (int(time_step) >= int(origin["Infective"]))
+            # and (h_jt > 0)
+        ):
+            zeta_it = 1  # int(origin["Presence"])
+            delta_kappa_ijt = climate_similarities[j, i]
 
-                delta_kappa_ijt = climate_similarities[j, i]
+            if "Ecological Disturbance" in origin:
+                epsilon_jt = origin["Ecological Disturbance"]
+            else:
+                epsilon_jt = 0
 
-                if "Ecological Disturbance" in origin:
-                    epsilon_jt = origin["Ecological Disturbance"]
-                else:
-                    epsilon_jt = 0
+            probability_of_entry_ijct = probability_of_entry(
+                rho_i, rho_j, zeta_it, lamda_c, T_ijct, sigma_T, mu, d_ij, chi_it
+            )
+            probability_of_establishment_ijt = probability_of_establishment(
+                alpha,
+                beta,
+                delta_kappa_ijt,
+                sigma_kappa,
+                h_jt,
+                sigma_h,
+                epsilon_jt,
+                sigma_epsilon,
+                phi,
+                sigma_phi,
+            )
+        else:
+            zeta_it = 0
+            probability_of_entry_ijct = 0.0
+            probability_of_establishment_ijt = 0.0
 
-                probability_of_entry_ijct = probability_of_entry(
-                    rho_i, rho_j, zeta_it, lamda_c, T_ijct, sigma_T, mu, d_ij, chi_it
+        probability_of_introduction_ijtc = probability_of_introduction(
+            probability_of_entry_ijct, probability_of_establishment_ijt
+        )
+
+        entry_probabilities[j, i] = probability_of_entry_ijct
+        establishment_probabilities[j, i] = probability_of_establishment_ijt
+        introduction_probabilities[j, i] = probability_of_introduction_ijtc
+
+        # decide if an introduction happens
+        introduced = np.random.binomial(1, probability_of_introduction_ijtc)
+        combined_probability_no_introduction = combined_probability_no_introduction * (
+            1 - probability_of_introduction_ijtc
+        )
+        if bool(introduced):
+            print("\t\t", origin["NAME"], "-->", destination["NAME"])
+            print("\t\t\tProb intro: ", probability_of_introduction_ijtc)
+            introduction_country[j, i] = bool(introduced)
+            locations.iloc[j, locations.columns.get_loc("Presence")] = bool(introduced)
+            # if no previous introductions, set infective column to current time
+            # step plus period to infectivity; assumes period to infectivity is
+            # given in number of years
+            if locations.iloc[j, locations.columns.get_loc("Infective")] == None:
+                locations.iloc[j, locations.columns.get_loc("Infective")] = str(
+                    int(time_step[:4]) + time_infect
+                ) + str(time_step[4:])
+                print(
+                    f'\t\t\t{destination["NAME"]} infective: ',
+                    locations.iloc[j, locations.columns.get_loc("Infective")],
                 )
-                probability_of_establishment_ijt = probability_of_establishment(
-                    alpha,
-                    beta,
-                    delta_kappa_ijt,
-                    sigma_kappa,
-                    h_jt,
-                    sigma_h,
-                    epsilon_jt,
-                    sigma_epsilon,
-                    phi,
-                    sigma_phi,
+
+            if origin_destination.empty:
+                origin_destination = pd.DataFrame(
+                    [[origin["NAME"], destination["NAME"]]],
+                    columns=["Origin", "Destination"],
                 )
             else:
-                zeta_it = 0
-                probability_of_entry_ijct = 0.0
-                probability_of_establishment_ijt = 0.0
-
-            probability_of_introduction_ijtc = probability_of_introduction(
-                probability_of_entry_ijct, probability_of_establishment_ijt
-            )
-            entry_probabilities[j, i] = probability_of_entry_ijct
-            establishment_probabilities[j, i] = probability_of_establishment_ijt
-            introduction_probabilities[j, i] = probability_of_introduction_ijtc
-
-            # decide if an introduction happens
-            introduced = np.random.binomial(1, probability_of_introduction_ijtc)
-            combined_probability_no_introduction = (
-                combined_probability_no_introduction
-                * (1 - probability_of_introduction_ijtc)
-            )
-            if bool(introduced):
-                introduction_country[j, i] = bool(introduced)
-                locations.iloc[j, locations.columns.get_loc("Presence")] = bool(
-                    introduced
-                )
-                print("\t", origin["NAME"], "-->", destination["NAME"])
-
-                if origin_destination.empty:
-                    origin_destination = pd.DataFrame(
+                origin_destination = origin_destination.append(
+                    pd.DataFrame(
                         [[origin["NAME"], destination["NAME"]]],
                         columns=["Origin", "Destination"],
-                    )
-                else:
-                    origin_destination = origin_destination.append(
-                        pd.DataFrame(
-                            [[origin["NAME"], destination["NAME"]]],
-                            columns=["Origin", "Destination"],
-                        ),
-                        ignore_index=True,
-                    )
-            else:
-                introduction_country[j, i] = bool(introduced)
+                    ),
+                    ignore_index=True,
+                )
+        else:
+            introduction_country[j, i] = bool(introduced)
+
         locations.iloc[j, locations.columns.get_loc("Probability of introduction")] = (
             1 - combined_probability_no_introduction
         )
@@ -382,13 +403,14 @@ def pandemic_multiple_time_steps(
 
         # filter locations to those where host percent area is greater
         # than 0 and therefore with potential for pest spread
-        locations_list = locations_with_hosts(locations)
+        # locations_list = list(locations.loc[locations['Host Percent Area'] > 0]["NAME"])
+        location_tuples = location_pairs_with_host(locations)
 
         ts_out = pandemic(
             trade=trade,
             distances=distances,
             locations=locations,
-            locations_list=locations_list,
+            location_tuples=location_tuples,
             climate_similarities=climate_similarities,
             alpha=alpha,
             beta=beta,
@@ -418,6 +440,7 @@ def pandemic_multiple_time_steps(
             )
         ts_time_end = time.perf_counter()
         print(f"\t\tloop: {round(ts_time_end - ts_time_start, 2)} seconds")
+
     locations["Presence " + str(ts)] = locations["Presence"]
     locations["Probability of introduction " + str(ts)] = locations[
         "Probability of introduction"
@@ -435,6 +458,7 @@ def pandemic_multiple_time_steps(
     )
 
 
+#%%
 # Read model arguments from configuration file
 # path_to_config_json = sys.argv[1]
 path_to_config_json = (
@@ -462,6 +486,8 @@ phi = data["phi"]
 sigma_epsilon = data["sigma_epsilon"]
 sigma_phi = data["sigma_phi"]
 start_year = data["start_year"]
+time_infect = data["time_to_infectivity"]
+time_infect_unit = data["time_to_infectivity_unit"]
 random_seed = data["random_seed"]
 out_dir = data["out_dir"]
 columns_to_drop = data["columns_to_drop"]
@@ -481,6 +507,7 @@ countries = countries.merge(phyto_data, how="left", on="UN", suffixes=[None, "_y
 phyto_dict = {"low": phyto_low, "mid": phyto_mid, "high": phyto_high, np.nan: 0}
 countries.replace(phyto_dict, inplace=True)
 
+#%%
 # Read & format trade data
 trades_list, file_list_filtered, code_list, commodities_available = create_trades_list(
     commodity_path=commodity_path,
@@ -511,7 +538,7 @@ print(f"Calculating climate similarities for {countries.shape[0]} locations")
 climate_similarities = create_climate_similarities_matrix(
     array_template=traded, countries=countries
 )
-
+#%%
 # Run Model for Selected Time Steps and Commodities
 print("Number of commodities: ", len([c for c in lamda_c_list if c > 0]))
 print("Number of time steps: ", trades_list[0].shape[0])
@@ -529,18 +556,29 @@ for i in range(len(trades_list)):
     locations = countries
     prob = np.zeros(len(countries.index))
     pres_ts0 = [False] * len(prob)
+    infect_ts0 = np.empty(locations.shape[0], dtype="object")
     for country in native_countries_list:
         country_index = countries.index[countries["NAME"] == country][0]
         pres_ts0[country_index] = True
+        # if time steps are monthly and time to infectivity is in years
+        if len(date_list[0]) > 4:
+            infect_ts0[country_index] = str(start_year) + "01"
+        # else if time steps are annual and time to infectivity is in years
+        else:
+            infect_ts0[country_index] = str(start_year)
+
     locations["Presence"] = pres_ts0
+    locations["Infective"] = infect_ts0
+
     sigma_h = 1 - countries["Host Percent Area"].mean()
-    iu1 = np.triu_indices(climate_similarities.shape[0], 1)
-    sigma_kappa = 1 - climate_similarities[iu1].mean()
+    ilo = np.tril_indices(climate_similarities.shape[0], -1)
+    sigma_kappa = 0.5907  # 1 - climate_similarities[ilo].mean() # change to host>0 countries only (mean = 0.40928)?
     sigma_T = np.mean(trades)
-    np.random.seed(random_seed)
     lamda_c = lamda_c_list[i]
 
+    #%%
     if lamda_c == 1:
+        np.random.seed(random_seed)
         e = pandemic_multiple_time_steps(
             trades=trades,
             distances=distances,
@@ -560,7 +598,7 @@ for i in range(len(trades_list)):
             date_list=date_list,
         )
 
-        run_num = sys.argv[2]
+        run_name = sys.argv[2]
         run_iter = sys.argv[3]
 
         arr_dict = {
@@ -571,9 +609,9 @@ for i in range(len(trades_list)):
         }
 
         if len(trades_list) > 1:
-            outpath = out_dir + f"/run{run_num}/iter{run_iter}/{code}/"
+            outpath = out_dir + f"/run_{run_name}/iter_{run_iter}/{code}/"
         else:
-            outpath = out_dir + f"/run{run_num}/iter{run_iter}/"
+            outpath = out_dir + f"/run_{run_name}/iter_{run_iter}/"
 
         create_model_dirs(outpath=outpath, output_dict=arr_dict)
         print("saving model outputs: ", outpath)
@@ -615,6 +653,8 @@ for i in range(len(trades_list)):
                 "sigma_T": str(sigma_T),
                 "start_year": str(start_year),
                 "random_seed": str(random_seed),
+                "infectivity_lag": str(time_infect),
+                "lag_unit": str(time_infect_unit),
             }
         )
         meta["NATIVE_COUNTRIES_T0"] = native_countries_list
@@ -626,8 +666,10 @@ for i in range(len(trades_list)):
             - len(native_countries_list)
         )
 
-        with open(f"{outpath}/run{run_num}_meta.txt", "w") as file:
+        with open(f"{outpath}/run_{run_name}_meta.txt", "w") as file:
             json.dump(meta, file, indent=4)
 
     else:
         print("\tskipping as pest is not transported with this commodity")
+
+# %%
