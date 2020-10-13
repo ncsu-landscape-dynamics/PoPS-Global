@@ -540,7 +540,7 @@ for i in range(len(trades_list)):
     np.random.seed(random_seed)
     lamda_c = lamda_c_list[i]
 
-    if lamda_c == 1:
+    if lamda_c > 0:
         e = pandemic_multiple_time_steps(
             trades=trades,
             distances=distances,
