@@ -189,8 +189,8 @@ def pandemic(
 
                 delta_kappa_ijt = climate_similarities[j, i]
 
-                if "Ecological Disturbance" in origin:
-                    epsilon_jt = origin["Ecological Disturbance"]
+                if "Ecological Disturbance" in destination:
+                    epsilon_jt = destination["Ecological Disturbance"]
                 else:
                     epsilon_jt = 0
 
@@ -442,29 +442,29 @@ path_to_config_json = (
 )
 
 with open(path_to_config_json) as json_file:
-    data = json.load(json_file)
+    config = json.load(json_file)
 
-data_dir = data["data_dir"]
-countries_path = data["countries_path"]
-phyto_path = data["phyto_path"]
-phyto_low = data["phyto_low"]
-phyto_mid = data["phyto_mid"]
-phyto_high = data["phyto_high"]
-commodity_path = data["commodity_path"]
-commodity_forecast_path = data["commodity_forecast_path"]
-native_countries_list = data["native_countries_list"]
-season_dict = data["season_dict"]
-alpha = data["alpha"]
-beta = data["beta"]
-mu = data["mu"]
-lamda_c_list = data["lamda_c_list"]
-phi = data["phi"]
-sigma_epsilon = data["sigma_epsilon"]
-sigma_phi = data["sigma_phi"]
-start_year = data["start_year"]
-random_seed = data["random_seed"]
-out_dir = data["out_dir"]
-columns_to_drop = data["columns_to_drop"]
+data_dir = config["data_dir"]
+countries_path = config["countries_path"]
+phyto_path = config["phyto_path"]
+phyto_low = config["phyto_low"]
+phyto_mid = config["phyto_mid"]
+phyto_high = config["phyto_high"]
+commodity_path = config["commodity_path"]
+commodity_forecast_path = config["commodity_forecast_path"]
+native_countries_list = config["native_countries_list"]
+season_dict = config["season_dict"]
+alpha = config["alpha"]
+beta = config["beta"]
+mu = config["mu"]
+lamda_c_list = config["lamda_c_list"]
+phi = config["phi"]
+sigma_epsilon = config["sigma_epsilon"]
+sigma_phi = config["sigma_phi"]
+start_year = config["start_year"]
+random_seed = config["random_seed"]
+out_dir = config["out_dir"]
+columns_to_drop = config["columns_to_drop"]
 
 countries = geopandas.read_file(countries_path, driver="GPKG")
 distances = distance_between(countries)
@@ -540,7 +540,7 @@ for i in range(len(trades_list)):
     np.random.seed(random_seed)
     lamda_c = lamda_c_list[i]
 
-    if lamda_c == 1:
+    if lamda_c > 0:
         e = pandemic_multiple_time_steps(
             trades=trades,
             distances=distances,
