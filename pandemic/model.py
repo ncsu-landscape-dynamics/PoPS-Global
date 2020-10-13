@@ -189,8 +189,8 @@ def pandemic(
 
                 delta_kappa_ijt = climate_similarities[j, i]
 
-                if "Ecological Disturbance" in origin:
-                    epsilon_jt = origin["Ecological Disturbance"]
+                if "Ecological Disturbance" in destination:
+                    epsilon_jt = destination["Ecological Disturbance"]
                 else:
                     epsilon_jt = 0
 
