@@ -148,6 +148,7 @@ def create_trades_list(commodity_path, commodity_forecast_path, start_year, dist
     # If trade data are aggregated (i.e., summed across
     # multiple commodity codes)
     if len(commodities_available) == 1:
+        code_list = ["Aggregated"]
         print("\t", commodities_available)
         file_list_historical = glob.glob(commodity_path + "/*.csv")
         file_list_historical.sort()
