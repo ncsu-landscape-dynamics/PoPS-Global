@@ -38,6 +38,9 @@ corrections = {
     "Korea (South Korea)": "Korea, Republic of",
     "St. Vin. and Gren.": "Saint Vincent and the Grenadines",
     "Swaziland": "Eswatini",
+    "Dem. Rep. Congo": "Congo, The Democratic Republic of the",
+    "Dominican Rep.": "Dominican Republic",
+    "Eq. Guinea": "Equatorial Guinea",
 }
 
 # Replace ISO name with correct value.
@@ -54,9 +57,11 @@ for index in capacities.index:
     ).alpha_3
 
 # Add UN codes if needed
-un_to_iso_path = "H:/Shared drives/APHIS  Projects/Pandemic/Data/Country_list_shapefile/un_to_iso.csv"
+un_to_iso_path = (
+    "H:/Shared drives/APHIS  Projects/Pandemic/Data/Country_list_shapefile/temp.csv"
+)
 un_to_iso = pandas.read_csv(un_to_iso_path)
-capacities = capacities.merge(un_to_iso, "left", on="ISO3")
+capacities = capacities.merge(un_to_iso, "left", left_on="ISO3", right_on="alpha_3")
 # capacities.UN_id = capacities.UN_id.astype(int)
 capacities.sort_values(by="UN")
 capacities.to_csv("phytosanitary_capacity_iso3.csv")
