@@ -10,7 +10,6 @@ from datetime import datetime
 from shapely.geometry.polygon import Polygon
 from shapely.geometry.multipolygon import MultiPolygon
 
-sys.path.append("C:/Users/cawalden/Documents/GitHub/Pandemic_Model")
 from pandemic.helpers import (
     distance_between,
     location_pairs_with_host,
@@ -437,10 +436,7 @@ def pandemic_multiple_time_steps(
 
 
 # Read model arguments from configuration file
-# path_to_config_json = sys.argv[1]
-path_to_config_json = (
-    "C:/Users/cawalden/Documents/GitHub/Pandemic_Model/pandemic/config.json"
-)
+path_to_config_json = sys.argv[1]
 
 with open(path_to_config_json) as json_file:
     config = json.load(json_file)
@@ -561,8 +557,8 @@ for i in range(len(trades_list)):
             date_list=date_list,
         )
 
-        run_num = "test"  # sys.argv[2]
-        run_iter = 9999  # sys.argv[3]
+        run_num = sys.argv[2]
+        run_iter = sys.argv[3]
 
         arr_dict = {
             "prob_entry": "probability_of_entry",
