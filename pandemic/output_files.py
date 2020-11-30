@@ -85,6 +85,8 @@ def save_model_output(
         for feature in out_df["geometry"]
     ]
     out_df.to_file(outpath + "/pandemic_output.geojson", driver="GeoJSON")
+    out_pdf = pd.DataFrame(out_df.drop(columns="geometry", axis=1))
+    out_pdf.to_csv(outpath + "/pandemic_output.csv")
 
     origin_dst.to_csv(outpath + "/origin_destination.csv")
 
@@ -96,7 +98,7 @@ def save_model_output(
         pro_entry_pd.index = example_trade_matrix.index
         pro_entry_pd.to_csv(
             outpath + f"/prob_entry/probability_of_entry_{str(ts)}.csv",
-            float_format="%.2f",
+            float_format="%.4f",
             na_rep="NAN!",
         )
 
@@ -105,7 +107,7 @@ def save_model_output(
         pro_intro_pd.index = example_trade_matrix.index
         pro_intro_pd.to_csv(
             outpath + f"/prob_intro/probability_of_introduction_{str(ts)}.csv",
-            float_format="%.2f",
+            float_format="%.4f",
             na_rep="NAN!",
         )
 
@@ -114,7 +116,7 @@ def save_model_output(
         pro_est_pd.index = example_trade_matrix.index
         pro_est_pd.to_csv(
             outpath + f"/prob_est/probability_of_establishment_{str(ts)}.csv",
-            float_format="%.2f",
+            float_format="%.4f",
             na_rep="NAN!",
         )
 
@@ -123,7 +125,7 @@ def save_model_output(
         country_int_pd.index = example_trade_matrix.index
         country_int_pd.to_csv(
             outpath + f"/country_introduction/country_introduction_{str(ts)}.csv",
-            float_format="%.2f",
+            float_format="%.4f",
             na_rep="NAN!",
         )
 
