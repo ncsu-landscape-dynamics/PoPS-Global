@@ -10,6 +10,8 @@ from datetime import datetime
 from shapely.geometry.polygon import Polygon
 from shapely.geometry.multipolygon import MultiPolygon
 
+sys.path.append("C:/Users/cawalden/Documents/GitHub/Pandemic_Model")
+
 from pandemic.helpers import (
     distance_between,
     location_pairs_with_host,
@@ -184,9 +186,12 @@ def pandemic(
 
         h_jt = destination["Host Percent Area"]
 
-        if origin["Presence"] and h_jt > 0:
-            zeta_it = int(origin["Presence"])
-
+        # check if species is present in origin country
+        # and sufficient time has passed to faciliate transmission
+        if (origin["Infective"] != None) and (
+            int(time_step) >= int(origin["Infective"])
+        ):
+            zeta_it = 1
             delta_kappa_ijt = climate_similarities[j, i]
 
             if "Ecological Disturbance" in destination:
@@ -224,9 +229,21 @@ def pandemic(
         # decide if an introduction happens
         introduced = np.random.binomial(1, probability_of_introduction_ijtc)
         if bool(introduced):
+            print("\t\t", origin["NAME"], "-->", destination["NAME"])
+            print("\t\t\tProb intro: ", probability_of_introduction_ijtc)
             introduction_country[j, i] = bool(introduced)
             locations.iloc[j, locations.columns.get_loc("Presence")] = bool(introduced)
-            print("\t", origin["NAME"], "-->", destination["NAME"])
+            # if no previous introductions, set infective column to current time
+            # step plus period to infectivity; assumes period to infectivity is
+            # given in number of years
+            if locations.iloc[j, locations.columns.get_loc("Infective")] == None:
+                locations.iloc[j, locations.columns.get_loc("Infective")] = str(
+                    int(time_step[:4]) + time_infect
+                ) + str(time_step[4:])
+                print(
+                    f'\t\t\t{destination["NAME"]} infective: ',
+                    locations.iloc[j, locations.columns.get_loc("Infective")],
+                )
 
             if origin_destination.empty:
                 origin_destination = pd.DataFrame(
@@ -416,12 +433,13 @@ def pandemic_multiple_time_steps(
             origin_destination = origin_destination.append(
                 origin_destination_ts, ignore_index=True
             )
+        locations["Presence " + str(ts)] = locations["Presence"]
+        locations["Probability of introduction " + str(ts)] = locations[
+            "Probability of introduction"
+        ]
         ts_time_end = time.perf_counter()
         print(f"\t\tloop: {round(ts_time_end - ts_time_start, 2)} seconds")
-    locations["Presence " + str(ts)] = locations["Presence"]
-    locations["Probability of introduction " + str(ts)] = locations[
-        "Probability of introduction"
-    ]
+
     model_end = time.perf_counter()
     print(f"model run: {round((model_end - model_start)/60, 2)} minutes")
 
@@ -437,6 +455,9 @@ def pandemic_multiple_time_steps(
 
 # Read model arguments from configuration file
 path_to_config_json = sys.argv[1]
+# path_to_config_json = (
+#     "C:/Users/cawalden/Documents/GitHub/Pandemic_Model/pandemic/config.json"
+# )
 
 with open(path_to_config_json) as json_file:
     config = json.load(json_file)
@@ -462,6 +483,7 @@ start_year = config["start_year"]
 random_seed = config["random_seed"]
 out_dir = config["out_dir"]
 columns_to_drop = config["columns_to_drop"]
+time_infect = config["time_to_infectivity"]
 
 countries = geopandas.read_file(countries_path, driver="GPKG")
 distances = distance_between(countries)
@@ -526,10 +548,20 @@ for i in range(len(trades_list)):
     locations = countries
     prob = np.zeros(len(countries.index))
     pres_ts0 = [False] * len(prob)
+    infect_ts0 = np.empty(locations.shape[0], dtype="object")
     for country in native_countries_list:
         country_index = countries.index[countries["NAME"] == country][0]
         pres_ts0[country_index] = True
+        # if time steps are monthly and time to infectivity is in years
+        if len(date_list[0]) > 4:
+            infect_ts0[country_index] = str(start_year) + "01"
+        # else if time steps are annual and time to infectivity is in years
+        else:
+            infect_ts0[country_index] = str(start_year)
+
     locations["Presence"] = pres_ts0
+    locations["Infective"] = infect_ts0
+
     sigma_h = 1 - countries["Host Percent Area"].mean()
     iu1 = np.triu_indices(climate_similarities.shape[0], 1)
     sigma_kappa = 1 - climate_similarities[iu1].mean()
@@ -568,9 +600,9 @@ for i in range(len(trades_list)):
         }
 
         if len(trades_list) > 1:
-            outpath = out_dir + f"/run{run_num}/iter{run_iter}/{code}/"
+            outpath = out_dir + f"/run_{run_num}/iter{run_iter}/{code}/"
         else:
-            outpath = out_dir + f"/run{run_num}/iter{run_iter}/"
+            outpath = out_dir + f"/run_{run_num}/iter{run_iter}/"
 
         create_model_dirs(outpath=outpath, output_dict=arr_dict)
         print("saving model outputs: ", outpath)
@@ -611,6 +643,7 @@ for i in range(len(trades_list)):
                 "sigma_phi": str(sigma_phi),
                 "sigma_T": str(sigma_T),
                 "start_year": str(start_year),
+                "infectivity_lag": str(time_infect),
                 "random_seed": str(random_seed),
             }
         )
@@ -623,7 +656,7 @@ for i in range(len(trades_list)):
             - len(native_countries_list)
         )
 
-        with open(f"{outpath}/run{run_num}_meta.txt", "w") as file:
+        with open(f"{outpath}/run_{run_num}_meta.txt", "w") as file:
             json.dump(meta, file, indent=4)
 
     else:
