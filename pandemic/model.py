@@ -10,7 +10,6 @@ from datetime import datetime
 from shapely.geometry.polygon import Polygon
 from shapely.geometry.multipolygon import MultiPolygon
 
-sys.path.append("C:/Users/kellyn/Documents/GitHub/Pandemic_Model")
 from pandemic.helpers import (
     distance_between,
     location_pairs_with_host,
