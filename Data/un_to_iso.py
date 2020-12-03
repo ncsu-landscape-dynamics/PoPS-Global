@@ -3,7 +3,6 @@
 # %%
 import pandas as pd
 import geopandas
-import numpy as np
 import os
 
 os.chdir("H:/Shared drives/APHIS  Projects/Pandemic/Data/")
@@ -60,7 +59,6 @@ corrections = {
     "YMD": "YEM",  # Democratic Yemen to Yemen
     "PCZ": "PAN",  # Zone of the Panama Canal to Panama
     "SCG": "SRB",  # Serbia and Montenegro to Serbia
-    "SSD": "SDN",  # the Republic of South Sudan to the Republic of the Sudan
 }
 
 
