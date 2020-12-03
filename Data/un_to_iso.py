@@ -55,26 +55,25 @@ no_shp_iso3[no_shp_iso3.ISO3.notnull()]
 # Where possible, change UN crosswalk to use ISO3 codes that match the shapefile (codes that represent the correct geography).
 # Create dictionary of manual corrections for mismatches.
 corrections = {
-    "BES": "ANT",  #
-    "CUW": "ANT",
-    "DDR": "DEU",
-    "VDR": "VNM",
-    "YMD": "YEM",
-    "PCZ": "PAN",
-    "SCG": "SRB",
-    "SSD": "SDN",
+    "DDR": "DEU",  # German Democratic Republic to Germany
+    "VDR": "VNM",  # Democratic Republic of Viet-Nam to Viet Nam
+    "YMD": "YEM",  # Democratic Yemen to Yemen
+    "PCZ": "PAN",  # Zone of the Panama Canal to Panama
+    "SCG": "SRB",  # Serbia and Montenegro to Serbia
+    "SSD": "SDN",  # the Republic of South Sudan to the Republic of the Sudan
 }
-corrections
 
 
 # %%
-# ISO3 codes that do not have matching geography in shapefile
+# ISO3 codes that do not have matching geography in shapefile (either border changes, or split into multiple countries)
 
-# CSW - now two separate ISO3 codes (CZE, SVK)
+# CSK - now two separate ISO3 codes (CZE, SVK)
 # PCI - former Pacific islands (1962 - 1991)
 # SUN - former USSR
 # YUG - former Yugoslavia
-# SXM - Sint Maarten (southern part of St Martin, not in geospatial data?)
+# EU2 - European Union
+# WLD - world
+# ANT - split into Sint Eustatius, Bonaire, Curacao, Aruba
 
 
 # %%
