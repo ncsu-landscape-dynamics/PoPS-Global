@@ -17,9 +17,7 @@ countries
 crosswalk = pd.read_csv(
     "H:/Shared drives/APHIS  Projects/Pandemic/Data/Comtrade Country Code and ISO list.csv",
     encoding="ISO-8859-1",
-    index_col="Country Code",
 )
-crosswalk
 
 
 # %%
@@ -52,26 +50,31 @@ no_shp_iso3[no_shp_iso3.ISO3.notnull()]
 
 # %%
 # Where possible, change UN crosswalk to use ISO3 codes that match the shapefile (codes that represent the correct geography).
-# Create dictionary of manual corrections for mismatches.
+# If changes result in duplicate ISO3 codes in a timestep, trade datta will need to be summed for the duplicate codes in the timestep (when 2 former countries combine into one modern country)
+# Remove ISO3 codes that do not have matching geography in shapefile (either border changes, or split into multiple countries)
+# Codes that are removed will not have trade data for the model during the years affected (specified in parentheses below)
+
+# Create dictionary of manual corrections.
 corrections = {
-    "DDR": "DEU",  # German Democratic Republic to Germany
-    "VDR": "VNM",  # Democratic Republic of Viet-Nam to Viet Nam
-    "YMD": "YEM",  # Democratic Yemen to Yemen
-    "PCZ": "PAN",  # Zone of the Panama Canal to Panama
-    "SCG": "SRB",  # Serbia and Montenegro to Serbia
+    "DDR": "DEU",  # (1962 - 1990) Former German Democratic Republic to Germany, combine with Former Fed. Rep. of Germany (DEU) for these years
+    "VDR": "VNM",  # (1962 - 1974) Former Democratic Republic of Viet-Nam to Viet Nam, combine with Former Rep. of Vietnam (VNM) for these years
+    "YMD": "YEM",  # (1962 - 1990) Former Democratic Yemen to Yemen, combine with Former Arab Rep of Yemen (YEM) for these years
+    "SCG": "SRB",  # (1992 - 2005) Serbia and Montenegro to Serbia, for these years, Montenegro's trade will be mapped to Serbia
+    "PCZ": "",  # (1962 - 1977) Zone of the Panama Canal
+    "CSK": "",  # (1962 - 1992) now two separate ISO3 codes (CZE, SVK), during these years there will be no trade data for Czech Rep and Slovakia. Could consider mapping to Czech Rep if needed.
+    "PCI": "",  # (1962 - 1991) former Pacific islands
+    "SUN": "",  # (1962 - 1991) former USSR, now 12 USO3 codes, during these year there will be no trade data for Russia, Georgia, Ukraine, Moldova, Belarus, Armenia, Azerbaijan, Kazakhstan, Uzbekistan, Turkmenistan, Kyrgyzstan, Tajikistan
+    "YUG": "",  # (1962 - 1991) former Yugoslavia, now 7 ISO3 codes, during these year there will be no trade data for Bosnia and Herzgovina, Croatia, Kosovo, Montenegro, North Macedonia, Serbia, Slovenia
+    "ANT": "",  # (1962 - 2010) Netherland Antilles, split into 4 ISO3 codes, during these year, will be no trade data for Sint Eustatius, Bonaire, Curacao. Except Aruba which will only be missing from 1962 - 1988
+    "EU2": "",  # European Union
+    "WLD": "",  # world
 }
 
-
-# %%
-# ISO3 codes that do not have matching geography in shapefile (either border changes, or split into multiple countries)
-
-# CSK - now two separate ISO3 codes (CZE, SVK)
-# PCI - former Pacific islands (1962 - 1991)
-# SUN - former USSR
-# YUG - former Yugoslavia
-# EU2 - European Union
-# WLD - world
-# ANT - split into Sint Eustatius, Bonaire, Curacao, Aruba
+# Other notes:
+# Prior to 2012, SDN refers to Sudan prior to splitting into two countries. Trade data will include all of former area but will be mapped to northern part (modern SDN).
+# If historical modeling is done (pre-1992), should check to see if additional changes need to be made
+# Many N/As in original crosswalk were dropped. Some are historical countries (Tanganyika, Zanzibar, Peninsula Malaysia) or uninhabited areas (Bouvet Island).
+# VIR, MTQ, GLP, GUF - these territories have current ISO3 codes, but do not have current UN codes. If modeling prior to 1996 (or prior to 1981 for VIR), these codes will be included but will not have modern trade data.
 
 
 # %%
@@ -83,8 +86,26 @@ for key in corrections.keys():
 
 
 # %%
-crosswalk[["ISO3-digit Alpha", "Country Name, Abbreviation"]]
+crosswalk = crosswalk[
+    [
+        "Country Code",
+        "ISO3-digit Alpha",
+        "Country Name, Abbreviation",
+        "Start Valid Year",
+        "End Valid Year",
+    ]
+].rename(
+    columns={
+        "Country Code": "UN",
+        "ISO3-digit Alpha": "ISO3",
+        "Country Name, Abbreviation": "Name",
+        "Start Valid Year": "Start",
+        "End Valid Year": "End",
+    },
+)
 
 
 # %%
-crosswalk[["ISO3-digit Alpha", "Country Name, Abbreviation"]].to_csv("un_to_iso.csv")
+crosswalk.to_csv("un_to_iso.csv", index=False)
+
+# %%
