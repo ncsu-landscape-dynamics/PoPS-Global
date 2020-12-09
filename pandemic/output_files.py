@@ -286,7 +286,6 @@ def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
     none
 
     """
-    presence_cols = [c for c in formatted_geojson.columns if c.startswith("Presence")]
     prob_intro_cols = [
         c
         for c in formatted_geojson.columns
@@ -300,6 +299,7 @@ def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
         )
         formatted_geojson[f"Presence {year}"] = formatted_geojson[f"Presence {year}12"]
 
+    presence_cols = [c for c in formatted_geojson.columns if c.startswith("Presence")]
     formatted_geojson.to_file(
         outpath + f"/pandemic_output_aggregated.geojson", driver="GeoJSON"
     )
@@ -317,6 +317,7 @@ def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
         column_list=presence_cols_annual,
         chars_to_strip="Presence ",
     )
+
     agg_prob_d = create_feature_dict(
         geojson_obj=formatted_geojson,
         column_list=agg_prob_cols_annual,
