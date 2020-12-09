@@ -138,8 +138,9 @@ def pandemic(
         # in data frame with all locations for selecting attributes
         # and populating output matrices
         l = locations_list[k]
-        j = locations.index[locations["UN"] == l[1]][0]
+        j = locations.index[locations["ISO3"] == l[1]][0]
         destination = locations.iloc[j, :]
+
         # check that Phytosanitary capacity data is available if not set
         # the value to 0 to remove this aspect of the equation
         if "Phytosanitary Capacity" in destination:
@@ -150,7 +151,7 @@ def pandemic(
         # get position index of location l with known host presence
         # in data frame with all locations for selecting attributes
         # and populating output matrices
-        i = locations.index[locations["UN"] == l[0]][0]
+        i = locations.index[locations["ISO3"] == l[0]][0]
         origin = locations.iloc[i, :]
         # check that Phytosanitary capacity data is available if not
         # set value to 0 to remove this aspect of the equation
@@ -468,7 +469,7 @@ phyto_data = phyto_data[["proactive", "ISO3", "UN"]]
 phyto_data = phyto_data.rename(columns={"proactive": "Phytosanitary Capacity"})
 
 # Assign value to phytosanitary capacity estimates
-countries = countries.merge(phyto_data, how="left", on="UN", suffixes=[None, "_y"])
+countries = countries.merge(phyto_data, how="left", on="ISO3", suffixes=[None, "_y"])
 phyto_dict = {
     np.nan: 0.0,
     0: 0.0,
@@ -499,7 +500,7 @@ date_list.sort()
 
 # Example trade array for formatting outputs
 traded = pd.read_csv(
-    file_list_filtered[1], sep=",", header=0, index_col=0, encoding="latin1"
+    file_list_filtered[0], sep=",", header=0, index_col=0, encoding="latin1"
 )
 # Checking trade array shapes
 print("Length of trades list: ", len(trades_list))
@@ -571,9 +572,9 @@ for i in range(len(trades_list)):
         }
 
         if len(trades_list) > 1:
-            outpath = out_dir + f"/run{run_num}/iter{run_iter}/{code}/"
+            outpath = out_dir + f"/run_{run_num}/iter_{run_iter}/{code}/"
         else:
-            outpath = out_dir + f"/run{run_num}/iter{run_iter}/"
+            outpath = out_dir + f"/run_{run_num}/iter_{run_iter}/"
 
         create_model_dirs(outpath=outpath, output_dict=arr_dict)
         print("saving model outputs: ", outpath)
@@ -626,7 +627,7 @@ for i in range(len(trades_list)):
             - len(native_countries_list)
         )
 
-        with open(f"{outpath}/run{run_num}_meta.txt", "w") as file:
+        with open(f"{outpath}/run_{run_num}_meta.txt", "w") as file:
             json.dump(meta, file, indent=4)
 
     else:
