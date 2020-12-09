@@ -72,9 +72,9 @@ def location_pairs_with_host(locations):
 
     locations_with_host_df = locations.loc[locations["Host Percent Area"] > 0]
     origins = list(
-        locations_with_host_df.loc[locations_with_host_df["Presence"] == True]["UN"]
+        locations_with_host_df.loc[locations_with_host_df["Presence"] == True]["ISO3"]
     )
-    destinations = list(locations_with_host_df["UN"])
+    destinations = list(locations_with_host_df["ISO3"])
     origins_list = [
         country for country in origins for i in range(locations_with_host_df.shape[0])
     ]
@@ -152,7 +152,7 @@ def create_trades_list(commodity_path, commodity_forecast_path, start_year, dist
     # If trade data are aggregated (i.e., summed across
     # multiple commodity codes)
     if len(commodities_available) == 1:
-        code_list = ["Aggregated"]
+        code_list = [os.path.split(f)[1] for f in commodities_available]
         print("\t", commodities_available)
         file_list_historical = glob.glob(commodity_path + "/*.csv")
         file_list_historical.sort()
