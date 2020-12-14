@@ -80,11 +80,11 @@ def save_model_output(
     country_intro = model_output_object[5]
 
     out_df = model_output_df.drop(columns_to_drop, axis=1)
-    out_df["geometry"] = [
-        MultiPolygon([feature]) if type(feature) == Polygon else feature
-        for feature in out_df["geometry"]
-    ]
-    out_df.to_file(outpath + "/pandemic_output.geojson", driver="GeoJSON")
+    # out_df["geometry"] = [
+    #     MultiPolygon([feature]) if type(feature) == Polygon else feature
+    #     for feature in out_df["geometry"]
+    # ]
+    # out_df.to_file(outpath + "/pandemic_output.geojson", driver="GeoJSON")
     out_pdf = pd.DataFrame(out_df.drop(columns="geometry", axis=1))
     out_pdf.to_csv(outpath + "/pandemic_output.csv")
 
@@ -160,8 +160,7 @@ def agg_prob(row, column_list):
     for i in range(0, len(column_list)):
         if row[column_list[i]] > 0.0:
             non_zero.append(row[column_list[i]])
-    sub_list = list(map(lambda x: 1 - x, non_zero))
-    prod_out = np.prod(sub_list)
+    prod_out = np.prod(list(map(lambda x: 1 - x, non_zero)))
     final_prob = 1 - prod_out
 
     return final_prob
@@ -286,7 +285,6 @@ def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
     none
 
     """
-    presence_cols = [c for c in formatted_geojson.columns if c.startswith("Presence")]
     prob_intro_cols = [
         c
         for c in formatted_geojson.columns
@@ -300,6 +298,7 @@ def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
         )
         formatted_geojson[f"Presence {year}"] = formatted_geojson[f"Presence {year}12"]
 
+    presence_cols = [c for c in formatted_geojson.columns if c.startswith("Presence")]
     formatted_geojson.to_file(
         outpath + f"/pandemic_output_aggregated.geojson", driver="GeoJSON"
     )
@@ -317,6 +316,7 @@ def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
         column_list=presence_cols_annual,
         chars_to_strip="Presence ",
     )
+
     agg_prob_d = create_feature_dict(
         geojson_obj=formatted_geojson,
         column_list=agg_prob_cols_annual,
@@ -336,12 +336,12 @@ def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
         if c in presence_cols_monthly or c.startswith("Probability")
     ]
 
-    sm_gdf = new_gdf.drop(cols_to_drop, axis=1)
-    sm_gdf.to_file(
-        outpath + f"/pandemic_output_aggregated_select.geojson", driver="GeoJSON"
-    )
-    sm_csv = pd.DataFrame(sm_gdf)
-    sm_csv.drop(["geometry"], axis=1, inplace=True)
+    # sm_gdf = new_gdf.drop(cols_to_drop, axis=1)
+    # sm_gdf.to_file(
+    #     outpath + f"/pandemic_output_aggregated_select.geojson", driver="GeoJSON"
+    # )
+    sm_csv = pd.DataFrame(new_gdf.drop(cols_to_drop + ["geometry"], axis=1))
+    # sm_csv.drop(["geometry"], axis=1, inplace=True)
     sm_csv.to_csv(
         outpath + f"/pandemic_output_aggregated_select.csv",
         float_format="%.2f",

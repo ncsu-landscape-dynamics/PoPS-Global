@@ -140,8 +140,9 @@ def pandemic(
         # in data frame with all locations for selecting attributes
         # and populating output matrices
         l = locations_list[k]
-        j = locations.index[locations["UN"] == l[1]][0]
+        j = locations.index[locations["ISO3"] == l[1]][0]
         destination = locations.iloc[j, :]
+
         # check that Phytosanitary capacity data is available if not set
         # the value to 0 to remove this aspect of the equation
         if "Phytosanitary Capacity" in destination:
@@ -152,7 +153,7 @@ def pandemic(
         # get position index of location l with known host presence
         # in data frame with all locations for selecting attributes
         # and populating output matrices
-        i = locations.index[locations["UN"] == l[0]][0]
+        i = locations.index[locations["ISO3"] == l[0]][0]
         origin = locations.iloc[i, :]
         # check that Phytosanitary capacity data is available if not
         # set value to 0 to remove this aspect of the equation
@@ -395,7 +396,7 @@ def pandemic_multiple_time_steps(
                 f"Phytosanitary Capacity {ts[:4]}"
             ]
         else:
-            locations["Phytosanitary Capacity"] = locations["pc_mode"]
+            locations["Phytosanitary Capacity"] = locations["Phytosanitary Capacity"]
 
         # filter locations to those where host percent area is greater
         # than 0 and therefore has potential for pest spread
@@ -465,9 +466,6 @@ with open(path_to_config_json) as json_file:
 data_dir = config["data_dir"]
 countries_path = config["countries_path"]
 phyto_path = config["phyto_path"]
-phyto_low = config["phyto_low"]
-phyto_mid = config["phyto_mid"]
-phyto_high = config["phyto_high"]
 commodity_path = config["commodity_path"]
 commodity_forecast_path = config["commodity_forecast_path"]
 native_countries_list = config["native_countries_list"]
@@ -488,16 +486,22 @@ time_infect = config["time_to_infectivity"]
 countries = geopandas.read_file(countries_path, driver="GPKG")
 distances = distance_between(countries)
 phyto_data = pd.read_csv(phyto_path, index_col=0)
-phyto_year_cols = phyto_data.columns[3:].to_list()
-phyto_data["pc_mode"] = phyto_data[phyto_year_cols].mode(axis=1)[0]
-phyto_data.columns = np.where(
-    phyto_data.columns.isin(phyto_year_cols),
-    "Phytosanitary Capacity " + phyto_data.columns,
-    phyto_data.columns,
-)
+# Use only proactive capacity now. May incorporate reactive capacity dynamically later.
+phyto_data = phyto_data[["proactive", "ISO3", "UN"]]
+phyto_data = phyto_data.rename(columns={"proactive": "Phytosanitary Capacity"})
+
 # Assign value to phytosanitary capacity estimates
-countries = countries.merge(phyto_data, how="left", on="UN", suffixes=[None, "_y"])
-phyto_dict = {"low": phyto_low, "mid": phyto_mid, "high": phyto_high, np.nan: 0}
+countries = countries.merge(phyto_data, how="left", on="ISO3", suffixes=[None, "_y"])
+phyto_dict = {
+    np.nan: 0.0,
+    0: 0.0,
+    0.5: 0.15,
+    1.0: 0.30,
+    1.5: 0.45,
+    2.0: 0.60,
+    2.5: 0.75,
+    3.0: 0.90,
+}
 countries.replace(phyto_dict, inplace=True)
 
 # Read & format trade data
@@ -518,7 +522,7 @@ date_list.sort()
 
 # Example trade array for formatting outputs
 traded = pd.read_csv(
-    file_list_filtered[1], sep=",", header=0, index_col=0, encoding="latin1"
+    file_list_filtered[0], sep=",", header=0, index_col=0, encoding="latin1"
 )
 # Checking trade array shapes
 print("Length of trades list: ", len(trades_list))
@@ -600,9 +604,9 @@ for i in range(len(trades_list)):
         }
 
         if len(trades_list) > 1:
-            outpath = out_dir + f"/run_{run_num}/iter{run_iter}/{code}/"
+            outpath = out_dir + f"/run_{run_num}/iter_{run_iter}/{code}/"
         else:
-            outpath = out_dir + f"/run_{run_num}/iter{run_iter}/"
+            outpath = out_dir + f"/run_{run_num}/iter_{run_iter}/"
 
         create_model_dirs(outpath=outpath, output_dict=arr_dict)
         print("saving model outputs: ", outpath)
