@@ -73,7 +73,7 @@ def location_pairs_with_host(locations):
 
     locations_with_host_df = locations.loc[locations["Host Percent Area"] > 0]
     origins = list(
-        locations_with_host_df.loc[locations_with_host_df["Presence"] is True]["ISO3"]
+        locations_with_host_df.loc[locations_with_host_df["Presence"] == True]["ISO3"]
     )
     destinations = list(locations_with_host_df["ISO3"])
     origins_list = [
@@ -81,6 +81,8 @@ def location_pairs_with_host(locations):
     ]
     destinations_list = destinations * len(origins)
     location_tuples = list(zip(origins_list, destinations_list))
+    # remove location tuples where origin and destination are the same country
+    location_tuples = [i for i in location_tuples if i[0] != i[1]]
 
     return location_tuples
 
