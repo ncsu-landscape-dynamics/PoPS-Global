@@ -1,5 +1,3 @@
-import pytest
-import os
 import pandas as pd
 from pandemic.helpers import locations_with_hosts, filter_trades_list
 

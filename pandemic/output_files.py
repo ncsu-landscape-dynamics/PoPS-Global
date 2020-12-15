@@ -1,10 +1,10 @@
 import os
 import numpy as np
 import pandas as pd
-import geopandas as gpd
-import json
-from shapely.geometry.polygon import Polygon
-from shapely.geometry.multipolygon import MultiPolygon
+
+# import geopandas as gpd
+# from shapely.geometry.polygon import Polygon
+# from shapely.geometry.multipolygon import MultiPolygon
 
 
 def create_model_dirs(outpath, output_dict):
@@ -300,12 +300,12 @@ def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
 
     presence_cols = [c for c in formatted_geojson.columns if c.startswith("Presence")]
     formatted_geojson.to_file(
-        outpath + f"/pandemic_output_aggregated.geojson", driver="GeoJSON"
+        outpath + "/pandemic_output_aggregated.geojson", driver="GeoJSON"
     )
     out_csv = pd.DataFrame(formatted_geojson)
     out_csv.drop(["geometry"], axis=1, inplace=True)
     out_csv.to_csv(
-        outpath + f"/pandemic_output_aggregated.csv", float_format="%.2f", na_rep="NAN!"
+        outpath + "/pandemic_output_aggregated.csv", float_format="%.2f", na_rep="NAN!"
     )
     presence_cols_monthly = [c for c in presence_cols if len(c.split(" ")[-1]) > 5]
     presence_cols_annual = [c for c in presence_cols if c not in presence_cols_monthly]
@@ -343,7 +343,7 @@ def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
     sm_csv = pd.DataFrame(new_gdf.drop(cols_to_drop + ["geometry"], axis=1))
     # sm_csv.drop(["geometry"], axis=1, inplace=True)
     sm_csv.to_csv(
-        outpath + f"/pandemic_output_aggregated_select.csv",
+        outpath + "/pandemic_output_aggregated_select.csv",
         float_format="%.2f",
         na_rep="NAN!",
     )

@@ -1,16 +1,10 @@
 import os
 import sys
-import glob
 import json
 import time
 import numpy as np
 import pandas as pd
 import geopandas
-from datetime import datetime
-from shapely.geometry.polygon import Polygon
-from shapely.geometry.multipolygon import MultiPolygon
-
-sys.path.append("C:/Users/cawalden/Documents/GitHub/Pandemic_Model")
 
 from pandemic.helpers import (
     distance_between,
@@ -139,8 +133,8 @@ def pandemic(
         # get position index of location k with known host presence
         # in data frame with all locations for selecting attributes
         # and populating output matrices
-        l = locations_list[k]
-        j = locations.index[locations["ISO3"] == l[1]][0]
+        loc_pair = locations_list[k]
+        j = locations.index[locations["ISO3"] == loc_pair[1]][0]
         destination = locations.iloc[j, :]
 
         # check that Phytosanitary capacity data is available if not set
@@ -166,8 +160,9 @@ def pandemic(
         d_ij = distances[j, i]
 
         # check if time steps are annual (YYYY) or monthly (YYYYMM)
-        # if monthly, parse dates to determine if species is in the correct life cycle
-        # to be transported (set value to 1), based on the geographic location of the origin
+        # if monthly, parse dates to determine if species is in the
+        # correct life cycle to be transported (set value to 1),
+        # based on the geographic location of the origin
         # country (i.e., Northern or Southern Hemisphere)
         if len(time_step) > 4:
             if (
@@ -189,7 +184,7 @@ def pandemic(
 
         # check if species is present in origin country
         # and sufficient time has passed to faciliate transmission
-        if (origin["Infective"] != None) and (
+        if (origin["Infective"] is not None) and (
             int(time_step) >= int(origin["Infective"])
         ):
             zeta_it = 1
@@ -237,7 +232,7 @@ def pandemic(
             # if no previous introductions, set infective column to current time
             # step plus period to infectivity; assumes period to infectivity is
             # given in number of years
-            if locations.iloc[j, locations.columns.get_loc("Infective")] == None:
+            if locations.iloc[j, locations.columns.get_loc("Infective")] is None:
                 locations.iloc[j, locations.columns.get_loc("Infective")] = str(
                     int(time_step[:4]) + time_infect
                 ) + str(time_step[4:])
@@ -365,7 +360,7 @@ def pandemic_multiple_time_steps(
         from the probability_of_establishment and probability_of_entry
     """
     model_start = time.perf_counter()
-    time_steps = trades.shape[0]
+    # time_steps = trades.shape[0]
 
     entry_probabilities = np.zeros_like(trades, dtype=float)
     establishment_probabilities = np.zeros_like(trades, dtype=float)

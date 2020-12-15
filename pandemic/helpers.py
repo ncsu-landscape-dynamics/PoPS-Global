@@ -19,8 +19,9 @@ import glob
 import pandas as pd
 import numpy as np
 from scipy.spatial import distance
-from shapely.geometry.polygon import Polygon
-from shapely.geometry.multipolygon import MultiPolygon
+
+# from shapely.geometry.polygon import Polygon
+# from shapely.geometry.multipolygon import MultiPolygon
 
 
 def distance_between(shapefile):
@@ -72,7 +73,7 @@ def location_pairs_with_host(locations):
 
     locations_with_host_df = locations.loc[locations["Host Percent Area"] > 0]
     origins = list(
-        locations_with_host_df.loc[locations_with_host_df["Presence"] == True]["ISO3"]
+        locations_with_host_df.loc[locations_with_host_df["Presence"] is True]["ISO3"]
     )
     destinations = list(locations_with_host_df["ISO3"])
     origins_list = [
@@ -156,7 +157,7 @@ def create_trades_list(commodity_path, commodity_forecast_path, start_year, dist
         print("\t", commodities_available)
         file_list_historical = glob.glob(commodity_path + "/*.csv")
         file_list_historical.sort()
-        if commodity_forecast_path != None:
+        if commodity_forecast_path is not None:
             file_list_forecast = glob.glob(commodity_forecast_path + "/*.csv")
             file_list_forecast.sort()
             file_list = file_list_historical + file_list_forecast
@@ -183,7 +184,7 @@ def create_trades_list(commodity_path, commodity_forecast_path, start_year, dist
             file_list_historical = glob.glob(commodity_path + f"/{code}/*.csv")
             file_list_historical.sort()
 
-            if commodity_forecast_path != None:
+            if commodity_forecast_path is not None:
                 file_list_forecast = glob.glob(
                     commodity_forecast_path + f"/{code}/*.csv"
                 )
