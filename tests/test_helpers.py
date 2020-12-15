@@ -1,18 +1,18 @@
 import pandas as pd
-from pandemic.helpers import locations_with_hosts, filter_trades_list
+from pandemic.helpers import location_pairs_with_host, filter_trades_list
 
 
 def test_location_filter():
     locations = pd.DataFrame(
         {
-            "name": ["Ecuador", "United States", "China", "Brazil"],
-            "phytosanitary_compliance": [0.00, 0.00, 0.00, 0.00],
+            "ISO3": ["ECU", "USA", "CHN", "BRA"],
+            "Phytosanitary Capacity": [0.00, 0.00, 0.00, 0.00],
             "Presence": [False, True, False, True],
             "Host Percent Area": [0.00, 0.25, 0.50, 0.35],
         }
     )
 
-    assert len(locations_with_hosts(locations)) == 3
+    assert len(location_pairs_with_host(locations)) == 4
 
 
 def test_filter_trades_list():
