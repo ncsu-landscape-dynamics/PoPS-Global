@@ -1,46 +1,30 @@
 import os
 import sys
 import json
-import time
 import numpy as np
 import pandas as pd
 import geopandas
 
 from pandemic.helpers import (
     distance_between,
-    location_pairs_with_host,
-    filter_trades_list,
     create_trades_list,
 )
-from pandemic.probability_calculations import (
-    probability_of_entry,
-    probability_of_establishment,
-    probability_of_introduction,
-)
+
 from pandemic.ecological_calculations import (
-    climate_similarity,
     create_climate_similarities_matrix,
 )
 from pandemic.output_files import (
     create_model_dirs,
     save_model_output,
-    agg_prob,
-    get_feature_cols,
-    create_feature_dict,
-    add_dict_to_geojson,
     aggregate_monthly_output_to_annual,
 )
 
 from pandemic.model_equations import (
-    pandemic_single_time_step,
     pandemic_multiple_time_steps,
 )
 
 # Read model arguments from configuration file
-# path_to_config_json = sys.argv[1]
-path_to_config_json = (
-    "C:/Users/cawalden/Documents/GitHub/Pandemic_Model/pandemic/config.json"
-)
+path_to_config_json = sys.argv[1]
 
 with open(path_to_config_json) as json_file:
     config = json.load(json_file)
@@ -175,8 +159,8 @@ for i in range(len(trades_list)):
             date_list=date_list,
         )
 
-        run_num = 9999 # sys.argv[2]
-        run_iter = 9999 # sys.argv[3]
+        run_num = sys.argv[2]
+        run_iter = sys.argv[3]
 
         arr_dict = {
             "prob_entry": "probability_of_entry",

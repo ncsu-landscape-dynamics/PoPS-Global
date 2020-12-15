@@ -105,9 +105,9 @@ corrections = {
 
 # Other notes:
 # Prior to 2012, SDN refers to Sudan prior to splitting into two countries.
-# Trade data will include all of former area but will be mapped to northern part (modern SDN).
-# If historical modeling is done (pre-1992), should check to see if additional
-# changes need to be made
+# Trade data will include all of former area but will be mapped to northern part
+# (modern SDN). # If historical modeling is done (pre-1992), should check to see
+# if additional changes need to be made
 # Many N/As in original crosswalk were dropped. Some are historical countries
 # (Tanganyika, Zanzibar, Peninsula Malaysia) or uninhabited areas (Bouvet Island).
 # VIR, MTQ, GLP, GUF - these territories have current ISO3 codes, but do not have
