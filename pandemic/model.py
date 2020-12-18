@@ -46,8 +46,12 @@ sigma_phi = config["sigma_phi"]
 start_year = config["start_year"]
 random_seed = config["random_seed"]
 out_dir = config["out_dir"]
-columns_to_drop = config["columns_to_drop"]
+cols_to_drop = config["columns_to_drop"]
+time_infect_units = config["transmission_lag_unit"]
+transmission_lag_type = config["transmission_lag_type"]
 time_infect = config["time_to_infectivity"]
+gamma_shape = config["transmission_lag_shape"]
+gamma_scale = config["transmission_lag_scale"]
 
 countries = geopandas.read_file(countries_path, driver="GPKG")
 distances = distance_between(countries)
@@ -90,6 +94,7 @@ date_list.sort()
 traded = pd.read_csv(
     file_list_filtered[0], sep=",", header=0, index_col=0, encoding="latin1"
 )
+
 # Checking trade array shapes
 print("Length of trades list: ", len(trades_list))
 for i in range(len(trades_list)):
@@ -109,6 +114,7 @@ for i in range(len(trades_list)):
         code = code_list[i]
         print("\nRunning model for commodity: ", code)
     else:
+        code = code_list[0]
         print(
             "\nRunning model for commodity: ",
             os.path.basename(commodities_available[0]),
@@ -157,10 +163,19 @@ for i in range(len(trades_list)):
             sigma_T=sigma_T,
             start_year=start_year,
             date_list=date_list,
+            season_dict=season_dict,
+            transmission_lag_type=transmission_lag_type,
+            time_infect_units=time_infect_units,
+            time_infect=time_infect,
+            gamma_shape=gamma_shape,
+            gamma_scale=gamma_scale,
         )
 
-        run_num = sys.argv[2]
-        run_iter = sys.argv[3]
+        sim_name = sys.argv[2]
+        add_descript = sys.argv[3]
+        run_num = sys.argv[4]
+
+        run_prefix = f"{sim_name}_{add_descript}"
 
         arr_dict = {
             "prob_entry": "probability_of_entry",
@@ -169,16 +184,12 @@ for i in range(len(trades_list)):
             "country_introduction": "country_introduction",
         }
 
-        if len(trades_list) > 1:
-            outpath = out_dir + f"/run_{run_num}/iter_{run_iter}/{code}/"
-        else:
-            outpath = out_dir + f"/run_{run_num}/iter_{run_iter}/"
-
+        outpath = out_dir + f"/{sim_name}/{run_prefix}/run_{run_num}/{code}/"
         create_model_dirs(outpath=outpath, output_dict=arr_dict)
         print("saving model outputs: ", outpath)
         full_out_df = save_model_output(
             model_output_object=e,
-            columns_to_drop=columns_to_drop,
+            columns_to_drop=cols_to_drop,
             example_trade_matrix=traded,
             outpath=outpath,
             date_list=date_list,
@@ -205,7 +216,7 @@ for i in range(len(trades_list)):
                 "alpha": str(alpha),
                 "beta": str(beta),
                 "mu": str(mu),
-                "lamda_c": str(lamda_c),
+                "lamda_c": str(lamda_c_list),
                 "phi": str(phi),
                 "sigma_epsilon": str(sigma_epsilon),
                 "sigma_h": str(sigma_h),
@@ -213,10 +224,18 @@ for i in range(len(trades_list)):
                 "sigma_phi": str(sigma_phi),
                 "sigma_T": str(sigma_T),
                 "start_year": str(start_year),
-                "infectivity_lag": str(time_infect),
+                "transmission_lag_type": str(transmission_lag_type),
+                "transmission_lag_units": time_infect_units,
+                "gamma_shape": gamma_shape,
+                "gamma_scale": gamma_scale,
                 "random_seed": str(random_seed),
+                "infectivity_lag": time_infect,
             }
         )
+        if (transmission_lag_type == "static") | (transmission_lag_type is None):
+            meta["PARAMETERS"][0].update({"infectivity_lag": time_infect})
+        if transmission_lag_type == "stochastic":
+            meta["PARAMETERS"][0].update({"infectivity_lag": None})
         meta["NATIVE_COUNTRIES_T0"] = native_countries_list
         meta["COMMODITY"] = commodities_available[i]
         meta["FORECASTED"] = commodity_forecast_path
@@ -226,7 +245,7 @@ for i in range(len(trades_list)):
             - len(native_countries_list)
         )
 
-        with open(f"{outpath}/run_{run_num}_meta.txt", "w") as file:
+        with open(f"{outpath}/run_{run_num}_meta.json", "w") as file:
             json.dump(meta, file, indent=4)
 
     else:
