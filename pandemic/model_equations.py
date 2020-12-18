@@ -1,7 +1,7 @@
 """
 PoPS Pandemic - Simulation
 
-Module containing all calcualtions for ecological similarity
+Module containing all calcualtions for the Pandemic model
 
 Copyright (C) 2019-2020 by the authors.
 
@@ -46,7 +46,11 @@ def pandemic_single_time_step(
     sigma_T,
     time_step,
     season_dict,
+    transmission_lag_type,
+    time_infect_units,
     time_infect,
+    gamma_shape,
+    gamma_scale,
 ):
     """
     Returns the probability of establishment, probability of entry, and
@@ -104,8 +108,23 @@ def pandemic_single_time_step(
     sigma_T : int
         The trade volume normalizing constant
     time_step : str
-        string representing the name of the discrete time step (i.e., YYYYMM
+        String representing the name of the discrete time step (i.e., YYYYMM
         for monthly or YYYY for annual)
+    season_dict : dict
+        Dictionary of months (i.e., MM) when a pest can be transported in
+        a commodity, denoted by hemisphere key (i.e.,
+        {NH_season: [05, 06'], SH_season: [11, 12]})
+    transmission_lag_type : str
+        Type of transmission lag used in the simulation (i.e., None,
+        static, or stochastic)
+    time_infect_units : str
+        Units associated with the transmission lag value (i.e., years, months)
+    time_infect : int
+        Time until a country is infectious, set for static transmission lag
+    gamma_shape : float
+        Shape parameter for gamma distribution used in stochastic transmission
+    gamma_scale: float
+        Scale parameter for gamma distribution used in stochastic transmission
 
     Returns
     -------
@@ -224,20 +243,61 @@ def pandemic_single_time_step(
         introduced = np.random.binomial(1, probability_of_introduction_ijtc)
         if bool(introduced):
             print("\t\t", origin["NAME"], "-->", destination["NAME"])
-            print("\t\t\tProb intro: ", probability_of_introduction_ijtc)
             introduction_country[j, i] = bool(introduced)
             locations.iloc[j, locations.columns.get_loc("Presence")] = bool(introduced)
+
             # if no previous introductions, set infective column to current time
-            # step plus period to infectivity; assumes period to infectivity is
-            # given in number of years
-            if locations.iloc[j, locations.columns.get_loc("Infective")] is None:
-                locations.iloc[j, locations.columns.get_loc("Infective")] = str(
-                    int(time_step[:4]) + time_infect
-                ) + str(time_step[4:])
-                print(
-                    f'\t\t\t{destination["NAME"]} infective: ',
-                    locations.iloc[j, locations.columns.get_loc("Infective")],
-                )
+            # step plus period to infectivity; currently assumes period to infectivity
+            # is given in number of years
+            if transmission_lag_type == None:
+                time_infect = 0
+                if locations.iloc[j, locations.columns.get_loc("Infective")] is None:
+                    locations.iloc[j, locations.columns.get_loc("Infective")] = str(
+                        int(time_step[:4]) + time_infect
+                    ) + str(time_step[4:])
+                    print(
+                        f'\t\t\t{destination["NAME"]} infective: ',
+                        locations.iloc[j, locations.columns.get_loc("Infective")],
+                    )
+            # Static lag is a tranmission lag of a set number of time units
+            if transmission_lag_type == "static":
+                if locations.iloc[j, locations.columns.get_loc("Infective")] is None:
+                    locations.iloc[j, locations.columns.get_loc("Infective")] = str(
+                        int(time_step[:4]) + time_infect
+                    ) + str(time_step[4:])
+                    print(
+                        f'\t\t\t{destination["NAME"]} infective: ',
+                        locations.iloc[j, locations.columns.get_loc("Infective")],
+                    )
+            # Stochastic lag draws from a gamma distribution to determine
+            # the number of time units until infectivity for each introduction
+            if transmission_lag_type == "stochastic":
+                time_infect = round(np.random.gamma(gamma_shape, gamma_scale, 1)[0])
+                if locations.iloc[j, locations.columns.get_loc("Infective")] is None:
+                    print("\t\t\tfirst intro...")
+                    print("\t\t\ttime to infectious: ", time_infect)
+                    locations.iloc[j, locations.columns.get_loc("Infective")] = str(
+                        int(time_step[:4]) + time_infect
+                    ) + str(time_step[4:])
+                    print(
+                        f'\t\t\t\t{destination["NAME"]} infective: ',
+                        locations.iloc[j, locations.columns.get_loc("Infective")],
+                    )
+                else:
+                    print("\t\t\treintroduction....")
+                    current = int(
+                        locations.iloc[j, locations.columns.get_loc("Infective")]
+                    )
+                    new = str(int(time_step[:4]) + time_infect) + str(time_step[4:])
+                    print("\t\t\tlatest time to infectious: ", time_infect)
+                    print(f"\t\t\t\torig: {current} \t new: {new}")
+                    if int(new) < int(current):
+                        print("\t\t\t\trevising to: ", new)
+                        locations.iloc[j, locations.columns.get_loc("Infective")] = str(
+                            new
+                        )
+                    else:
+                        print("\t\t\t\tkeeping: ", current)
 
             if origin_destination.empty:
                 origin_destination = pd.DataFrame(
@@ -291,6 +351,12 @@ def pandemic_multiple_time_steps(
     sigma_T,
     start_year,
     date_list,
+    season_dict,
+    transmission_lag_type,
+    time_infect_units,
+    time_infect,
+    gamma_shape,
+    gamma_scale,
 ):
     """
     Returns the probability of establishment, probability of entry, and
@@ -346,6 +412,21 @@ def pandemic_multiple_time_steps(
         The year in which to start the simulation
     date_list : list
         List of unique time step values (YYYY or YYYYMM)
+    season_dict : dict
+        Dictionary of months (i.e., MM) when a pest can be transported in
+        a commodity, separated by hemisphere (i.e.,
+        {NH_season: [05, 06', SH_season: [11, 12]})
+    transmission_lag_type : str
+        Type of transmission lag used in the simulation (i.e., None,
+        static, or stochastic)
+    time_infect_units : str
+        Units associated with the transmission lag value (i.e., years, months)
+    time_infect : int
+        Time until a country is infectious, set for static transmission lag
+    gamma_shape : float
+        Shape parameter for gamma distribution used in stochastic transmission
+    gamma_scale: float
+        Scale parameter for gamma distribution used in stochastic transmission
 
     Returns
     -------
@@ -412,6 +493,12 @@ def pandemic_multiple_time_steps(
             sigma_phi=sigma_phi,
             sigma_T=sigma_T,
             time_step=ts,
+            season_dict=season_dict,
+            transmission_lag_type=transmission_lag_type,
+            time_infect_units=time_infect_units,
+            time_infect=time_infect,
+            gamma_shape=gamma_shape,
+            gamma_scale=gamma_scale,
         )
 
         establishment_probabilities[t] = ts_out[1]
@@ -432,7 +519,6 @@ def pandemic_multiple_time_steps(
             "Probability of introduction"
         ]
         ts_time_end = time.perf_counter()
-        print(f"\t\tloop: {round(ts_time_end - ts_time_start, 2)} seconds")
 
     model_end = time.perf_counter()
     print(f"model run: {round((model_end - model_start)/60, 2)} minutes")
