@@ -249,7 +249,7 @@ def pandemic_single_time_step(
             # if no previous introductions, set infective column to current time
             # step plus period to infectivity; currently assumes period to infectivity
             # is given in number of years
-            if transmission_lag_type == None:
+            if transmission_lag_type is None:
                 time_infect = 0
                 if locations.iloc[j, locations.columns.get_loc("Infective")] is None:
                     locations.iloc[j, locations.columns.get_loc("Infective")] = str(
@@ -438,7 +438,7 @@ def pandemic_multiple_time_steps(
     probability_of_introduction : Calculates the probability of introduction
         from the probability_of_establishment and probability_of_entry
     """
-    model_start = time.perf_counter()
+
     # time_steps = trades.shape[0]
 
     entry_probabilities = np.zeros_like(trades, dtype=float)
@@ -450,7 +450,6 @@ def pandemic_multiple_time_steps(
     origin_destination = pd.DataFrame(columns=["Origin", "Destination", "Year"])
 
     for t in range(trades.shape[0]):
-        ts_time_start = time.perf_counter()
         ts = date_list[t]
         print("TIME STEP: ", ts)
         trade = trades[t]
@@ -518,10 +517,6 @@ def pandemic_multiple_time_steps(
         locations["Probability of introduction " + str(ts)] = locations[
             "Probability of introduction"
         ]
-        ts_time_end = time.perf_counter()
-
-    model_end = time.perf_counter()
-    print(f"model run: {round((model_end - model_start)/60, 2)} minutes")
 
     return (
         locations,
