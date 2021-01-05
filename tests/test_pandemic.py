@@ -47,6 +47,10 @@ def test_pandemic_runs():
         time_step=time_step,
         season_dict=season_dict,
         time_infect=time_infect,
+        transmission_lag_type="static",
+        time_infect_units="year",
+        gamma_shape=None,
+        gamma_scale=None,
     )
     assert (e[0] >= 0).all() and (e[0] <= 1).all()
     assert (e[1] >= 0).all() and (e[1] <= 1).all()
