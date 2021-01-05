@@ -35,3 +35,4 @@ MANIFEST
 pandemic/create_config.py
 pandemic/config.json
 pandemic/model_runs.py
+pandemic/create_header_file.py

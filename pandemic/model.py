@@ -89,6 +89,7 @@ for f in file_list_filtered:
     ts = str.split(os.path.splitext(fn)[0], "_")[-1]
     date_list.append(ts)
 date_list.sort()
+stop_year = date_list[-1][:4]
 
 # Example trade array for formatting outputs
 traded = pd.read_csv(
@@ -175,7 +176,7 @@ for i in range(len(trades_list)):
         add_descript = sys.argv[3]
         run_num = sys.argv[4]
 
-        run_prefix = f"{sim_name}_{add_descript}"
+        run_prefix = f"{sim_name}_{add_descript}_{code}"
 
         arr_dict = {
             "prob_entry": "probability_of_entry",
@@ -184,7 +185,7 @@ for i in range(len(trades_list)):
             "country_introduction": "country_introduction",
         }
 
-        outpath = out_dir + f"/{sim_name}/{run_prefix}/run_{run_num}/{code}/"
+        outpath = out_dir + f"/{sim_name}/{run_prefix}/run_{run_num}/"
         create_model_dirs(outpath=outpath, output_dict=arr_dict)
         print("saving model outputs: ", outpath)
         full_out_df = save_model_output(
@@ -224,6 +225,7 @@ for i in range(len(trades_list)):
                 "sigma_phi": str(sigma_phi),
                 "sigma_T": str(sigma_T),
                 "start_year": str(start_year),
+                "stop_year": str(stop_year),
                 "transmission_lag_type": str(transmission_lag_type),
                 "transmission_lag_units": time_infect_units,
                 "gamma_shape": gamma_shape,
