@@ -73,7 +73,7 @@ def location_pairs_with_host(locations):
 
     locations_with_host_df = locations.loc[locations["Host Percent Area"] > 0]
     origins = list(
-        locations_with_host_df.loc[locations_with_host_df["Presence"] == True]["ISO3"]
+        locations_with_host_df.loc[locations_with_host_df["Presence"]]["ISO3"]
     )
     destinations = list(locations_with_host_df["ISO3"])
     origins_list = [
