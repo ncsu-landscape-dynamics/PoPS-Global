@@ -2,10 +2,6 @@ import os
 import numpy as np
 import pandas as pd
 
-# import geopandas as gpd
-# from shapely.geometry.polygon import Polygon
-# from shapely.geometry.multipolygon import MultiPolygon
-
 
 def create_model_dirs(outpath, output_dict):
     """
@@ -80,11 +76,6 @@ def save_model_output(
     country_intro = model_output_object[5]
 
     out_df = model_output_df.drop(columns_to_drop, axis=1)
-    # out_df["geometry"] = [
-    #     MultiPolygon([feature]) if type(feature) == Polygon else feature
-    #     for feature in out_df["geometry"]
-    # ]
-    # out_df.to_file(outpath + "/pandemic_output.geojson", driver="GeoJSON")
     out_pdf = pd.DataFrame(out_df.drop(columns="geometry", axis=1))
     out_pdf.to_csv(outpath + "/pandemic_output.csv")
 
@@ -298,52 +289,8 @@ def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
         )
         formatted_geojson[f"Presence {year}"] = formatted_geojson[f"Presence {year}12"]
 
-    presence_cols = [c for c in formatted_geojson.columns if c.startswith("Presence")]
-    # formatted_geojson.to_file(
-    #     outpath + "/pandemic_output_aggregated.geojson", driver="GeoJSON"
-    # )
     out_csv = pd.DataFrame(formatted_geojson)
     out_csv.drop(["geometry"], axis=1, inplace=True)
     out_csv.to_csv(
         outpath + "/pandemic_output_aggregated.csv", float_format="%.2f", na_rep="NAN!"
     )
-    # presence_cols_monthly = [c for c in presence_cols if len(c.split(" ")[-1]) > 5]
-    # presence_cols_annual = [c for c in presence_cols if c not in presence_cols_monthly]
-    # agg_prob_cols_annual = [c for c in formatted_geojson.columns if c.startswith("Agg")]
-
-    # presence_d = create_feature_dict(
-    #     geojson_obj=formatted_geojson,
-    #     column_list=presence_cols_annual,
-    #     chars_to_strip="Presence ",
-    # )
-
-    # agg_prob_d = create_feature_dict(
-    #     geojson_obj=formatted_geojson,
-    #     column_list=agg_prob_cols_annual,
-    #     chars_to_strip="Agg Prob Intro ",
-    # )
-    # new_gdf = add_dict_to_geojson(
-    #     geojson_obj=formatted_geojson,
-    #     new_col_name="Presence",
-    #     dictionary_obj=presence_d,
-    # )
-    # new_gdf = add_dict_to_geojson(
-    #     geojson_obj=new_gdf, new_col_name="Agg Prob Intro", dictionary_obj=agg_prob_d
-    # )
-    # cols_to_drop = [
-    #     c
-    #     for c in new_gdf.columns
-    #     if c in presence_cols_monthly or c.startswith("Probability")
-    # ]
-
-    # # sm_gdf = new_gdf.drop(cols_to_drop, axis=1)
-    # # sm_gdf.to_file(
-    # #     outpath + f"/pandemic_output_aggregated_select.geojson", driver="GeoJSON"
-    # # )
-    # sm_csv = pd.DataFrame(new_gdf.drop(cols_to_drop + ["geometry"], axis=1))
-    # # sm_csv.drop(["geometry"], axis=1, inplace=True)
-    # sm_csv.to_csv(
-    #     outpath + "/pandemic_output_aggregated_select.csv",
-    #     float_format="%.2f",
-    #     na_rep="NAN!",
-    # )
