@@ -1,5 +1,3 @@
-import pytest
-import numpy as np
 from pandemic.probability_calculations import (
     probability_of_entry,
     probability_of_establishment,

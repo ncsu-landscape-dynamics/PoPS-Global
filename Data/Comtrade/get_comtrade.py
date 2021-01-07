@@ -101,62 +101,21 @@ for hs in hs_list:
     # loop over all countries (5 at a time, could do more at once) and call API
     for country_code_list in enumerate(nested_country_codes):
         country_code_str = "%2C".join(country_code_list[1])
-        try:
-            url = urlopen(
-                "http://comtrade.un.org/api/get?max=250000&type=C&px=HS&cc="
-                + str(hs)
-                + "&r="
-                + country_code_str
-                + "&rg=1&p=all&freq="
-                + freq
-                + "&ps="
-                + years_str
-                + "&fmt=json&token="
-                + str(auth_code)
-            )
-            raw = json.loads(url.read().decode())
-            url.close()
-        except:  # if did not load, try again
-            try:
-                url = urlopen(
-                    "http://comtrade.un.org/api/get?max=250000&type=C&px=HS&cc="
-                    + str(hs)
-                    + "&r="
-                    + country_code_str
-                    + "&rg=1&p=all&freq="
-                    + freq
-                    + "&ps="
-                    + years_str
-                    + "&fmt=json&token="
-                    + str(auth_code)
-                )
-                raw = json.loads(url.read().decode())
-                url.close()
-            except:  # if did not load again, move on to the next country in the loop
-                error_log.writerow(
-                    [
-                        "",
-                        ", ".join(map(str, nested_country_names[country_code_list[0]])),
-                        hs,
-                        years_str,
-                        "Fail",
-                        "",
-                        time.ctime(),
-                    ]
-                )
-                print(
-                    "Fail: HS"
-                    + str(hs)
-                    + ", "
-                    + years_str
-                    + ": "
-                    + ", ".join(map(str, nested_country_names[country_code_list[0]]))
-                    + ", "
-                    + years_str
-                    + ", "
-                    + str(hs)
-                )
-                continue
+
+        url = urlopen(
+            "http://comtrade.un.org/api/get?max=250000&type=C&px=HS&cc="
+            + str(hs)
+            + "&r="
+            + country_code_str
+            + "&rg=1&p=all&freq="
+            + freq
+            + "&ps="
+            + years_str
+            + "&fmt=json&token="
+            + str(auth_code)
+        )
+        raw = json.loads(url.read().decode())
+        url.close()
 
         if len(raw["dataset"]) == 0:
             print(

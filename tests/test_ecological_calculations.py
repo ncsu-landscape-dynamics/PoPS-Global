@@ -1,4 +1,3 @@
-import pytest
 import numpy as np
 from pandemic.ecological_calculations import climate_similarity
 

@@ -19,8 +19,9 @@ import glob
 import pandas as pd
 import numpy as np
 from scipy.spatial import distance
-from shapely.geometry.polygon import Polygon
-from shapely.geometry.multipolygon import MultiPolygon
+
+# from shapely.geometry.polygon import Polygon
+# from shapely.geometry.multipolygon import MultiPolygon
 
 
 def distance_between(shapefile):
@@ -72,14 +73,16 @@ def location_pairs_with_host(locations):
 
     locations_with_host_df = locations.loc[locations["Host Percent Area"] > 0]
     origins = list(
-        locations_with_host_df.loc[locations_with_host_df["Presence"] == True]["UN"]
+        locations_with_host_df.loc[locations_with_host_df["Presence"]]["ISO3"]
     )
-    destinations = list(locations_with_host_df["UN"])
+    destinations = list(locations_with_host_df["ISO3"])
     origins_list = [
         country for country in origins for i in range(locations_with_host_df.shape[0])
     ]
     destinations_list = destinations * len(origins)
     location_tuples = list(zip(origins_list, destinations_list))
+    # remove location tuples where origin and destination are the same country
+    location_tuples = [i for i in location_tuples if i[0] != i[1]]
 
     return location_tuples
 
@@ -152,11 +155,11 @@ def create_trades_list(commodity_path, commodity_forecast_path, start_year, dist
     # If trade data are aggregated (i.e., summed across
     # multiple commodity codes)
     if len(commodities_available) == 1:
-        code_list = ["Aggregated"]
+        code_list = [os.path.split(f)[1] for f in commodities_available]
         print("\t", commodities_available)
         file_list_historical = glob.glob(commodity_path + "/*.csv")
         file_list_historical.sort()
-        if commodity_forecast_path != None:
+        if commodity_forecast_path is not None:
             file_list_forecast = glob.glob(commodity_forecast_path + "/*.csv")
             file_list_forecast.sort()
             file_list = file_list_historical + file_list_forecast
@@ -183,7 +186,7 @@ def create_trades_list(commodity_path, commodity_forecast_path, start_year, dist
             file_list_historical = glob.glob(commodity_path + f"/{code}/*.csv")
             file_list_historical.sort()
 
-            if commodity_forecast_path != None:
+            if commodity_forecast_path is not None:
                 file_list_forecast = glob.glob(
                     commodity_forecast_path + f"/{code}/*.csv"
                 )
