@@ -41,8 +41,7 @@ def create_date_lists(
     if len(str(start_forecast_date)) == 4:
         end_forecast_date = start_forecast_date + number_forecast_years - 1
         hist_ts_list = list(
-            range(
-                start_forecast_date - number_historical_years, start_forecast_date, 1)
+            range(start_forecast_date - number_historical_years, start_forecast_date, 1)
         )
         forecast_ts_list = list(range(start_forecast_date, end_forecast_date + 1, 1))
 
@@ -195,7 +194,7 @@ if len(str(start_forecast_date)) == 6:
         hist_arr, forecast_arr = create_trade_arrays(
             hist_trade_to_use_subsample, number_forecast_years
         )
-        forecast_ts_list_filtered = fnmatch.filter(forecast_ts_list, f'*20*{month}')
+        forecast_ts_list_filtered = fnmatch.filter(forecast_ts_list, f"*20*{month}")
         write_forecast_arrays(
             hist_trade_to_use_subsample,
             forecast_arr,
