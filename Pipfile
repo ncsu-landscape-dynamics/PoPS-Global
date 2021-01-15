@@ -24,7 +24,6 @@ pyproj = {path = "./wheels/pyproj-2.6.1.post1-cp37-cp37m-win_amd64.whl"}
 geopy = "*"
 psycopg2 = "*"
 rtree = {path = "./wheels/Rtree-0.9.4-cp37-cp37m-win_amd64.whl"}
-math = "*"
 munch = "*"
 cligj = "*"
 six = "*"
