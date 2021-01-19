@@ -1,4 +1,5 @@
 import os
+import sys
 import glob
 import fnmatch
 import shutil
@@ -38,6 +39,8 @@ def create_date_lists(
         List of MM strings
 
     """
+    # If generating an annual forecast, date lists include
+    # a 4-digit date format (e.g., 2020)
     if len(str(start_forecast_date)) == 4:
         end_forecast_date = start_forecast_date + number_forecast_years - 1
         hist_ts_list = list(
@@ -45,6 +48,8 @@ def create_date_lists(
         )
         forecast_ts_list = list(range(start_forecast_date, end_forecast_date + 1, 1))
 
+    # If generating a monthly forecast, date lists include
+    # a 6-digit date format(e.g., 202012 for December 2020)
     if len(str(start_forecast_date)) == 6:
         start_year = int(str(start_forecast_date)[:4])
         end_year = start_year + number_forecast_years - 1
@@ -112,6 +117,9 @@ def create_trade_arrays(list_of_csvs, number_forecast_years):
             index_col=0,
             encoding="latin1",
         ).values
+    # Randomly choose a value from the historical trade
+    # matrices to populate the trade forecast for each
+    # destination (j) - origin (i) pair and forecasted year
     for k in range(0, forecast_arr.shape[0]):
         for j in range(0, hist_arr.shape[1]):
             for i in range(0, hist_arr.shape[2]):
@@ -162,9 +170,9 @@ def write_forecast_arrays(
         forecast_df.to_csv(output_dir + f"/{file_prefix}_trades_{ts}.csv")
 
 
-start_forecast_date = 202101
-number_historical_years = 5
-number_forecast_years = 10
+start_forecast_date = sys.argv[1]
+number_historical_years = sys.argv[2]
+number_forecast_years = sys.argv[3]
 
 root_dir = "G:/Shared drives/APHIS  Projects/Pandemic/Data/slf_model"
 
@@ -186,6 +194,7 @@ hist_trade_to_use = [
     if (os.path.basename(timestep)[:-4].split("_")[-1]) in (hist_ts_list)
 ]
 
+# For monthly forecasts
 if len(str(start_forecast_date)) == 6:
     for month in month_list:
         hist_trade_to_use_subsample = fnmatch.filter(
@@ -201,6 +210,7 @@ if len(str(start_forecast_date)) == 6:
             forecast_ts_list_filtered,
             output_dir,
         )
+# For annual forecasts
 elif len(str(start_forecast_date)) == 4:
     hist_arr, forecast_arr = create_trade_arrays(
         hist_trade_to_use, number_forecast_years
