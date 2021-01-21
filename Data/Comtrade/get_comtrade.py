@@ -10,8 +10,8 @@ import time
 import csv
 import numpy as np
 
-print(os.getcwd())
-os.chdir(".")  # set your current directory
+results_dir = "H:/Shared drives/APHIS  Projects/Pandemic/Data/Comtrade"
+os.chdir(results_dir)  # set your current directory
 
 # create a directory to save downloaded data
 if not os.path.exists("csv"):
@@ -38,7 +38,7 @@ crosswalk = crosswalk[crosswalk.ISO3.notnull()]
 
 # Set years of trade data to download and use to subset crosswalk by years
 start_year = 2000
-end_year = 2020  # inclusive
+end_year = 2019  # inclusive
 
 # Change "Now" end date in crosswalk to a max year value so column can be converted
 # to numeric and compared to simulation years
@@ -60,8 +60,8 @@ else:  # else if file does not exist, create it
     )
 
 # Premium subscription authorization code. Look this up in our
-# Comtrade account info page.
-auth_code = ""
+# Comtrade account info page. (https://comtrade.un.org/db/sysLoginAccess.aspx)
+auth_code = "jXIKwJ2httdcPDHwwJCj7GzbDh8fva23HYV17lyN+BeKrxX3fSviSAT9vgH5zQ+XnKj75SBnqPn25kXrwD1viUgtdDMNhpjrw4ZPcpdznaYq1nH8F/wxSoUBSMUzwVVb3YsoqruN04qDiJU/NleTCA=="
 
 # Set time step for trade data, options are A (annual) or M (monthly)
 freq = "M"
@@ -86,8 +86,61 @@ if freq == "M":
         ]
         for month in months:
             timesteps.append(str(year) + month)
-else:
+elif freq == "A":
     timesteps = years
+else:
+    raise RuntimeError("Unknown frequency: {freq}".format(**locals()))
+
+# Get data availability from Comtrade and compare to desired data
+data_availability_url = urlopen(
+    "http://comtrade.un.org/api/refs/da/view?type=C&freq=all&ps=all&px=HS"
+)
+data_availability_raw = json.loads(data_availability_url.read().decode())
+data_availability_url.close()
+data_availability = pd.json_normalize(data_availability_raw)
+
+no_annual = pd.DataFrame(columns=["country", "year"])
+annual_available = data_availability[data_availability["freq"] == "ANNUAL"]
+for country in crosswalk.UN.to_list():
+    annual_country = annual_available[annual_available["r"] == country]
+    annual_country_yrs = set(list(annual_country["ps"]))
+    country_no_annual = pd.DataFrame(
+        set(years.astype(str)).difference(annual_country_yrs), columns=["year"]
+    )
+    country_no_annual["country"] = country
+    no_annual = no_annual.append(country_no_annual)
+if len(no_annual) > 0:
+    countries_no_annual = set(list(no_annual["country"]))
+    print(
+        str(len(countries_no_annual))
+        + " countries have timesteps with no annual data available"
+    )
+no_annual_out = no_annual.merge(
+    crosswalk[["UN", "ISO3", "Name"]], how="left", left_on="country", right_on="UN"
+)
+no_annual_out.to_csv("comtrade_no_annual_available.csv")
+
+
+if freq == "M":
+    no_monthly = pd.DataFrame(columns=["country", "timestep", "year"])
+    monthly_available = data_availability[data_availability["freq"] == "MONTHLY"]
+    for country in crosswalk.UN.to_list():
+        monthly_country = monthly_available[monthly_available["r"] == country]
+        monthly_country_ts = set(list(monthly_country["ps"]))
+        country_no_monthly = pd.DataFrame(
+            set(timesteps).difference(monthly_country_ts), columns=["timestep"]
+        )
+        country_no_monthly["year"] = country_no_monthly["timestep"].str[:4]
+        country_no_monthly["country"] = country
+        no_monthly = no_monthly.append(country_no_monthly)
+    no_data = no_annual.merge(no_monthly[["country", "year"]].drop_duplicates())
+    if len(no_data) > 0:
+        countries_no_data = set(list(no_data["country"]))
+        print(
+            str(len(countries_no_data))
+            + " countries have timesteps with no monthly or annual data available"
+        )
+
 
 # list HS commodity codes to query
 hs_list = np.arange(6801, 6804 + 1, 1)
