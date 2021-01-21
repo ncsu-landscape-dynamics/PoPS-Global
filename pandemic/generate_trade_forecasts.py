@@ -117,9 +117,9 @@ def create_trade_arrays(list_of_csvs, number_forecast_years):
             index_col=0,
             encoding="latin1",
         ).values
-    # Randomly choose a value from the historical trade
-    # matrices to populate the trade forecast for each
-    # destination (j) - origin (i) pair and forecasted year
+    # Randomly choose a value from the historical trade matrices
+    # to populate the trade forecast for each destination (j) -
+    # origin (i) pair and forecasted time step (k)
     for k in range(0, forecast_arr.shape[0]):
         for j in range(0, hist_arr.shape[1]):
             for i in range(0, hist_arr.shape[2]):
