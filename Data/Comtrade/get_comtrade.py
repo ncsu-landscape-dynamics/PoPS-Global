@@ -1,5 +1,4 @@
-# Download and format data from Comtrade API,
-# keeping a log of successful downloads and errors.
+# Download and format data from Comtrade API
 
 import pandas as pd
 import math
@@ -61,7 +60,7 @@ else:  # else if file does not exist, create it
 
 # Premium subscription authorization code. Look this up in our
 # Comtrade account info page. (https://comtrade.un.org/db/sysLoginAccess.aspx)
-auth_code = "jXIKwJ2httdcPDHwwJCj7GzbDh8fva23HYV17lyN+BeKrxX3fSviSAT9vgH5zQ+XnKj75SBnqPn25kXrwD1viUgtdDMNhpjrw4ZPcpdznaYq1nH8F/wxSoUBSMUzwVVb3YsoqruN04qDiJU/NleTCA=="
+auth_code = ""
 
 # Set time step for trade data, options are A (annual) or M (monthly)
 freq = "M"
