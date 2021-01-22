@@ -60,7 +60,7 @@ crosswalk_dict = pd.Series(crosswalk.ISO3.values, index=crosswalk.UN).to_dict()
 
 # Premium subscription authorization code. Look this up in our
 # Comtrade account info page. (https://comtrade.un.org/db/sysLoginAccess.aspx)
-auth_code = "jXIKwJ2httdcPDHwwJCj7GzbDh8fva23HYV17lyN+BeKrxX3fSviSAT9vgH5zQ+XnKj75SBnqPn25kXrwD1viUgtdDMNhpjrw4ZPcpdznaYq1nH8F/wxSoUBSMUzwVVb3YsoqruN04qDiJU/NleTCA=="
+auth_code = ""
 
 # Set time step for trade data, options are A (annual) or M (monthly)
 freq = "M"
@@ -133,7 +133,7 @@ for country in crosswalk.UN.to_list():
         data_summary = data_summary.append(year_summary)
 
 use_monthly = data_summary[data_summary["all_monthly_avail"] == 1]
-use_monthly.append(
+use_monthly = use_monthly.append(
     data_summary[
         (data_summary["partial_monthly_avail"] == 1)
         & (data_summary["annual_avail"] == 0)
