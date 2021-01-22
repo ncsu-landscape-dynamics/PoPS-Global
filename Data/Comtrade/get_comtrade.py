@@ -47,20 +47,20 @@ crosswalk = crosswalk[crosswalk["End"] >= start_year]
 
 crosswalk_dict = pd.Series(crosswalk.ISO3.values, index=crosswalk.UN).to_dict()
 
-# Error log file, not very useful. Consider removing.
-if os.path.isfile("log.csv"):  # if file exists, open to append
-    csv_file = open("log.csv", "a", newline="")
-    error_log = csv.writer(csv_file, delimiter=",", quotechar='"')
-else:  # else if file does not exist, create it
-    csv_file = open("log.csv", "w", newline="")
-    error_log = csv.writer(csv_file, delimiter=",", quotechar='"')
-    error_log.writerow(
-        ["reporter_id", "reporter", "hs", "year", "status", "message", "time"]
-    )
+# Error log file, track no data, but not very useful. Consider removing.
+# if os.path.isfile("log.csv"):  # if file exists, open to append
+#     csv_file = open("log.csv", "a", newline="")
+#     error_log = csv.writer(csv_file, delimiter=",", quotechar='"')
+# else:  # else if file does not exist, create it
+#     csv_file = open("log.csv", "w", newline="")
+#     error_log = csv.writer(csv_file, delimiter=",", quotechar='"')
+#     error_log.writerow(
+#         ["reporter_id", "reporter", "hs", "year", "status", "message", "time"]
+#     )
 
 # Premium subscription authorization code. Look this up in our
 # Comtrade account info page. (https://comtrade.un.org/db/sysLoginAccess.aspx)
-auth_code = ""
+auth_code = "jXIKwJ2httdcPDHwwJCj7GzbDh8fva23HYV17lyN+BeKrxX3fSviSAT9vgH5zQ+XnKj75SBnqPn25kXrwD1viUgtdDMNhpjrw4ZPcpdznaYq1nH8F/wxSoUBSMUzwVVb3YsoqruN04qDiJU/NleTCA=="
 
 # Set time step for trade data, options are A (annual) or M (monthly)
 freq = "M"
@@ -98,48 +98,55 @@ data_availability_raw = json.loads(data_availability_url.read().decode())
 data_availability_url.close()
 data_availability = pd.json_normalize(data_availability_raw)
 
-no_annual = pd.DataFrame(columns=["country", "year"])
-annual_available = data_availability[data_availability["freq"] == "ANNUAL"]
-for country in crosswalk.UN.to_list():
-    annual_country = annual_available[annual_available["r"] == country]
-    annual_country_yrs = set(list(annual_country["ps"]))
-    country_no_annual = pd.DataFrame(
-        set(years.astype(str)).difference(annual_country_yrs), columns=["year"]
-    )
-    country_no_annual["country"] = country
-    no_annual = no_annual.append(country_no_annual)
-if len(no_annual) > 0:
-    countries_no_annual = set(list(no_annual["country"]))
-    print(
-        str(len(countries_no_annual))
-        + " countries have timesteps with no annual data available"
-    )
-no_annual_out = no_annual.merge(
-    crosswalk[["UN", "ISO3", "Name"]], how="left", left_on="country", right_on="UN"
+data_summary = pd.DataFrame(
+    columns=[
+        "country",
+        "year",
+        "annual_avail",
+        "all_monthly_avail",
+        "partial_monthly_avail",
+    ]
 )
-no_annual_out.to_csv("comtrade_no_annual_available.csv")
-
-
-if freq == "M":
-    no_monthly = pd.DataFrame(columns=["country", "timestep", "year"])
-    monthly_available = data_availability[data_availability["freq"] == "MONTHLY"]
-    for country in crosswalk.UN.to_list():
-        monthly_country = monthly_available[monthly_available["r"] == country]
-        monthly_country_ts = set(list(monthly_country["ps"]))
-        country_no_monthly = pd.DataFrame(
-            set(timesteps).difference(monthly_country_ts), columns=["timestep"]
+for country in crosswalk.UN.to_list():
+    country_availability = data_availability[data_availability["r"] == country]
+    for year in years:
+        summary_data = {
+            "country": [country],
+            "year": [year],
+            "annual_avail": [0],
+            "all_monthly_avail": [0],
+            "partial_monthly_avail": [0],
+        }
+        year_summary = pd.DataFrame(summary_data)
+        if str(year) in list(country_availability["ps"]):
+            year_summary["annual_avail"] = 1
+        country_monthly = list(
+            country_availability[country_availability["freq"] == "MONTHLY"]["ps"].str[
+                :4
+            ]
         )
-        country_no_monthly["year"] = country_no_monthly["timestep"].str[:4]
-        country_no_monthly["country"] = country
-        no_monthly = no_monthly.append(country_no_monthly)
-    no_data = no_annual.merge(no_monthly[["country", "year"]].drop_duplicates())
-    if len(no_data) > 0:
-        countries_no_data = set(list(no_data["country"]))
-        print(
-            str(len(countries_no_data))
-            + " countries have timesteps with no monthly or annual data available"
-        )
+        monthly_sum = sum(1 for i in country_monthly if i == str(year))
+        if monthly_sum == 12:
+            year_summary["all_monthly_avail"] = 1
+        if 0 < monthly_sum < 12:
+            year_summary["partial_monthly_avail"] = 1
+        data_summary = data_summary.append(year_summary)
 
+use_monthly = data_summary[data_summary["all_monthly_avail"] == 1]
+use_monthly.append(
+    data_summary[
+        (data_summary["partial_monthly_avail"] == 1)
+        & (data_summary["annual_avail"] == 0)
+    ]
+)
+use_annual = data_summary[
+    (data_summary["annual_avail"] == 1) & (data_summary["all_monthly_avail"] == 0)
+]
+no_data = data_summary[
+    (data_summary["annual_avail"] == 0)
+    & (data_summary["all_monthly_avail"] == 0)
+    & (data_summary["partial_monthly_avail"] == 0)
+]
 
 # list HS commodity codes to query
 hs_list = np.arange(6801, 6804 + 1, 1)
