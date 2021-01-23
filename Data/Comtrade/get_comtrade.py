@@ -32,7 +32,7 @@ def nested_list(original_list, list_length):
 # Premium subscription authorization code. Look this up in our
 # Comtrade account info page.
 # (https://comtrade.un.org/db/sysLoginAccess.aspx)
-auth_code = "jXIKwJ2httdcPDHwwJCj7GzbDh8fva23HYV17lyN+BeKrxX3fSviSAT9vgH5zQ+XnKj75SBnqPn25kXrwD1viUgtdDMNhpjrw4ZPcpdznaYq1nH8F/wxSoUBSMUzwVVb3YsoqruN04qDiJU/NleTCA=="
+auth_code = ""
 
 # list HS commodity codes to query, will be downloaded individually
 # and aggregated (if needed) in later script
@@ -43,7 +43,7 @@ start_year = 2000
 end_year = 2020  # inclusive
 
 # Set time step for trade data, options are A (annual) or M (monthly)
-temporal_res = "M"
+temporal_res = "A"
 years = np.arange(start_year, end_year + 1, 1)
 
 # Read UN codes to ISO3 codes crosswalk to use as country list
@@ -114,6 +114,8 @@ for country in crosswalk.UN.to_list():
             year_summary["partial_monthly_avail"] = 1
         data_summary = data_summary.append(year_summary)
 
+# Create df specifying if annual or monthly should be download
+# based on desired temp res for each country and year
 if temporal_res == "A":
     use_annual = data_summary[data_summary["annual_avail"] == 1]
     use_monthly = data_summary[
@@ -139,6 +141,7 @@ no_data = data_summary[
     & (data_summary["all_monthly_avail"] == 0)
     & (data_summary["partial_monthly_avail"] == 0)
 ]
+# Save data summary as CSV for future reference
 data_summary.to_csv(
     model_inputs_dir
     + "/comtrade_data_availability_summary_"
@@ -163,12 +166,30 @@ if temporal_res == "M":
 
 
 def download_trade_data(hs, freq, year_country_dict, auth_code):
+    """Loops over years and countries, calling Comtrade API for specified
+    HS commodity code and appends downloaded data to dataframe. Prints
+    messages to track progress.
+
+    Returns dataframe of trade data, one row for each
+    origin/destination/timestep combo.
+
+    Parameters
+    ----------
+    hs : integer
+        HS commodity code, can be 2, 4, or 6 digits depending on desired
+        aggregation
+    freq: str
+        temporal resolution of data, "A" for annual, "M" for monthly
+    year_country_dict: dict
+        specifies which countries to use for which years, keys are years,
+        values are lists of UN country codes
+    auth_code: str
+        premium API authorization code
+    """
     data = pd.DataFrame()
     for year in year_country_dict.keys():
         country_codes = year_country_dict[year]
-        nested_country_codes = nested_list(country_codes, 10)
-        # nested_country_names = nested_list(crosswalk.Name.to_list(), 5)
-        # years_str = "%2C".join(map(str, years))
+        nested_country_codes = nested_list(country_codes, 20)
         # loop over all countries (10 at a time) and call API
         for country_code_list in nested_country_codes:
             country_code_str = "%2C".join(country_code_list)
@@ -218,13 +239,30 @@ def download_trade_data(hs, freq, year_country_dict, auth_code):
 
 
 def save_hs_timestep_matrices(timesteps, trade_data, un_country_df, crosswalk_dict):
+    """Loops over timesteps and creates country x country matrix of import
+    trade values. Of no data was downloaded for a country pair, will add zeros and
+    print a message. Changes US codes to ISO3 codes in column, row names.
+
+    Saves a matrix for each timestep as CSVs.
+
+    Parameters
+    ----------
+    timesteps : list of int
+        list of timesteps downloaded, will use format YYYY or YYYYMM
+    trade_data: dataframe
+        dataframe of downloaded trade data
+    un_country_df: dataframe
+        dataframe with single column containing all UN country codes, used as template
+        for HS matrix
+    crosswalk_dict: dict
+        dictionary crosswalk of UN to ISO3 codes
+    """
     for timestep in timesteps:
         timestep_data = trade_data[trade_data.period.eq(timestep)]
         HS_matrix = un_country_df
         for reporter in crosswalk_dict.keys():
             reporter_data = timestep_data[timestep_data.rtCode.eq(int(reporter))]
             reporter_data = reporter_data[["ptCode", "TradeValue"]]
-
             # if no data were downloaded for reporter/timestep, add column of
             # zeros to commodity/year df and move to next country
             if len(reporter_data) == 0:
@@ -254,11 +292,7 @@ def save_hs_timestep_matrices(timesteps, trade_data, un_country_df, crosswalk_di
 
             # Merge to commodity/year df
             HS_matrix = pd.merge(
-                HS_matrix,
-                reporter_data,
-                how="left",
-                left_on="UN",
-                right_on="ptCode",
+                HS_matrix, reporter_data, how="left", left_on="UN", right_on="ptCode",
             )
             HS_matrix.drop("ptCode", axis=1, inplace=True)
             HS_matrix.rename(columns={"TradeValue": reporter}, inplace=True)
@@ -299,45 +333,24 @@ def save_hs_timestep_matrices(timesteps, trade_data, un_country_df, crosswalk_di
 # loop over commodities, 1 at a time (could do more at once to speed it up)
 if temporal_res == "A":
     for hs in hs_list:
+        # Download either annual or monthly depending on availability
         freq = "A"
         annual_data = download_trade_data(hs, freq, use_annual_dict, auth_code)
         freq = "M"
         monthly_data = download_trade_data(hs, freq, use_monthly_dict, auth_code)
+        # Sum monthly to get annual
         monthly_data_agg = (
             monthly_data.groupby(["yr", "rtCode", "ptCode"]).sum().reset_index()
         )
         annual_data = annual_data.append(monthly_data_agg)
-
+        # loop over timesteps (YYYY) and save a country x country matrix
+        # per timestep per HS code as csv
         timesteps = use_annual_dict.keys()
         un_country_df = crosswalk[["UN"]]
-        # loop over timesteps (YYYY or YYYYMM) and save a country x country matrix
-        # per timestep per HS code as csv
         save_hs_timestep_matrices(timesteps, annual_data, un_country_df, crosswalk_dict)
 
 if temporal_res == "M":
     for hs in hs_list:
-        freq = "M"
-        monthly_data = download_trade_data(hs, freq, use_monthly_dict, auth_code)
-        freq = "A"
-        annual_data = download_trade_data(hs, freq, use_annual_dict, auth_code)
-        for i, row in annual_data.iterrows():
-            tradeval = row["TradeValue"]
-            tradeval_split = tradeval / 12
-            year = row["yr"]
-            rtCode = row["rtCode"]
-            ptCode = row["ptCode"]
-            for month in months:
-                monthly_split = pd.DataFrame(
-                    {
-                        "yr": year,
-                        "period": str(year) + month,
-                        "rtCode": rtCode,
-                        "ptCode": ptCode,
-                        "TradeValue": tradeval_split,
-                    },
-                    index=[0],
-                )
-                monthly_data = monthly_data.append(monthly_split)
         timesteps = []
         for year in years:
             months = [
@@ -356,9 +369,33 @@ if temporal_res == "M":
             ]
             for month in months:
                 timesteps.append(str(year) + month)
-        un_country_df = crosswalk[["UN"]]
+        # Download either annual or monthly depending on availability
+        freq = "M"
+        monthly_data = download_trade_data(hs, freq, use_monthly_dict, auth_code)
+        freq = "A"
+        annual_data = download_trade_data(hs, freq, use_annual_dict, auth_code)
+        # Split annual data into monthly by dividing by 12
+        for i, row in annual_data.iterrows():
+            tradeval = row["TradeValue"]
+            tradeval_split = tradeval / 12
+            year = row["yr"]
+            rtCode = row["rtCode"]
+            ptCode = row["ptCode"]
+            for month in months:
+                monthly_split = pd.DataFrame(
+                    {
+                        "yr": year,
+                        "period": str(year) + month,
+                        "rtCode": rtCode,
+                        "ptCode": ptCode,
+                        "TradeValue": tradeval_split,
+                    },
+                    index=[0],
+                )
+                monthly_data = monthly_data.append(monthly_split)
         # loop over timesteps (YYYY or YYYYMM) and save a country x country matrix
         # per timestep per HS code as csv
+        un_country_df = crosswalk[["UN"]]
         save_hs_timestep_matrices(
             timesteps, monthly_data, un_country_df, crosswalk_dict
         )
