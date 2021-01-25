@@ -36,14 +36,14 @@ auth_code = ""
 
 # list HS commodity codes to query, will be downloaded individually
 # and aggregated (if needed) in later script
-hs_list = np.arange(6801, 6804 + 1, 1)
+hs_list = np.arange(6803, 6804 + 1, 1)
 
 # Set years of trade data to download and use to subset crosswalk by years
-start_year = 2000
+start_year = 2011
 end_year = 2020  # inclusive
 
 # Set time step for trade data, options are A (annual) or M (monthly)
-temporal_res = "A"
+temporal_res = "M"
 years = np.arange(start_year, end_year + 1, 1)
 
 # Read UN codes to ISO3 codes crosswalk to use as country list
@@ -158,11 +158,11 @@ use_monthly_dict = use_monthly.groupby("year")["country"].apply(list).to_dict()
 if temporal_res == "A":
     if not os.path.exists(model_inputs_dir + "/annual"):
         os.makedirs(model_inputs_dir + "/annual")
-        os.chdir(model_inputs_dir + "/annual")
+    os.chdir(model_inputs_dir + "/annual")
 if temporal_res == "M":
     if not os.path.exists(model_inputs_dir + "/monthly"):
         os.makedirs(model_inputs_dir + "/monthly")
-        os.chdir(model_inputs_dir + "/monthly")
+    os.chdir(model_inputs_dir + "/monthly")
 
 
 def download_trade_data(hs, freq, year_country_dict, auth_code):
@@ -189,8 +189,10 @@ def download_trade_data(hs, freq, year_country_dict, auth_code):
     data = pd.DataFrame()
     for year in year_country_dict.keys():
         country_codes = year_country_dict[year]
-        nested_country_codes = nested_list(country_codes, 20)
-        # loop over all countries (10 at a time) and call API
+        # Set number of countries to call at once
+        num_countries_per_call = 200
+        nested_country_codes = nested_list(country_codes, num_countries_per_call)
+        # loop over all country lists countries and call API
         for country_code_list in nested_country_codes:
             country_code_str = "%2C".join(country_code_list)
 
@@ -345,7 +347,7 @@ if temporal_res == "A":
         annual_data = annual_data.append(monthly_data_agg)
         # loop over timesteps (YYYY) and save a country x country matrix
         # per timestep per HS code as csv
-        timesteps = use_annual_dict.keys()
+        timesteps = years
         un_country_df = crosswalk[["UN"]]
         save_hs_timestep_matrices(timesteps, annual_data, un_country_df, crosswalk_dict)
 
@@ -369,30 +371,23 @@ if temporal_res == "M":
             ]
             for month in months:
                 timesteps.append(str(year) + month)
+        timesteps = list(map(int, timesteps))
         # Download either annual or monthly depending on availability
         freq = "M"
         monthly_data = download_trade_data(hs, freq, use_monthly_dict, auth_code)
         freq = "A"
         annual_data = download_trade_data(hs, freq, use_annual_dict, auth_code)
         # Split annual data into monthly by dividing by 12
-        for i, row in annual_data.iterrows():
-            tradeval = row["TradeValue"]
-            tradeval_split = tradeval / 12
-            year = row["yr"]
-            rtCode = row["rtCode"]
-            ptCode = row["ptCode"]
-            for month in months:
-                monthly_split = pd.DataFrame(
-                    {
-                        "yr": year,
-                        "period": str(year) + month,
-                        "rtCode": rtCode,
-                        "ptCode": ptCode,
-                        "TradeValue": tradeval_split,
-                    },
-                    index=[0],
-                )
-                monthly_data = monthly_data.append(monthly_split)
+        annual_split = pd.DataFrame()
+        for month in months:
+            month_portion = annual_data.copy()
+            month_portion["TradeValue"] = month_portion["TradeValue"].apply(
+                lambda x: x / 12
+            )
+            month_portion["period"] = month_portion["period"].astype(str) + month
+            month_portion["period"] = month_portion["period"].astype(int)
+            annual_split = annual_split.append(month_portion)
+        monthly_data = monthly_data.append(annual_split)
         # loop over timesteps (YYYY or YYYYMM) and save a country x country matrix
         # per timestep per HS code as csv
         un_country_df = crosswalk[["UN"]]
