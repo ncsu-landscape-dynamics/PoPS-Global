@@ -17,7 +17,6 @@ http://www.gnu.org/copyleft/gpl.html
 
 import numpy as np
 import pandas as pd
-import math
 
 from pandemic.probability_calculations import (
     probability_of_entry,
@@ -273,7 +272,7 @@ def pandemic_single_time_step(
             # the number of time units until infectivity for each introduction
             if transmission_lag_type == "stochastic":
                 time_infect = int(
-                    math.round(np.random.gamma(gamma_shape, gamma_scale, 1)[0])
+                    round(np.random.gamma(gamma_shape, gamma_scale, 1)[0])
                 )
                 if locations.iloc[j, locations.columns.get_loc("Infective")] is None:
                     print("\t\t\tfirst intro...")
