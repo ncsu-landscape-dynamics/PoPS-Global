@@ -25,7 +25,6 @@ from pandemic.probability_calculations import (
     probability_of_introduction,
 )
 
-import numpy as np
 from pandemic.helpers import location_pairs_with_host
 
 
@@ -361,6 +360,7 @@ def pandemic_multiple_time_steps(
     gamma_shape,
     gamma_scale,
 ):
+
     """
     Returns the probability of establishment, probability of entry, and
     probability of introduction as an n x n matrices betweem every origin (i)
