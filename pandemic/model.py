@@ -1,43 +1,36 @@
+import json
 import os
 import sys
-import json
+
+import geopandas
 import numpy as np
 import pandas as pd
-import geopandas
+from dotenv import load_dotenv
 
-from pandemic.helpers import (
-    distance_between,
-    create_trades_list,
-)
+from pandemic.helpers import create_trades_list
+from pandemic.model_equations import pandemic_multiple_time_steps
+from pandemic.output_files import (aggregate_monthly_output_to_annual,
+                                   create_model_dirs, save_model_output)
 
-from pandemic.ecological_calculations import (
-    create_climate_similarities_matrix,
-)
-from pandemic.output_files import (
-    create_model_dirs,
-    save_model_output,
-    aggregate_monthly_output_to_annual,
-)
-
-from pandemic.model_equations import (
-    pandemic_multiple_time_steps,
-)
+# Read environmental variables
+load_dotenv(os.path.join('.env'))
+data_dir = os.getenv('DATA_PATH')
+input_dir = os.getenv('INPUT_PATH')
+out_dir = os.getenv('OUTPUT_PATH')
+countries_path = os.getenv('COUNTRIES_PATH')
 
 # Read model arguments from configuration file
 path_to_config_json = sys.argv[1]
-
 with open(path_to_config_json) as json_file:
     config = json.load(json_file)
 
-data_dir = config["data_dir"]
-countries_path = config["countries_path"]
-phyto_path = config["phyto_path"]
 commodity_path = config["commodity_path"]
 commodity_forecast_path = config["commodity_forecast_path"]
 native_countries_list = config["native_countries_list"]
 season_dict = config["season_dict"]
 alpha = config["alpha"]
-beta = config["beta"]
+# beta = config["beta"]
+beta = 0.5
 mu = config["mu"]
 lamda_c_list = config["lamda_c_list"]
 phi = config["phi"]
@@ -45,7 +38,6 @@ sigma_epsilon = config["sigma_epsilon"]
 sigma_phi = config["sigma_phi"]
 start_year = config["start_year"]
 random_seed = config["random_seed"]
-out_dir = config["out_dir"]
 cols_to_drop = config["columns_to_drop"]
 time_infect_units = config["transmission_lag_unit"]
 transmission_lag_type = config["transmission_lag_type"]
@@ -54,25 +46,8 @@ gamma_shape = config["transmission_lag_shape"]
 gamma_scale = config["transmission_lag_scale"]
 
 countries = geopandas.read_file(countries_path, driver="GPKG")
-distances = distance_between(countries)
-phyto_data = pd.read_csv(phyto_path, index_col=0)
-# Use only proactive capacity now. May incorporate reactive capacity dynamically later.
-phyto_data = phyto_data[["proactive", "ISO3", "UN"]]
-phyto_data = phyto_data.rename(columns={"proactive": "Phytosanitary Capacity"})
-
-# Assign value to phytosanitary capacity estimates
-countries = countries.merge(phyto_data, how="left", on="ISO3", suffixes=[None, "_y"])
-phyto_dict = {
-    np.nan: 0.0,
-    0: 0.0,
-    0.5: 0.15,
-    1.0: 0.30,
-    1.5: 0.45,
-    2.0: 0.60,
-    2.5: 0.75,
-    3.0: 0.90,
-}
-countries.replace(phyto_dict, inplace=True)
+distances = np.load(input_dir + '/distance_matrix.npy')
+climate_similarities = np.load(input_dir + '/climate_similarities.npy')
 
 # Read & format trade data
 trades_list, file_list_filtered, code_list, commodities_available = create_trades_list(
@@ -101,11 +76,6 @@ print("Length of trades list: ", len(trades_list))
 for i in range(len(trades_list)):
     print("\tcommodity array shape: ", trades_list[i].shape)
 
-# Create an n x n array of climate similarity calculations
-print(f"Calculating climate similarities for {countries.shape[0]} locations")
-climate_similarities = create_climate_similarities_matrix(
-    array_template=traded, countries=countries
-)
 
 # Run Model for Selected Time Steps and Commodities
 print("Number of commodities: ", len([c for c in lamda_c_list if c > 0]))
@@ -139,9 +109,12 @@ for i in range(len(trades_list)):
     locations["Presence"] = pres_ts0
     locations["Infective"] = infect_ts0
 
-    sigma_h = 1 - countries["Host Percent Area"].mean()
+    # sigma_h = 1 - countries["Host Percent Area"].mean()
+    sigma_h = (1 - countries["Host Percent Area"]).std()
     iu1 = np.triu_indices(climate_similarities.shape[0], 1)
-    sigma_kappa = 1 - climate_similarities[iu1].mean()
+    # sigma_kappa = 1 - climate_similarities[iu1].mean()
+    sigma_kappa = np.std(1 - climate_similarities[iu1])
+    # alpha = 1 / (sigma_kappa * sigma_h * math.sqrt(2 * math.pi))
     sigma_T = np.mean(trades)
     np.random.seed(random_seed)
     lamda_c = lamda_c_list[i]
@@ -241,7 +214,6 @@ for i in range(len(trades_list)):
         meta["NATIVE_COUNTRIES_T0"] = native_countries_list
         meta["COMMODITY"] = commodities_available[i]
         meta["FORECASTED"] = commodity_forecast_path
-        meta["PHYTOSANITARY_CAPACITY_WEIGHTS"] = phyto_dict
         meta["TOTAL COUNTRIES INTRODUCTED"] = str(
             main_model_output[final_presence_col].value_counts()[1]
             - len(native_countries_list)
