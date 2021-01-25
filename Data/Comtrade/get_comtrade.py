@@ -1,6 +1,7 @@
 # Download and format data from Comtrade API,
 # keeping a log of successful downloads and errors.
 
+import sys
 import pandas as pd
 import math
 import os
@@ -10,12 +11,13 @@ import time
 import csv
 import numpy as np
 
-print(os.getcwd())
-os.chdir(".")  # set your current directory
+# print(os.getcwd())
+# os.chdir(".")  # set your current directory
+trade_data_path = sys.argv[1]
 
 # create a directory to save downloaded data
-if not os.path.exists("csv"):
-    os.makedirs("csv")
+if not os.path.exists(trade_data_path):
+    os.makedirs(trade_data_path)
 
 
 def nested_list(original_list, list_length):
@@ -32,13 +34,15 @@ def nested_list(original_list, list_length):
 
 
 # Read UN codes to ISO3 codes crosswalk to use as country list
-crosswalk = pd.read_csv("H:/Shared drives/APHIS  Projects/Pandemic/Data/un_to_iso.csv")
+# crosswalk = pd.read_csv(
+# "H:/Shared drives/APHIS  Projects/Pandemic/Data/un_to_iso.csv")
+crosswalk = pd.read_csv(sys.argv[2])
 crosswalk["UN"] = crosswalk["UN"].astype(str)
 crosswalk = crosswalk[crosswalk.ISO3.notnull()]
 
 # Set years of trade data to download and use to subset crosswalk by years
-start_year = 2000
-end_year = 2020  # inclusive
+start_year = sys.argv[3]  # 2000
+end_year = sys.argv[4]  # 2020, inclusive
 
 # Change "Now" end date in crosswalk to a max year value so column can be converted
 # to numeric and compared to simulation years
@@ -61,10 +65,10 @@ else:  # else if file does not exist, create it
 
 # Premium subscription authorization code. Look this up in our
 # Comtrade account info page.
-auth_code = ""
+auth_code = sys.argv[5]
 
 # Set time step for trade data, options are A (annual) or M (monthly)
-freq = "M"
+freq = sys.argv[6]
 years = np.arange(start_year, end_year + 1, 1)
 
 if freq == "M":
