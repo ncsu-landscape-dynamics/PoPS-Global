@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import json
 
 
 def create_model_dirs(outpath, output_dict):
@@ -294,4 +295,146 @@ def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
     out_csv.to_csv(
         outpath + "/pandemic_output_aggregated.csv", float_format="%.2f", na_rep="NAN!"
     )
-    
+
+
+def write_model_metadata(
+    main_model_output,
+    alpha,
+    beta,
+    mu,
+    lamda_c_list,
+    phi,
+    sigma_epsilon,
+    sigma_h,
+    sigma_kappa,
+    sigma_phi,
+    sigma_T,
+    start_year,
+    stop_year,
+    transmission_lag_type,
+    time_infect_units,
+    gamma_shape,
+    gamma_scale,
+    random_seed,
+    time_infect,
+    native_countries_list,
+    commodities_available,
+    commodity_forecast_path,
+    phyto_weights,
+    outpath,
+    run_num
+):
+    """
+    Write model parameters and configuration to metadata file
+
+    Parameters
+    ----------
+    numpy array
+        List of 6 n x n arrays created by running pandemic model, ordered as
+        1) full forecast dataframe; 2) probability of entry;
+        3) probability of establishment; 4) probability of introduction;
+        5) origin - destination pairs; and 6) list of countries where pest is
+        predicted to be introduced
+    alpha : float
+        A parameter that allows the equation to be adapated to various discrete
+        time steps
+    beta : float
+        A parameter that allows the equation to be adapted to various discrete
+        time steps
+    mu : float
+        The mortality rate of the pest or pathogen during transport
+    lamda_c_list : list
+        List of commodity importance values [0,1] for commodities (c)
+        in transporting the pest or pathogen
+    phi : int
+        The degree of polyphagy of the pest of interest described as the number
+        of host families
+    sigma_kappa : float
+        The climate dissimilarity normalizing constant
+    sigma_h : float
+        The host normalizing constant
+    sigma_epsilon : float
+        The ecological disturbance normalizing constant
+    phi : int
+        The degree of polyphagy of the pest of interest described as the number
+        of host families
+    sigma_phi : int
+        The degree of polyphagy normalizing constant
+    sigma_T : int
+        The trade volume normalizing constant
+    start_year : str
+        The first year of the simulation
+    stop_year : str
+        The final year of the simulation
+    transmission_lag_type : str
+        Type of transmission lag used in the simulation (i.e., None,
+        static, or stochastic)
+    time_infect_units : str
+        Units associated with the transmission lag value (i.e., years, months)
+    time_infect : int
+        Time until a country is infectious, set for static transmission lag
+    gamma_shape : float
+        Shape parameter for gamma distribution used in stochastic transmission
+    gamma_scale: float
+        Scale parameter for gamma distribution used in stochastic transmission.
+    native_countries_list : list
+        Countries with pest or pathogen present at first time step of simulation
+    commodities_available :
+        Commodity simulated
+    commodity_forecast_path : str
+        Path to forecasted trade data
+    phyto_weights : list
+        Phytosanitary capacity weights
+    outpath : str
+        Directory path to save json file
+    run_num : int
+        Stochastic run number
+
+    Returns
+    -------
+    none
+
+    """
+
+    final_presence_col = sorted(
+        [c for c in main_model_output.columns if c.startswith("Presence")]
+    )[-1]
+    meta = {}
+    meta["PARAMETERS"] = []
+    meta["PARAMETERS"].append(
+        {
+            "alpha": str(alpha),
+            "beta": str(beta),
+            "mu": str(mu),
+            "lamda_c": str(lamda_c_list),
+            "phi": str(phi),
+            "sigma_epsilon": str(sigma_epsilon),
+            "sigma_h": str(sigma_h),
+            "sigma_kappa": str(sigma_kappa),
+            "sigma_phi": str(sigma_phi),
+            "sigma_T": str(sigma_T),
+            "start_year": str(start_year),
+            "stop_year": str(stop_year),
+            "transmission_lag_type": str(transmission_lag_type),
+            "transmission_lag_units": time_infect_units,
+            "gamma_shape": gamma_shape,
+            "gamma_scale": gamma_scale,
+            "random_seed": str(random_seed),
+            "infectivity_lag": time_infect,
+        }
+    )
+    if (transmission_lag_type == "static") | (transmission_lag_type is None):
+        meta["PARAMETERS"][0].update({"infectivity_lag": time_infect})
+    if transmission_lag_type == "stochastic":
+        meta["PARAMETERS"][0].update({"infectivity_lag": None})
+    meta["NATIVE_COUNTRIES_T0"] = native_countries_list
+    meta["COMMODITY"] = commodities_available
+    meta["FORECASTED"] = commodity_forecast_path
+    meta["PHYTOSANITARY_CAPACITY_WEIGHTS"] = phyto_weights
+    meta["TOTAL COUNTRIES INTRODUCTED"] = str(
+        main_model_output[final_presence_col].value_counts()[1]
+        - len(native_countries_list)
+    )
+
+    with open(f"{outpath}/run_{run_num}_meta.json", "w") as file:
+        json.dump(meta, file, indent=4)
