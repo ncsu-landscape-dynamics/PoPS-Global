@@ -8,13 +8,6 @@ import pandas as pd
 import numpy as np
 from dotenv import load_dotenv
 
-project_path = "H:/Shared drives/APHIS  Projects/Pandemic"
-load_dotenv(os.path.join(project_path, ".env"))
-# Root project data folder
-data_path = os.getenv("DATA_PATH")
-# Path to formatted model inputs
-model_inputs_dir = data_path + "slf_model/inputs/"
-
 
 def nested_list(original_list, list_length):
     """Split long list into nested list of lists at specified length.
@@ -27,129 +20,6 @@ def nested_list(original_list, list_length):
         nested_lists.append(x)
         start += list_length
     return nested_lists
-
-
-# Premium subscription authorization code.
-auth_code = os.getenv("COMTRADE_AUTH_KEY")
-
-# list HS commodity codes to query, will be downloaded individually
-# and aggregated (if needed) in later script
-hs_list = np.arange(6801, 6801 + 1, 1)
-
-# Set years of trade data to download and use to subset crosswalk by years
-start_year = 2000
-end_year = 2001  # inclusive
-
-# Set time step for trade data, options are A (annual) or M (monthly)
-temporal_res = "M"
-years = np.arange(start_year, end_year + 1, 1)
-
-# Read UN codes to ISO3 codes crosswalk to use as country list
-crosswalk = pd.read_csv("H:/Shared drives/APHIS  Projects/Pandemic/Data/un_to_iso.csv")
-crosswalk["UN"] = crosswalk["UN"].astype(str)
-crosswalk = crosswalk[crosswalk.ISO3.notnull()]
-
-# Change "Now" end date in crosswalk to a max year value so column can be converted
-# to numeric and compared to simulation years
-crosswalk.loc[crosswalk["End"] == "Now", "End"] = "9999"
-crosswalk["End"] = pd.to_numeric(crosswalk["End"])
-crosswalk = crosswalk[crosswalk["End"] >= start_year]
-# Create dictionary to convert UN to ISO3 codes
-crosswalk_dict = pd.Series(crosswalk.ISO3.values, index=crosswalk.UN).to_dict()
-
-# Get data availability from Comtrade and compare to desired data
-data_availability_url = urlopen(
-    "http://comtrade.un.org/api/refs/da/view?type=C&freq=all&ps=all&px=HS"
-)
-data_availability_raw = json.loads(data_availability_url.read().decode())
-data_availability_url.close()
-data_availability = pd.json_normalize(data_availability_raw)
-
-# Create summary of availability, tracking availability of annual,
-# and monthly (all 12 months, or less than 12)
-data_summary = pd.DataFrame(
-    columns=[
-        "country",
-        "year",
-        "annual_avail",
-        "all_monthly_avail",
-        "partial_monthly_avail",
-    ]
-)
-for country in crosswalk.UN.to_list():
-    country_availability = data_availability[data_availability["r"] == country]
-    for year in years:
-        summary_data = {
-            "country": [country],
-            "year": [year],
-            "annual_avail": [0],
-            "all_monthly_avail": [0],
-            "partial_monthly_avail": [0],
-        }
-        year_summary = pd.DataFrame(summary_data)
-        if str(year) in list(country_availability["ps"]):
-            year_summary["annual_avail"] = 1
-        country_monthly = list(
-            country_availability[country_availability["freq"] == "MONTHLY"]["ps"].str[
-                :4
-            ]
-        )
-        monthly_sum = sum(1 for i in country_monthly if i == str(year))
-        if monthly_sum == 12:
-            year_summary["all_monthly_avail"] = 1
-        if 0 < monthly_sum < 12:
-            year_summary["partial_monthly_avail"] = 1
-        data_summary = data_summary.append(year_summary)
-
-# Create df specifying if annual or monthly should be download
-# based on desired temp res for each country and year
-if temporal_res == "A":
-    use_annual = data_summary[data_summary["annual_avail"] == 1]
-    use_monthly = data_summary[
-        (data_summary["annual_avail"] == 0)
-        & (
-            (data_summary["all_monthly_avail"] == 1)
-            | (data_summary["partial_monthly_avail"] == 1)
-        )
-    ]
-if temporal_res == "M":
-    use_monthly = data_summary[data_summary["all_monthly_avail"] == 1]
-    use_monthly = use_monthly.append(
-        data_summary[
-            (data_summary["partial_monthly_avail"] == 1)
-            & (data_summary["annual_avail"] == 0)
-        ]
-    )
-    use_annual = data_summary[
-        (data_summary["annual_avail"] == 1) & (data_summary["all_monthly_avail"] == 0)
-    ]
-no_data = data_summary[
-    (data_summary["annual_avail"] == 0)
-    & (data_summary["all_monthly_avail"] == 0)
-    & (data_summary["partial_monthly_avail"] == 0)
-]
-# Save data summary as CSV for future reference
-data_summary.to_csv(
-    model_inputs_dir
-    + "/comtrade_data_availability_summary_"
-    + str(start_year)
-    + "-"
-    + str(end_year)
-    + ".csv"
-)
-
-use_annual_dict = use_annual.groupby("year")["country"].apply(list).to_dict()
-use_monthly_dict = use_monthly.groupby("year")["country"].apply(list).to_dict()
-
-# create a directory to save downloaded data
-if temporal_res == "A":
-    if not os.path.exists(model_inputs_dir + "/annual"):
-        os.makedirs(model_inputs_dir + "/annual")
-    os.chdir(model_inputs_dir + "/annual")
-if temporal_res == "M":
-    if not os.path.exists(model_inputs_dir + "/monthly"):
-        os.makedirs(model_inputs_dir + "/monthly")
-    os.chdir(model_inputs_dir + "/monthly")
 
 
 def download_trade_data(hs_str, freq_str, year_country_dict, auth_code_str):
@@ -316,6 +186,135 @@ def save_hs_timestep_matrices(
             hs_str + "/" + hs_str + "_" + str(timestep) + ".csv", index=True
         )
 
+
+project_path = "H:/Shared drives/APHIS  Projects/Pandemic"
+load_dotenv(os.path.join(project_path, ".env"))
+# Root project data folder
+data_path = os.getenv("DATA_PATH")
+# Path to formatted model inputs
+model_inputs_dir = data_path + "slf_model/inputs/"
+
+# Premium subscription authorization code.
+auth_code = os.getenv("COMTRADE_AUTH_KEY")
+
+# list HS commodity codes to query, will be downloaded individually
+# and aggregated (if needed) in later script
+hs_list = np.arange(6801, 6801 + 1, 1)
+
+# Set years of trade data to download and use to subset crosswalk by years
+start_year = 2000
+end_year = 2001  # inclusive
+
+# Set time step for trade data, options are A (annual) or M (monthly)
+temporal_res = "M"
+years = np.arange(start_year, end_year + 1, 1)
+
+# Read UN codes to ISO3 codes crosswalk to use as country list
+crosswalk = pd.read_csv("H:/Shared drives/APHIS  Projects/Pandemic/Data/un_to_iso.csv")
+crosswalk["UN"] = crosswalk["UN"].astype(str)
+crosswalk = crosswalk[crosswalk.ISO3.notnull()]
+
+# Change "Now" end date in crosswalk to a max year value so column can be converted
+# to numeric and compared to simulation years
+crosswalk.loc[crosswalk["End"] == "Now", "End"] = "9999"
+crosswalk["End"] = pd.to_numeric(crosswalk["End"])
+crosswalk = crosswalk[crosswalk["End"] >= start_year]
+# Create dictionary to convert UN to ISO3 codes
+crosswalk_dict = pd.Series(crosswalk.ISO3.values, index=crosswalk.UN).to_dict()
+
+# Get data availability from Comtrade and compare to desired data
+data_availability_url = urlopen(
+    "http://comtrade.un.org/api/refs/da/view?type=C&freq=all&ps=all&px=HS"
+)
+data_availability_raw = json.loads(data_availability_url.read().decode())
+data_availability_url.close()
+data_availability = pd.json_normalize(data_availability_raw)
+
+# Create summary of availability, tracking availability of annual,
+# and monthly (all 12 months, or less than 12)
+data_summary = pd.DataFrame(
+    columns=[
+        "country",
+        "year",
+        "annual_avail",
+        "all_monthly_avail",
+        "partial_monthly_avail",
+    ]
+)
+for country in crosswalk.UN.to_list():
+    country_availability = data_availability[data_availability["r"] == country]
+    for year in years:
+        summary_data = {
+            "country": [country],
+            "year": [year],
+            "annual_avail": [0],
+            "all_monthly_avail": [0],
+            "partial_monthly_avail": [0],
+        }
+        year_summary = pd.DataFrame(summary_data)
+        if str(year) in list(country_availability["ps"]):
+            year_summary["annual_avail"] = 1
+        country_monthly = list(
+            country_availability[country_availability["freq"] == "MONTHLY"]["ps"].str[
+                :4
+            ]
+        )
+        monthly_sum = sum(1 for i in country_monthly if i == str(year))
+        if monthly_sum == 12:
+            year_summary["all_monthly_avail"] = 1
+        if 0 < monthly_sum < 12:
+            year_summary["partial_monthly_avail"] = 1
+        data_summary = data_summary.append(year_summary)
+
+# Create df specifying if annual or monthly should be download
+# based on desired temp res for each country and year
+if temporal_res == "A":
+    use_annual = data_summary[data_summary["annual_avail"] == 1]
+    use_monthly = data_summary[
+        (data_summary["annual_avail"] == 0)
+        & (
+            (data_summary["all_monthly_avail"] == 1)
+            | (data_summary["partial_monthly_avail"] == 1)
+        )
+    ]
+if temporal_res == "M":
+    use_monthly = data_summary[data_summary["all_monthly_avail"] == 1]
+    use_monthly = use_monthly.append(
+        data_summary[
+            (data_summary["partial_monthly_avail"] == 1)
+            & (data_summary["annual_avail"] == 0)
+        ]
+    )
+    use_annual = data_summary[
+        (data_summary["annual_avail"] == 1) & (data_summary["all_monthly_avail"] == 0)
+    ]
+no_data = data_summary[
+    (data_summary["annual_avail"] == 0)
+    & (data_summary["all_monthly_avail"] == 0)
+    & (data_summary["partial_monthly_avail"] == 0)
+]
+# Save data summary as CSV for future reference
+data_summary.to_csv(
+    model_inputs_dir
+    + "/comtrade_data_availability_summary_"
+    + str(start_year)
+    + "-"
+    + str(end_year)
+    + ".csv"
+)
+
+use_annual_dict = use_annual.groupby("year")["country"].apply(list).to_dict()
+use_monthly_dict = use_monthly.groupby("year")["country"].apply(list).to_dict()
+
+# create a directory to save downloaded data
+if temporal_res == "A":
+    if not os.path.exists(model_inputs_dir + "/annual"):
+        os.makedirs(model_inputs_dir + "/annual")
+    os.chdir(model_inputs_dir + "/annual")
+if temporal_res == "M":
+    if not os.path.exists(model_inputs_dir + "/monthly"):
+        os.makedirs(model_inputs_dir + "/monthly")
+    os.chdir(model_inputs_dir + "/monthly")
 
 # loop over commodities, 1 at a time (could do more at once to speed it up)
 if temporal_res == "A":
