@@ -198,12 +198,12 @@ hist_trade_to_use = [
 if len(str(start_forecast_date)) == 6:
     for month in month_list:
         hist_trade_to_use_subsample = fnmatch.filter(
-            hist_trade_to_use, f"*20*{month}.csv"
+            hist_trade_to_use, f"*{month}.csv"
         )
         hist_arr, forecast_arr = create_trade_arrays(
             hist_trade_to_use_subsample, number_forecast_years
         )
-        forecast_ts_list_filtered = fnmatch.filter(forecast_ts_list, f"*20*{month}")
+        forecast_ts_list_filtered = fnmatch.filter(forecast_ts_list, f"*{month}")
         write_forecast_arrays(
             hist_trade_to_use_subsample,
             forecast_arr,
