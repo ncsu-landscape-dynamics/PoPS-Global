@@ -15,9 +15,9 @@ http://www.opensource.org/licenses/gpl-license.html
 http://www.gnu.org/copyleft/gpl.html
 """
 
-import time
 import numpy as np
 import pandas as pd
+import math
 
 from pandemic.probability_calculations import (
     probability_of_entry,
@@ -25,6 +25,7 @@ from pandemic.probability_calculations import (
     probability_of_introduction,
 )
 
+import numpy as np
 from pandemic.helpers import location_pairs_with_host
 
 
@@ -183,12 +184,12 @@ def pandemic_single_time_step(
         # country (i.e., Northern or Southern Hemisphere)
         if len(time_step) > 4:
             if (
-                origin["centroid_lat"] >= 0
+                origin["LAT"] >= 0
                 and time_step[-2:] not in season_dict["NH_season"]
             ):
                 chi_it = 0
             elif (
-                origin["centroid_lat"] < 0
+                origin["LAT"] < 0
                 and time_step[-2:] not in season_dict["SH_season"]
             ):
                 chi_it = 0
@@ -272,7 +273,9 @@ def pandemic_single_time_step(
             # Stochastic lag draws from a gamma distribution to determine
             # the number of time units until infectivity for each introduction
             if transmission_lag_type == "stochastic":
-                time_infect = round(np.random.gamma(gamma_shape, gamma_scale, 1)[0])
+                time_infect = int(
+                    math.round(np.random.gamma(gamma_shape, gamma_scale, 1)[0])
+                )
                 if locations.iloc[j, locations.columns.get_loc("Infective")] is None:
                     print("\t\t\tfirst intro...")
                     print("\t\t\ttime to infectious: ", time_infect)
