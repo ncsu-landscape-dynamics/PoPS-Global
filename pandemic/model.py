@@ -10,7 +10,8 @@ from dotenv import load_dotenv
 from pandemic.helpers import create_trades_list
 from pandemic.model_equations import pandemic_multiple_time_steps
 from pandemic.output_files import (aggregate_monthly_output_to_annual,
-                                   create_model_dirs, save_model_output)
+                                   create_model_dirs, save_model_output,
+                                   write_model_metadata)
 
 # Read environmental variables
 load_dotenv(os.path.join('.env'))
@@ -179,48 +180,32 @@ for i in range(len(trades_list)):
 
         # Save model metadata to text file
         print("writing model metadata...")
-        main_model_output = e[0]
-        final_presence_col = sorted(
-            [c for c in main_model_output.columns if c.startswith("Presence")]
-        )[-1]
-        meta = {}
-        meta["PARAMETERS"] = []
-        meta["PARAMETERS"].append(
-            {
-                "alpha": str(alpha),
-                "beta": str(beta),
-                "mu": str(mu),
-                "lamda_c": str(lamda_c_list),
-                "phi": str(phi),
-                "sigma_epsilon": str(sigma_epsilon),
-                "sigma_h": str(sigma_h),
-                "sigma_kappa": str(sigma_kappa),
-                "sigma_phi": str(sigma_phi),
-                "sigma_T": str(sigma_T),
-                "start_year": str(start_year),
-                "stop_year": str(stop_year),
-                "transmission_lag_type": str(transmission_lag_type),
-                "transmission_lag_units": time_infect_units,
-                "gamma_shape": gamma_shape,
-                "gamma_scale": gamma_scale,
-                "random_seed": str(random_seed),
-                "infectivity_lag": time_infect,
-            }
+        write_model_metadata(
+            main_model_output=e[0],
+            alpha=alpha,
+            beta=beta,
+            mu=mu,
+            lamda_c_list=lamda_c_list,
+            phi=phi,
+            sigma_epsilon=sigma_epsilon,
+            sigma_h=sigma_h,
+            sigma_kappa=sigma_kappa,
+            sigma_phi=sigma_phi,
+            sigma_T=sigma_T,
+            start_year=start_year,
+            stop_year=stop_year,
+            transmission_lag_type=transmission_lag_type,
+            time_infect_units=time_infect_units,
+            gamma_shape=gamma_shape,
+            gamma_scale=gamma_scale,
+            random_seed=random_seed,
+            time_infect=time_infect,
+            native_countries_list=native_countries_list,
+            commodities_available=commodities_available[i],
+            commodity_forecast_path=commodity_forecast_path,
+            phyto_weights=list(locations['Phytosanitary_Capacity'].unique()),
+            outpath=outpath,
+            run_num=run_num
         )
-        if (transmission_lag_type == "static") | (transmission_lag_type is None):
-            meta["PARAMETERS"][0].update({"infectivity_lag": time_infect})
-        if transmission_lag_type == "stochastic":
-            meta["PARAMETERS"][0].update({"infectivity_lag": None})
-        meta["NATIVE_COUNTRIES_T0"] = native_countries_list
-        meta["COMMODITY"] = commodities_available[i]
-        meta["FORECASTED"] = commodity_forecast_path
-        meta["TOTAL COUNTRIES INTRODUCTED"] = str(
-            main_model_output[final_presence_col].value_counts()[1]
-            - len(native_countries_list)
-        )
-
-        with open(f"{outpath}/run_{run_num}_meta.json", "w") as file:
-            json.dump(meta, file, indent=4)
-
     else:
         print("\tskipping as pest is not transported with this commodity")
