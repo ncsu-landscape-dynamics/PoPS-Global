@@ -221,9 +221,6 @@ def query_comtrade(
     crosswalk_path: str
         Location of UN code to ISO3 code crosswalk csv
 
-    Returns
-    --------
-
     """
 
     # list HS commodity codes to query, will be downloaded individually
@@ -410,26 +407,24 @@ def query_comtrade(
                 str(hs), timesteps, monthly_data, crosswalk[["UN"]], crosswalk_dict
             )
 
-    return
 
+# project_path = "H:/My drive/Projects/Pandemic"
+# load_dotenv(os.path.join(project_path, ".env"))
+# # Root project data folder
+# data_path = os.getenv("DATA_PATH")
+# # Path to formatted model inputs
+# model_inputs_dir = data_path + "slf_model/test/"
 
-project_path = "H:/My drive/Pandemic"
-load_dotenv(os.path.join(project_path, ".env"))
-# Root project data folder
-data_path = os.getenv("DATA_PATH")
-# Path to formatted model inputs
-model_inputs_dir = data_path + "slf_model/test/"
+# # Premium subscription authorization code.
+# auth_code = os.getenv("COMTRADE_AUTH_KEY")
 
-# Premium subscription authorization code.
-auth_code = os.getenv("COMTRADE_AUTH_KEY")
-
-query_comtrade(
-    model_inputs_dir=model_inputs_dir,
-    auth_code=auth_code,
-    start_code=6801,
-    end_code=6804,
-    start_year=2000,
-    end_year=2019,
-    temporal_res='M',
-    crosswalk_path="H:/Shared drives/APHIS  Projects/Pandemic/Data/un_to_iso.csv",
-)
+# query_comtrade(
+#     model_inputs_dir=model_inputs_dir,
+#     auth_code=auth_code,
+#     start_code=6801,
+#     end_code=6804,
+#     start_year=2000,
+#     end_year=2019,
+#     temporal_res='M',
+#     crosswalk_path="H:/Shared drives/APHIS  Projects/Pandemic/Data/un_to_iso.csv",
+# )
