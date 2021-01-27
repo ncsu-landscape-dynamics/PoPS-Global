@@ -1,5 +1,4 @@
 import os
-import sys
 import glob
 import fnmatch
 import shutil
@@ -170,49 +169,98 @@ def write_forecast_arrays(
         forecast_df.to_csv(output_dir + f"/{file_prefix}_trades_{ts}.csv")
 
 
-start_forecast_date = sys.argv[1]
-number_historical_years = sys.argv[2]
-number_forecast_years = sys.argv[3]
+def simple_trade_forecast(
+    data_dir,
+    output_dir,
+    start_forecast_date,
+    num_yrs_historical,
+    num_yrs_forecast,
+    hist_data_dir,
+):
+    """
+    Generates a simple trade forecast by randomly
+    selecting a historic value from a number of
+    specified years (by month if temporal resolution
+    is monthly). The process is repeated for the
+    specified number of forecast years.
 
-root_dir = "G:/Shared drives/APHIS  Projects/Pandemic/Data/slf_model"
+    Parameters
+    ----------
+    data_dir : str
+        Path to model data directory
+    output_dir : str
+        Path to where forecast data will
+        be written
+    start_forecast_date : int
+        Year (YYYY) to start generating a
+        trade forecast. If monthly resolution,
+        assumes forecast will start in month 01.
+    num_yrs_historical : int
+        Number of years of historical data
+        from which to randomly select a value.
+        If monthly resolution, will start in
+        month 01.
+    num_yrs_forecast : int
+        Number of years for which to generate
+        a trade forecast. If monthly resolution,
+        assumes forecast will start in month 01.
+    hist_data_dir : str
+        Path to location of historical trade data
+    """
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
+    os.makedirs(output_dir)
 
-output_dir = root_dir + "/inputs/trade_forecast/monthly_agg/6801-6804"
-if os.path.exists(output_dir):
-    shutil.rmtree(output_dir)
-
-os.makedirs(output_dir)
-
-hist_ts_list, forecast_ts_list, month_list = create_date_lists(
-    start_forecast_date, number_historical_years, number_forecast_years
-)
-
-historical_trade_dir = root_dir + "/inputs/monthly_agg/6801-6804"
-historical_trade = glob.glob(historical_trade_dir + "/*")
-hist_trade_to_use = [
-    timestep
-    for timestep in historical_trade
-    if (os.path.basename(timestep)[:-4].split("_")[-1]) in (hist_ts_list)
-]
-
-# For monthly forecasts
-if len(str(start_forecast_date)) == 6:
-    for month in month_list:
-        hist_trade_to_use_subsample = fnmatch.filter(hist_trade_to_use, f"*{month}.csv")
-        hist_arr, forecast_arr = create_trade_arrays(
-            hist_trade_to_use_subsample, number_forecast_years
-        )
-        forecast_ts_list_filtered = fnmatch.filter(forecast_ts_list, f"*{month}")
-        write_forecast_arrays(
-            hist_trade_to_use_subsample,
-            forecast_arr,
-            forecast_ts_list_filtered,
-            output_dir,
-        )
-# For annual forecasts
-elif len(str(start_forecast_date)) == 4:
-    hist_arr, forecast_arr = create_trade_arrays(
-        hist_trade_to_use, number_forecast_years
+    hist_ts_list, forecast_ts_list, month_list = create_date_lists(
+        start_forecast_date, num_yrs_historical, num_yrs_forecast
     )
-    write_forecast_arrays(hist_trade_to_use, forecast_arr, forecast_ts_list, output_dir)
-else:
-    print("format start_forecast_date as YYYY or YYYYMM")
+
+    historical_trade = glob.glob(hist_data_dir + "/*")
+    hist_trade_to_use = [
+        timestep
+        for timestep in historical_trade
+        if (os.path.basename(timestep)[:-4].split("_")[-1]) in (hist_ts_list)
+    ]
+
+    # For monthly forecasts
+    if len(str(start_forecast_date)) == 6:
+        for month in month_list:
+            hist_trade_to_use_subsample = (
+                fnmatch.filter(hist_trade_to_use, f"*{month}.csv")
+            )
+            hist_arr, forecast_arr = create_trade_arrays(
+                hist_trade_to_use_subsample, num_yrs_forecast
+            )
+            forecast_ts_list_filtered = fnmatch.filter(forecast_ts_list, f"*{month}")
+            write_forecast_arrays(
+                hist_trade_to_use_subsample,
+                forecast_arr,
+                forecast_ts_list_filtered,
+                output_dir,
+            )
+    # For annual forecasts
+    elif len(str(start_forecast_date)) == 4:
+        hist_arr, forecast_arr = create_trade_arrays(
+            hist_trade_to_use, num_yrs_forecast
+        )
+        write_forecast_arrays(
+            hist_trade_to_use,
+            forecast_arr,
+            forecast_ts_list,
+            output_dir
+        )
+    else:
+        print("format start_forecast_date as YYYY or YYYYMM")
+
+
+# model_input_dir = "H:/Shared drives/APHIS  Projects/Pandemic/Data/slf_model/inputs"
+# simple_trade_forecast(
+#     model_input_dir=model_input_dir,
+#     output_dir=(
+#         model_input_dir + "/trade_forecast/monthly_agg/6801-6804"
+#     ),
+#     start_forecast_date=2020,
+#     num_yrs_historical=5,
+#     num_yrs_forecast=10,
+#     hist_data_dir=model_input_dir + "/monthly_agg/6801-6804"
+# )
