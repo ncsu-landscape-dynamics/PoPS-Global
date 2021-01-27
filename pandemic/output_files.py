@@ -294,4 +294,3 @@ def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
     out_csv.to_csv(
         outpath + "/pandemic_output_aggregated.csv", float_format="%.2f", na_rep="NAN!"
     )
-    
