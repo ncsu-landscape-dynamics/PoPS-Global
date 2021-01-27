@@ -413,7 +413,7 @@ def query_comtrade(
     return
 
 
-project_path = "H:/Shared drives/APHIS  Projects/Pandemic"
+project_path = "H:/My drive/Pandemic"
 load_dotenv(os.path.join(project_path, ".env"))
 # Root project data folder
 data_path = os.getenv("DATA_PATH")
