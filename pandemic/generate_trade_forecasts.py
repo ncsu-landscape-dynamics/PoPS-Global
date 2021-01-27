@@ -38,6 +38,7 @@ def create_date_lists(
         List of MM strings
 
     """
+
     # If generating an annual forecast, date lists include
     # a 4-digit date format (e.g., 2020)
     if len(str(start_forecast_date)) == 4:
@@ -46,6 +47,7 @@ def create_date_lists(
             range(start_forecast_date - number_historical_years, start_forecast_date, 1)
         )
         forecast_ts_list = list(range(start_forecast_date, end_forecast_date + 1, 1))
+        month_list = []
 
     # If generating a monthly forecast, date lists include
     # a 6-digit date format(e.g., 202012 for December 2020)
@@ -98,6 +100,7 @@ def create_trade_arrays(list_of_csvs, number_forecast_years):
         the number of locations
 
     """
+    print("Creating trade forecast...")
     example_matrix = pd.read_csv(
         list_of_csvs[0], header=0, index_col=0, encoding="latin1"
     )
@@ -155,6 +158,7 @@ def write_forecast_arrays(
 
     """
 
+    print("Saving trade forecasts...")
     file_prefix = os.path.basename(list_of_csvs[0]).split("_")[0]
     example_matrix = pd.read_csv(
         list_of_csvs[0], header=0, index_col=0, encoding="latin1"
@@ -187,23 +191,17 @@ def simple_trade_forecast(
     Parameters
     ----------
     data_dir : str
-        Path to model data directory
+        Path to model input data directory
     output_dir : str
-        Path to where forecast data will
-        be written
+        Path to where forecast data will be written
     start_forecast_date : int
-        Year (YYYY) to start generating a
-        trade forecast. If monthly resolution,
-        assumes forecast will start in month 01.
+        Year-Month (YYYYMM) or year (YYYY) to start generating
+        a trade forecast.
     num_yrs_historical : int
-        Number of years of historical data
-        from which to randomly select a value.
-        If monthly resolution, will start in
-        month 01.
+        Number of years of historical data from which to randomly
+        select a value.
     num_yrs_forecast : int
-        Number of years for which to generate
-        a trade forecast. If monthly resolution,
-        assumes forecast will start in month 01.
+        Number of years for which to generate a trade forecast.
     hist_data_dir : str
         Path to location of historical trade data
     """
