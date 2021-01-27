@@ -20,7 +20,7 @@ import math
 
 
 def probability_of_entry(
-    rho_i, rho_j, zeta_it, lamda_c, T_ijct, sigma_T, mu, d_ij, chi_it
+    rho_i, rho_j, zeta_it, lamda_c, T_ijct, avgT_ct, sigma_T, mu, d_ij, chi_it
 ):
     """
     Returns the probability of entry given trade volume, distance, and
@@ -39,8 +39,13 @@ def probability_of_entry(
         The commodity importance [0,1] of commodity (c) in transporting the
         pest or pathogen
     T_ijct : float
-        The trade volume between origin (i) and destination (j) for commodity
-        (c) at time (t) in metric tons
+        The trade value/volume between origin (i) and destination (j) for commodity
+        (c) at time (t) in dollar value or metric tons
+    avgT_ct : float
+        Average trade value/volume for all origin and destination pairs for commodity
+        (c) at time (t) in dollar value or metric tons
+    sigma_T : float
+        The trade volume normalizing constant
     mu : float
         The mortality rate of the pest or pathogen during transport
     d_ij : int
@@ -64,7 +69,7 @@ def probability_of_entry(
         (1 - rho_i)
         * (1 - rho_j)
         * zeta_it
-        * (1 - math.exp((-1) * lamda_c * (T_ijct / sigma_T)))
+        * (1 - math.exp((-1) * lamda_c * ((T_ijct - avgT_ct) / sigma_T)))
         * math.exp((-1) * mu * d_ij)
         * chi_it
     )
@@ -74,8 +79,10 @@ def probability_of_establishment(
     alpha,
     beta,
     delta_kappa_ijt,
+    avg_kappa_t,
     sigma_kappa,
     h_jt,
+    avg_h_t,
     sigma_h,
     epsilon_jt,
     sigma_epsilon,
@@ -95,14 +102,20 @@ def probability_of_establishment(
     beta : float
         A parameter that allows the equation to be adapted to various discrete
         time steps
-    delta_kappa_ijt :float
+    delta_kappa_ijt : float
         The climate dissimilarity between the origin (i) and destination (j)
+        at time (t)
+    avg_kappa_t : float
+        Average climate dissimilarity for all origin and destination pairs
         at time (t)
     sigma_kappa : float
         The climate dissimilarity normalizing constant
     h_jt : float
-        The percent of area in the destination (j) that has suitable host for
-        the pest
+        The percent of area in the destination (j) that does not have
+        suitable host for the pest
+    avg_h_t : float
+        Average percent of area in all destinations that do not have
+        suitable host for the pest
     sigma_h : float
         The host normalizing constant
     epsilon_jt : float
@@ -126,16 +139,28 @@ def probability_of_establishment(
         from the probability_of_establishment and probability_of_entry
     """
 
-    return alpha * math.exp(
-        (-1)
-        * beta
-        * (
-            ((1 - delta_kappa_ijt) / sigma_kappa) ** 2
-            + ((1 - h_jt) / sigma_h) ** 2
-            + ((1 - epsilon_jt) / sigma_epsilon) ** 2
-            + (phi / sigma_phi) ** (-2)
+    return (
+        (alpha / (sigma_kappa * sigma_h * math.sqrt(2 * math.pi)))
+        * math.exp(
+            (-1) * beta * (
+                (((delta_kappa_ijt - avg_kappa_t) / sigma_kappa) ** 2)
+                + (((h_jt - avg_h_t) / sigma_h) ** 2)
+                + (((1 - epsilon_jt) / sigma_epsilon) ** 2)
+                + ((phi / sigma_phi) ** (-2))
+            )
         )
     )
+
+    # return alpha * math.exp(
+    #     (-1)
+    #     * beta
+    #     * (
+    #         ((delta_kappa_ijt - avg_kappa_t) / sigma_kappa) ** 2
+    #         + ((h_jt - avg_h_t) / sigma_h) ** 2
+    #         + ((1 - epsilon_jt) / sigma_epsilon) ** 2
+    #         + (phi / sigma_phi) ** (-2)
+    #     )
+    # )
 
 
 def probability_of_introduction(

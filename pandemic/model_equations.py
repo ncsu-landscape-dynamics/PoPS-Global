@@ -145,6 +145,10 @@ def pandemic_single_time_step(
     locations["Probability of introduction"] = np.zeros(len(locations))
     origin_destination = pd.DataFrame(columns=["Origin", "Destination"])
 
+    avgT_ct = np.nanmean(trade)
+    avg_h_t = locations["Host Percent Area"].mean()
+    avg_kappa_t = np.nanmean(1 - climate_similarities)
+
     for k in range(len(locations_list)):
         # get position index of location k with known host presence
         # in data frame with all locations for selecting attributes
@@ -196,7 +200,7 @@ def pandemic_single_time_step(
         else:
             chi_it = 1
 
-        h_jt = destination["Host Percent Area"]
+        h_jt = 1 - destination["Host Percent Area"]
 
         # check if species is present in origin country
         # and sufficient time has passed to faciliate transmission
@@ -204,7 +208,7 @@ def pandemic_single_time_step(
             int(time_step) >= int(origin["Infective"])
         ):
             zeta_it = 1
-            delta_kappa_ijt = climate_similarities[j, i]
+            delta_kappa_ijt = (1 - climate_similarities[j, i])
 
             if "Ecological Disturbance" in destination:
                 epsilon_jt = destination["Ecological Disturbance"]
@@ -212,14 +216,17 @@ def pandemic_single_time_step(
                 epsilon_jt = 0
 
             probability_of_entry_ijct = probability_of_entry(
-                rho_i, rho_j, zeta_it, lamda_c, T_ijct, sigma_T, mu, d_ij, chi_it
+                rho_i, rho_j, zeta_it, lamda_c, T_ijct, avgT_ct,
+                sigma_T, mu, d_ij, chi_it,
             )
             probability_of_establishment_ijt = probability_of_establishment(
                 alpha,
                 beta,
                 delta_kappa_ijt,
+                avg_kappa_t,
                 sigma_kappa,
                 h_jt,
+                avg_h_t,
                 sigma_h,
                 epsilon_jt,
                 sigma_epsilon,
@@ -237,6 +244,11 @@ def pandemic_single_time_step(
         entry_probabilities[j, i] = probability_of_entry_ijct
         establishment_probabilities[j, i] = probability_of_establishment_ijt
         introduction_probabilities[j, i] = probability_of_introduction_ijtc
+        print(
+            probability_of_entry_ijct,
+            probability_of_establishment_ijt,
+            probability_of_introduction_ijtc
+        )
 
         # decide if an introduction happens
         introduced = np.random.binomial(1, probability_of_introduction_ijtc)
@@ -349,7 +361,7 @@ def pandemic_multiple_time_steps(
     sigma_h,
     sigma_kappa,
     sigma_phi,
-    sigma_T,
+    # sigma_T,
     start_year,
     date_list,
     season_dict,
@@ -408,8 +420,8 @@ def pandemic_multiple_time_steps(
         of host families
     sigma_phi : int
         The degree of polyphagy normalizing constant
-    sigma_T : int
-        The trade volume normalizing constant
+    # sigma_T : int
+    #     The trade volume normalizing constant
     start_year : int
         The year in which to start the simulation
     date_list : list
@@ -455,6 +467,7 @@ def pandemic_multiple_time_steps(
         ts = date_list[t]
         print("TIME STEP: ", ts)
         trade = trades[t]
+        sigma_T = np.nanstd(trade)
 
         if f"Host Percent Area T{t}" in locations.columns:
             locations["Host Percent Area"] = locations[f"Host Percent Area T{t}"]
