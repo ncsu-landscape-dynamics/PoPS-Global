@@ -20,7 +20,7 @@ import math
 
 
 def probability_of_entry(
-    rho_i, rho_j, zeta_it, lamda_c, T_ijct, avgT_ct, sigma_T, mu, d_ij, chi_it
+    rho_i, rho_j, zeta_it, lamda_c, T_ijct, min_Tc, max_Tc, mu, d_ij, chi_it
 ):
     """
     Returns the probability of entry given trade volume, distance, and
@@ -41,11 +41,12 @@ def probability_of_entry(
     T_ijct : float
         The trade value/volume between origin (i) and destination (j) for commodity
         (c) at time (t) in dollar value or metric tons
-    avgT_ct : float
-        Average trade value/volume for all origin and destination pairs for commodity
+    min_Tc : float
+        Minimum trade value/volume for all origin and destination pairs for commodity
         (c) at time (t) in dollar value or metric tons
-    sigma_T : float
-        The trade volume normalizing constant
+    max_Tc : float
+        Minimum trade value/volume for all origin and destination pairs for commodity
+        (c) at time (t) in dollar value or metric tons
     mu : float
         The mortality rate of the pest or pathogen during transport
     d_ij : int
@@ -69,7 +70,7 @@ def probability_of_entry(
         (1 - rho_i)
         * (1 - rho_j)
         * zeta_it
-        * (1 - math.exp((-1) * lamda_c * ((T_ijct - avgT_ct) / sigma_T)))
+        * (math.exp(lamda_c * ((T_ijct - min_Tc) / (max_Tc - min_Tc))))
         * math.exp((-1) * mu * d_ij)
         * chi_it
     )
@@ -84,10 +85,8 @@ def probability_of_establishment(
     h_jt,
     avg_h_t,
     sigma_h,
-    epsilon_jt,
-    sigma_epsilon,
     phi,
-    sigma_phi,
+    w_phi,
 ):
     """
     Returns the probability of establishment between origin (i) and destination
@@ -118,15 +117,11 @@ def probability_of_establishment(
         suitable host for the pest
     sigma_h : float
         The host normalizing constant
-    epsilon_jt : float
-        The ecological disturbance index of destination (j) at time (t)
-    sigma_epsilon : float
-        The ecological disturbance normalizing constant
     phi : int
         The degree of polyphagy of the pest of interest described as the number
         of host families
-    sigma_phi : int
-        The degree of polyphagy normalizing constant
+    w_phi : float
+        The degree of polyphagy weight
 
     Returns
     -------
@@ -140,13 +135,15 @@ def probability_of_establishment(
     """
 
     return (
-        (alpha / (sigma_kappa * sigma_h * math.sqrt(2 * math.pi)))
+        phi
+        * w_phi
+        * (alpha / (sigma_kappa * sigma_h * math.sqrt(2 * math.pi)))
         * math.exp(
-            (-1) * beta * (
+            (-1)
+            * beta
+            * (
                 (((delta_kappa_ijt - avg_kappa_t) / sigma_kappa) ** 2)
                 + (((h_jt - avg_h_t) / sigma_h) ** 2)
-                + (((1 - epsilon_jt) / sigma_epsilon) ** 2)
-                + ((phi / sigma_phi) ** (-2))
             )
         )
     )
