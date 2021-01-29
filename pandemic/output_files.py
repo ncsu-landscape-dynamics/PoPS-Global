@@ -4,34 +4,53 @@ import pandas as pd
 import json
 
 
-def create_model_dirs(outpath, output_dict):
+def create_model_dirs(
+    outpath,
+    output_dict,
+    write_entry_probs=False,
+    write_estab_probs=False
+):
     """
     Creates directory and folders for model output files.
 
     Parameters
     ----------
-    run_num : Integer
-        Number identifying the model run
     outpath : String
         Absolute path of directory where model output are saved
     output_dict : Dictionary
         Key-value pairs identifying the object name and folder name
         of model output components.
-
-    Returns
-    -------
-    None
-
+    write_entry_probs : bool
+        Indicates whether to save n x n matrices for each time
+        step where n is the number of countries, and values
+        represent the origin-destination probability of
+        entry. Default is False.
+    write_estab_probs : bool
+        Indicates whether to save n x n matrices for each time
+        step where n is the number of countries, and values
+        represent the origin-destination probability of
+        establishment. Default is False.
     """
 
     os.makedirs(outpath, exist_ok=True)
+
+    if write_entry_probs is False:
+        del output_dict['prob_entry']
+    if write_estab_probs is False:
+        del output_dict['prob_est']
 
     for key in output_dict.keys():
         os.makedirs(outpath + key, exist_ok=True)
 
 
 def save_model_output(
-    model_output_object, columns_to_drop, example_trade_matrix, outpath, date_list
+    model_output_object,
+    example_trade_matrix,
+    outpath,
+    date_list,
+    write_entry_probs=False,
+    write_estab_probs=False,
+    columns_to_drop=None,
 ):
     """
     Saves model output, including probabilities for entry, establishment,
@@ -46,20 +65,26 @@ def save_model_output(
         3) probability of establishment; 4) probability of introduction;
         5) origin - destination pairs; and 6) list of countries where pest is
         predicted to be introduced
-
-    columns_to_drop : list
-        List of columns used or created by the model that are to be dropped
-        from the final output (e.g., Koppen climate classifications)
-
     example_trade_matrix : numpy array
         Array of trade data from one time step as example to format
         output dataframe columns and indices
-
     outpath : str
         String specifying absolute path of output directory
-
     date_list : list
         List of unique time step values (YYYY or YYYYMM)
+    write_entry_probs : bool
+        Indicates whether to save n x n matrices for each time
+        step where n is the number of countries, and values
+        represent the origin-destination probability of
+        entry. Default is False.
+    write_estab_probs : bool
+        Indicates whether to save n x n matrices for each time
+        step where n is the number of countries, and values
+        represent the origin-destination probability of
+        establishment. Default is False.
+    columns_to_drop : list
+        Optional list of columns used or created by the model that are to drop
+        from the final output (e.g., Koppen climate classifications)
 
     Returns
     -------
@@ -76,20 +101,27 @@ def save_model_output(
     origin_dst = model_output_object[4]
     country_intro = model_output_object[5]
 
-    out_df = model_output_df.drop(columns_to_drop, axis=1)
+    # saving main model output with overall introduction
+    # probabilities for each time step
+    if columns_to_drop is not None:
+        out_df = model_output_df.drop(columns_to_drop, axis=1)
     out_pdf = pd.DataFrame(out_df.drop(columns="geometry", axis=1))
     out_pdf.to_csv(outpath + "/pandemic_output.csv")
 
     origin_dst.to_csv(outpath + "/origin_destination.csv")
 
+    # saving origin-destination pairs resulting in introduction
+    # for each time step; saving intermediate probabilities
+    # of entry, establishment, and introduction for each
+    # origin-destination pair
     for i in range(0, len(date_list)):
         ts = date_list[i]
 
-        pro_entry_pd = pd.DataFrame(prob_entry[i])
-        pro_entry_pd.columns = example_trade_matrix.columns
-        pro_entry_pd.index = example_trade_matrix.index
-        pro_entry_pd.to_csv(
-            outpath + f"/prob_entry/probability_of_entry_{str(ts)}.csv",
+        country_int_pd = pd.DataFrame(country_intro[i])
+        country_int_pd.columns = example_trade_matrix.columns
+        country_int_pd.index = example_trade_matrix.index
+        country_int_pd.to_csv(
+            outpath + f"/country_introduction/country_introduction_{str(ts)}.csv",
             float_format="%.4f",
             na_rep="NAN!",
         )
@@ -103,23 +135,25 @@ def save_model_output(
             na_rep="NAN!",
         )
 
-        pro_est_pd = pd.DataFrame(prob_est[i])
-        pro_est_pd.columns = example_trade_matrix.columns
-        pro_est_pd.index = example_trade_matrix.index
-        pro_est_pd.to_csv(
-            outpath + f"/prob_est/probability_of_establishment_{str(ts)}.csv",
-            float_format="%.4f",
-            na_rep="NAN!",
-        )
+        if write_entry_probs is True:
+            pro_entry_pd = pd.DataFrame(prob_entry[i])
+            pro_entry_pd.columns = example_trade_matrix.columns
+            pro_entry_pd.index = example_trade_matrix.index
+            pro_entry_pd.to_csv(
+                outpath + f"/prob_entry/probability_of_entry_{str(ts)}.csv",
+                float_format="%.4f",
+                na_rep="NAN!",
+            )
 
-        country_int_pd = pd.DataFrame(country_intro[i])
-        country_int_pd.columns = example_trade_matrix.columns
-        country_int_pd.index = example_trade_matrix.index
-        country_int_pd.to_csv(
-            outpath + f"/country_introduction/country_introduction_{str(ts)}.csv",
-            float_format="%.4f",
-            na_rep="NAN!",
-        )
+        if write_estab_probs is True:
+            pro_est_pd = pd.DataFrame(prob_est[i])
+            pro_est_pd.columns = example_trade_matrix.columns
+            pro_est_pd.index = example_trade_matrix.index
+            pro_est_pd.to_csv(
+                outpath + f"/prob_est/probability_of_establishment_{str(ts)}.csv",
+                float_format="%.4f",
+                na_rep="NAN!",
+            )
 
     return out_df
 
@@ -438,3 +472,4 @@ def write_model_metadata(
 
     with open(f"{outpath}/run_{run_num}_meta.json", "w") as file:
         json.dump(meta, file, indent=4)
+

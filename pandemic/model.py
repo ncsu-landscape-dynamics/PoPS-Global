@@ -45,6 +45,8 @@ transmission_lag_type = config["transmission_lag_type"]
 time_infect = config["time_to_infectivity"]
 gamma_shape = config["transmission_lag_shape"]
 gamma_scale = config["transmission_lag_scale"]
+save_entry = config['save_entry_probs']
+save_estab = config['save_estab_probs']
 
 countries = geopandas.read_file(countries_path, driver="GPKG")
 distances = np.load(input_dir + '/distance_matrix.npy')
@@ -164,10 +166,11 @@ for i in range(len(trades_list)):
         print("saving model outputs: ", outpath)
         full_out_df = save_model_output(
             model_output_object=e,
-            columns_to_drop=cols_to_drop,
             example_trade_matrix=traded,
             outpath=outpath,
             date_list=date_list,
+            write_entry_probs=save_entry,
+            write_estab_probs=save_estab,
         )
 
         # If time steps are monthly, aggregate predictions to
