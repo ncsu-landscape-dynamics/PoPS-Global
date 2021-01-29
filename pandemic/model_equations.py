@@ -236,11 +236,11 @@ def pandemic_single_time_step(
         entry_probabilities[j, i] = probability_of_entry_ijct
         establishment_probabilities[j, i] = probability_of_establishment_ijt
         introduction_probabilities[j, i] = probability_of_introduction_ijtc
-        print(
-            probability_of_entry_ijct,
-            probability_of_establishment_ijt,
-            probability_of_introduction_ijtc,
-        )
+        # print(
+        #     f"Entry:\t{probability_of_entry_ijct:.4f}\t",
+        #     f"Estab:\t{probability_of_establishment_ijt:.4f}\t",
+        #     f"Intro:\t{probability_of_introduction_ijtc:.4f}\t",
+        # )
 
         # decide if an introduction happens
         introduced = np.random.binomial(1, probability_of_introduction_ijtc)
