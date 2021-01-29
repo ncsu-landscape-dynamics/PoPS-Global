@@ -17,6 +17,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 import numpy as np
 import pandas as pd
+import math
 
 from pandemic.probability_calculations import (
     probability_of_entry,
@@ -201,18 +202,21 @@ def pandemic_single_time_step(
             zeta_it = 1
             delta_kappa_ijt = 1 - climate_similarities[j, i]
 
-            probability_of_entry_ijct = probability_of_entry(
-                rho_i,
-                rho_j,
-                zeta_it,
-                lamda_c,
-                T_ijct,
-                min_Tc,
-                max_Tc,
-                mu,
-                d_ij,
-                chi_it,
-            )
+            if T_ijct == 0:
+                probability_of_entry_ijct = 0
+            else:
+                probability_of_entry_ijct = probability_of_entry(
+                    rho_i,
+                    rho_j,
+                    zeta_it,
+                    lamda_c,
+                    T_ijct,
+                    min_Tc,
+                    max_Tc,
+                    mu,
+                    d_ij,
+                    chi_it,
+                )
             probability_of_establishment_ijt = probability_of_establishment(
                 alpha,
                 beta,
@@ -450,8 +454,11 @@ def pandemic_multiple_time_steps(
         ts = date_list[t]
         print("TIME STEP: ", ts)
         trade = trades[t]
-        min_Tc = np.nanmin(trade)
-        max_Tc = np.nanmax(trade)
+        trade_list = [item for sublist in trade for item in sublist]
+        trade_nonzero = [e for e in trade_list if e not in [0]]
+        trade_log = [math.log(e) for e in trade_nonzero]
+        min_Tc = np.nanmin(trade_log)
+        max_Tc = np.nanmax(trade_log)
 
         if f"Host Percent Area T{t}" in locations.columns:
             locations["Host Percent Area"] = locations[f"Host Percent Area T{t}"]
