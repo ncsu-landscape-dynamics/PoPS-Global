@@ -157,7 +157,7 @@ def create_trades_list(commodity_path, commodity_forecast_path, start_year, dist
     if len(commodities_available) == 1:
         code_list = [os.path.split(f)[1] for f in commodities_available]
         print("\t", commodities_available)
-        file_list_historical = glob.glob(commodity_path + "/*.csv")
+        file_list_historical = glob.glob(commodity_path + "*/*.csv")
         file_list_historical.sort()
         if commodity_forecast_path is not None:
             file_list_forecast = glob.glob(commodity_forecast_path + "/*.csv")
