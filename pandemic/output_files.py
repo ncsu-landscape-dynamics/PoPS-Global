@@ -88,13 +88,13 @@ def save_model_output(
 
     Returns
     -------
-    out_df : geodataframe
+    model_output_df : geodataframe
         Geodataframe of model outputs
 
 
     """
 
-    model_output_df = model_output_object[0]
+    model_output_gdf = model_output_object[0]
     prob_entry = model_output_object[1]
     prob_est = model_output_object[2]
     prob_intro = model_output_object[3]
@@ -104,8 +104,12 @@ def save_model_output(
     # saving main model output with overall introduction
     # probabilities for each time step
     if columns_to_drop is not None:
-        out_df = model_output_df.drop(columns_to_drop, axis=1)
-    out_pdf = pd.DataFrame(out_df.drop(columns="geometry", axis=1))
+        model_output_gdf = model_output_gdf.drop(columns_to_drop, axis=1)
+    else:
+        model_output_gdf = model_output_gdf.drop(
+            columns=['Probability of introduction', 'Presence']
+        )
+    out_pdf = pd.DataFrame(model_output_gdf.drop(columns="geometry", axis=1))
     out_pdf.to_csv(outpath + "/pandemic_output.csv")
 
     origin_dst.to_csv(outpath + "/origin_destination.csv")
@@ -155,7 +159,7 @@ def save_model_output(
                 na_rep="NAN!",
             )
 
-    return out_df
+    return model_output_gdf
 
 
 def agg_prob(row, column_list):
@@ -338,19 +342,18 @@ def write_model_metadata(
     mu,
     lamda_c_list,
     phi,
-    sigma_epsilon,
+    sigma_phi,
+    w_phi,
     sigma_h,
     sigma_kappa,
-    sigma_phi,
-    sigma_T,
     start_year,
     stop_year,
     transmission_lag_type,
+    time_infect,
     time_infect_units,
     gamma_shape,
     gamma_scale,
     random_seed,
-    time_infect,
     native_countries_list,
     commodities_available,
     commodity_forecast_path,
@@ -394,8 +397,6 @@ def write_model_metadata(
         of host families
     sigma_phi : int
         The degree of polyphagy normalizing constant
-    sigma_T : int
-        The trade volume normalizing constant
     start_year : str
         The first year of the simulation
     stop_year : str
@@ -442,19 +443,18 @@ def write_model_metadata(
             "mu": str(mu),
             "lamda_c": str(lamda_c_list),
             "phi": str(phi),
-            "sigma_epsilon": str(sigma_epsilon),
+            "sigma_phi": str(sigma_phi),
+            "w_phi": str(w_phi),
             "sigma_h": str(sigma_h),
             "sigma_kappa": str(sigma_kappa),
-            "sigma_phi": str(sigma_phi),
-            "sigma_T": str(sigma_T),
             "start_year": str(start_year),
             "stop_year": str(stop_year),
             "transmission_lag_type": str(transmission_lag_type),
+            "infectivity_lag": time_infect,
             "transmission_lag_units": time_infect_units,
             "gamma_shape": gamma_shape,
             "gamma_scale": gamma_scale,
             "random_seed": str(random_seed),
-            "infectivity_lag": time_infect,
         }
     )
     if (transmission_lag_type == "static") | (transmission_lag_type is None):
