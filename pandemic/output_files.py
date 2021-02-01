@@ -5,10 +5,7 @@ import json
 
 
 def create_model_dirs(
-    outpath,
-    output_dict,
-    write_entry_probs=False,
-    write_estab_probs=False
+    outpath, output_dict, write_entry_probs=False, write_estab_probs=False
 ):
     """
     Creates directory and folders for model output files.
@@ -35,9 +32,9 @@ def create_model_dirs(
     os.makedirs(outpath, exist_ok=True)
 
     if write_entry_probs is False:
-        del output_dict['prob_entry']
+        del output_dict["prob_entry"]
     if write_estab_probs is False:
-        del output_dict['prob_est']
+        del output_dict["prob_est"]
 
     for key in output_dict.keys():
         os.makedirs(outpath + key, exist_ok=True)
@@ -107,7 +104,7 @@ def save_model_output(
         model_output_gdf = model_output_gdf.drop(columns_to_drop, axis=1)
     else:
         model_output_gdf = model_output_gdf.drop(
-            columns=['Probability of introduction', 'Presence']
+            columns=["Probability of introduction", "Presence"]
         )
     out_pdf = pd.DataFrame(model_output_gdf.drop(columns="geometry", axis=1))
     out_pdf.to_csv(outpath + "/pandemic_output.csv")
@@ -342,7 +339,6 @@ def write_model_metadata(
     mu,
     lamda_c_list,
     phi,
-    sigma_phi,
     w_phi,
     sigma_h,
     sigma_kappa,
@@ -359,7 +355,7 @@ def write_model_metadata(
     commodity_forecast_path,
     phyto_weights,
     outpath,
-    run_num
+    run_num,
 ):
     """
     Write model parameters and configuration to metadata file
@@ -386,17 +382,14 @@ def write_model_metadata(
     phi : int
         The degree of polyphagy of the pest of interest described as the number
         of host families
+    w_phi: float
+        The degree of polyphagy weight.
     sigma_kappa : float
         The climate dissimilarity normalizing constant
     sigma_h : float
         The host normalizing constant
     sigma_epsilon : float
         The ecological disturbance normalizing constant
-    phi : int
-        The degree of polyphagy of the pest of interest described as the number
-        of host families
-    sigma_phi : int
-        The degree of polyphagy normalizing constant
     start_year : str
         The first year of the simulation
     stop_year : str
@@ -443,7 +436,6 @@ def write_model_metadata(
             "mu": str(mu),
             "lamda_c": str(lamda_c_list),
             "phi": str(phi),
-            "sigma_phi": str(sigma_phi),
             "w_phi": str(w_phi),
             "sigma_h": str(sigma_h),
             "sigma_kappa": str(sigma_kappa),

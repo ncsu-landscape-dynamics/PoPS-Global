@@ -15,9 +15,9 @@ http://www.opensource.org/licenses/gpl-license.html
 http://www.gnu.org/copyleft/gpl.html
 """
 
+import math
 import numpy as np
 import pandas as pd
-import math
 
 from pandemic.probability_calculations import (
     probability_of_entry,
@@ -453,12 +453,18 @@ def pandemic_multiple_time_steps(
     for t in range(trades.shape[0]):
         ts = date_list[t]
         print("TIME STEP: ", ts)
+
+        # Get index for time steps in date list that match the year of the current ts
+        same_year_idx = [
+            idx for idx, element in enumerate(date_list) if element[:4] == ts[:4]
+        ]
+        # Extract relevant trade arrays based on index position
+        year_trade_data = [trades[i] for i in same_year_idx]
+        # Get annaul maximum and minimum nonzero trade value, log transformed
+        min_Tc = math.log(np.min(np.ma.masked_equal(year_trade_data, 0)))
+        max_Tc = math.log(np.nanmax(sum(year_trade_data)))
+
         trade = trades[t]
-        trade_list = [item for sublist in trade for item in sublist]
-        trade_nonzero = [e for e in trade_list if e not in [0]]
-        trade_log = [math.log(e) for e in trade_nonzero]
-        min_Tc = np.nanmin(trade_log)
-        max_Tc = np.nanmax(trade_log)
 
         if f"Host Percent Area T{t}" in locations.columns:
             locations["Host Percent Area"] = locations[f"Host Percent Area T{t}"]
