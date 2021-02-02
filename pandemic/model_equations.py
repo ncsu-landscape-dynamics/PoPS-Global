@@ -103,8 +103,6 @@ def pandemic_single_time_step(
         of host families
     w_phi : int
         The degree of polyphagy weight
-    sigma_T : int
-        The trade volume normalizing constant
     time_step : str
         String representing the name of the discrete time step (i.e., YYYYMM
         for monthly or YYYY for annual)
