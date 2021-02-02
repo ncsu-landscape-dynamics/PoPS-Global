@@ -87,16 +87,7 @@ def probability_of_entry(
 
 
 def probability_of_establishment(
-    alpha,
-    beta,
-    delta_kappa_ijt,
-    avg_kappa_t,
-    sigma_kappa,
-    h_jt,
-    avg_h_t,
-    sigma_h,
-    phi,
-    w_phi,
+    alpha, beta, delta_kappa_ijt, sigma_kappa, h_jt, sigma_h, phi, w_phi,
 ):
     """
     Returns the probability of establishment between origin (i) and destination
@@ -114,16 +105,10 @@ def probability_of_establishment(
     delta_kappa_ijt : float
         The climate dissimilarity between the origin (i) and destination (j)
         at time (t)
-    avg_kappa_t : float
-        Average climate dissimilarity for all origin and destination pairs
-        at time (t)
     sigma_kappa : float
         The climate dissimilarity normalizing constant
     h_jt : float
         The percent of area in the destination (j) that does not have
-        suitable host for the pest
-    avg_h_t : float
-        Average percent of area in all destinations that do not have
         suitable host for the pest
     sigma_h : float
         The host normalizing constant
@@ -147,14 +132,11 @@ def probability_of_establishment(
     return (
         phi
         * w_phi
-        * (alpha / (sigma_kappa * sigma_h * math.sqrt(2 * math.pi)))
+        * alpha
         * math.exp(
             (-1)
             * beta
-            * (
-                (((delta_kappa_ijt - avg_kappa_t) / sigma_kappa) ** 2)
-                + (((h_jt - avg_h_t) / sigma_h) ** 2)
-            )
+            * (((delta_kappa_ijt / sigma_kappa) ** 2) + ((h_jt / sigma_h) ** 2))
         )
     )
 
