@@ -30,13 +30,11 @@ commodity_forecast_path = config["commodity_forecast_path"]
 native_countries_list = config["native_countries_list"]
 season_dict = config["season_dict"]
 alpha = config["alpha"]
-# beta = config["beta"]
 beta = 0.5
 mu = config["mu"]
 lamda_c_list = config["lamda_c_list"]
 phi = config["phi"]
-sigma_epsilon = config["sigma_epsilon"]
-sigma_phi = config["sigma_phi"]
+w_phi = config["w_phi"]
 start_year = config["start_year"]
 random_seed = config["random_seed"]
 cols_to_drop = config["columns_to_drop"]
@@ -45,8 +43,8 @@ transmission_lag_type = config["transmission_lag_type"]
 time_infect = config["time_to_infectivity"]
 gamma_shape = config["transmission_lag_shape"]
 gamma_scale = config["transmission_lag_scale"]
-save_entry = config['save_entry_probs']
-save_estab = config['save_estab_probs']
+save_entry = config['save_entry']
+save_estab = config['save_estab']
 
 countries = geopandas.read_file(countries_path, driver="GPKG")
 distances = np.load(input_dir + '/distance_matrix.npy')
@@ -111,14 +109,11 @@ for i in range(len(trades_list)):
 
     locations["Presence"] = pres_ts0
     locations["Infective"] = infect_ts0
-
-    # sigma_h = 1 - countries["Host Percent Area"].mean()
-    sigma_h = (1 - countries["Host Percent Area"]).std()
     iu1 = np.triu_indices(climate_similarities.shape[0], 1)
-    # sigma_kappa = 1 - climate_similarities[iu1].mean()
+
+    sigma_h = (1 - countries["Host Percent Area"]).std()
     sigma_kappa = np.std(1 - climate_similarities[iu1])
-    # alpha = 1 / (sigma_kappa * sigma_h * math.sqrt(2 * math.pi))
-    sigma_T = np.mean(trades)
+
     np.random.seed(random_seed)
     lamda_c = lamda_c_list[i]
 
@@ -133,11 +128,9 @@ for i in range(len(trades_list)):
             mu=mu,
             lamda_c=lamda_c,
             phi=phi,
-            sigma_epsilon=sigma_epsilon,
             sigma_h=sigma_h,
             sigma_kappa=sigma_kappa,
-            sigma_phi=sigma_phi,
-            sigma_T=sigma_T,
+            w_phi=w_phi,
             start_year=start_year,
             date_list=date_list,
             season_dict=season_dict,
@@ -190,11 +183,9 @@ for i in range(len(trades_list)):
             mu=mu,
             lamda_c_list=lamda_c_list,
             phi=phi,
-            sigma_epsilon=sigma_epsilon,
             sigma_h=sigma_h,
+            w_phi=w_phi,
             sigma_kappa=sigma_kappa,
-            sigma_phi=sigma_phi,
-            sigma_T=sigma_T,
             start_year=start_year,
             stop_year=stop_year,
             transmission_lag_type=transmission_lag_type,
@@ -206,7 +197,7 @@ for i in range(len(trades_list)):
             native_countries_list=native_countries_list,
             commodities_available=commodities_available[i],
             commodity_forecast_path=commodity_forecast_path,
-            phyto_weights=list(locations['Phytosanitary_Capacity'].unique()),
+            phyto_weights=list(locations['Phytosanitary Capacity'].unique()),
             outpath=outpath,
             run_num=run_num
         )
