@@ -144,8 +144,8 @@ def pandemic_single_time_step(
     locations["Probability of introduction"] = np.zeros(len(locations))
     origin_destination = pd.DataFrame(columns=["Origin", "Destination"])
 
-    avg_h_t = (1 - locations["Host Percent Area"]).mean()
-    avg_kappa_t = np.nanmean(1 - climate_similarities)
+    # avg_h_t = (1 - locations["Host Percent Area"]).mean()
+    # avg_kappa_t = np.nanmean(1 - climate_similarities)
 
     for k in range(len(locations_list)):
         # get position index of location k with known host presence
@@ -221,10 +221,10 @@ def pandemic_single_time_step(
                 alpha,
                 beta,
                 delta_kappa_ijt,
-                avg_kappa_t,
+                # avg_kappa_t,
                 sigma_kappa,
                 h_jt,
-                avg_h_t,
+                # avg_h_t,
                 sigma_h,
                 phi,
                 w_phi,
