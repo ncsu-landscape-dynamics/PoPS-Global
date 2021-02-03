@@ -20,7 +20,7 @@ import math
 
 
 def probability_of_entry(
-    rho_i, rho_j, zeta_it, lamda_c, T_ijct, min_Tc, max_Tc, mu, d_ij, chi_it
+    rho_i, rho_j, zeta_it, lamda_c, T_ijct, sigma_Tc, mu, d_ij, chi_it
 ):
     """
     Returns the probability of entry given trade volume, distance, and
@@ -41,12 +41,15 @@ def probability_of_entry(
     T_ijct : float
         The trade value/volume between origin (i) and destination (j) for commodity
         (c) at time (t) in dollar value or metric tons
-    min_Tc : float
-        Minimum trade value/volume for all origin and destination pairs for commodity
-        (c) at time (t) in dollar value or metric tons
-    max_Tc : float
-        Minimum trade value/volume for all origin and destination pairs for commodity
-        (c) at time (t) in dollar value or metric tons
+    # min_Tc : float
+    #     Minimum trade value/volume for all origin and destination pairs for commodity
+    #     (c) at time (t) in dollar value or metric tons
+    # max_Tc : float
+    #     Minimum trade value/volume for all origin and destination pairs for commodity
+    #     (c) at time (t) in dollar value or metric tons
+    sigma_Tc : float
+        Standard deviation of annual trade value/volume for all origin and destination
+        pairs for commodity (c) for year of timestep (t) in dollar value or metric tons
     mu : float
         The mortality rate of the pest or pathogen during transport
     d_ij : int
@@ -71,16 +74,7 @@ def probability_of_entry(
         * (1 - rho_j)
         * zeta_it
         * lamda_c
-        * (
-            1
-            - (
-                2
-                / (
-                    (math.exp(2 * ((math.log(T_ijct) - min_Tc) / (max_Tc - min_Tc))))
-                    + 1
-                )
-            )
-        )
+        * (1 - (2 / ((math.exp(2 * (T_ijct / sigma_Tc))) + 1)))
         * math.exp((-1) * mu * d_ij)
         * chi_it
     )

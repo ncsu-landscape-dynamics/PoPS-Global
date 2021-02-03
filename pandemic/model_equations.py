@@ -42,8 +42,9 @@ def pandemic_single_time_step(
     sigma_h,
     sigma_kappa,
     w_phi,
-    min_Tc,
-    max_Tc,
+    # min_Tc,
+    # max_Tc,
+    sigma_Tc,
     time_step,
     season_dict,
     transmission_lag_type,
@@ -103,6 +104,9 @@ def pandemic_single_time_step(
         of host families
     w_phi : int
         The degree of polyphagy weight
+    sigma_Tc : float
+        Standard deviation of annual trade value/volume for all origin and destination
+        pairs for commodity (c) for year of timestep (t) in dollar value or metric tons
     time_step : str
         String representing the name of the discrete time step (i.e., YYYYMM
         for monthly or YYYY for annual)
@@ -209,8 +213,9 @@ def pandemic_single_time_step(
                     zeta_it,
                     lamda_c,
                     T_ijct,
-                    min_Tc,
-                    max_Tc,
+                    # min_Tc,
+                    # max_Tc,
+                    sigma_Tc,
                     mu,
                     d_ij,
                     chi_it,
@@ -458,9 +463,10 @@ def pandemic_multiple_time_steps(
         ]
         # Extract relevant trade arrays based on index position
         year_trade_data = [trades[i] for i in same_year_idx]
-        # Get annaul maximum and minimum nonzero trade value, log transformed
-        min_Tc = math.log(np.min(np.ma.masked_equal(year_trade_data, 0)))
-        max_Tc = math.log(np.nanmax(sum(year_trade_data)))
+        # Get annual standard deviation of nonzero trade value
+        # min_Tc = np.min(np.ma.masked_equal(year_trade_data, 0))
+        # max_Tc = np.nanmax(sum(year_trade_data))
+        sigma_Tc = np.nanstd(sum(year_trade_data))
 
         trade = trades[t]
 
@@ -499,8 +505,9 @@ def pandemic_multiple_time_steps(
             sigma_h=sigma_h,
             sigma_kappa=sigma_kappa,
             w_phi=w_phi,
-            min_Tc=min_Tc,
-            max_Tc=max_Tc,
+            # min_Tc=min_Tc,
+            # max_Tc=max_Tc,
+            sigma_Tc=sigma_Tc,
             time_step=ts,
             season_dict=season_dict,
             transmission_lag_type=transmission_lag_type,
