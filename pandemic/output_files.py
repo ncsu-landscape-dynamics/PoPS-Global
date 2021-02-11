@@ -5,7 +5,12 @@ import json
 
 
 def create_model_dirs(
-    outpath, output_dict, write_entry_probs=False, write_estab_probs=False
+    outpath,
+    output_dict,
+    write_entry_probs=False,
+    write_estab_probs=False,
+    write_intro_probs=False,
+    write_country_intros=False
 ):
     """
     Creates directory and folders for model output files.
@@ -27,6 +32,11 @@ def create_model_dirs(
         step where n is the number of countries, and values
         represent the origin-destination probability of
         establishment. Default is False.
+    write_intro_probs : bool
+        Indicates whether to save n x n matrices for each time
+        step where n is the number of countries, and values
+        represent the origin-destination probability of
+        introduction. Default is False.
     """
 
     os.makedirs(outpath, exist_ok=True)
@@ -35,6 +45,10 @@ def create_model_dirs(
         del output_dict["prob_entry"]
     if write_estab_probs is False:
         del output_dict["prob_est"]
+    if write_intro_probs is False:
+        del output_dict["prob_intro"]
+    if write_country_intros is False:
+        del output_dict["country_introduction"]
 
     for key in output_dict.keys():
         os.makedirs(outpath + key, exist_ok=True)
@@ -47,6 +61,8 @@ def save_model_output(
     date_list,
     write_entry_probs=False,
     write_estab_probs=False,
+    write_intro_probs=False,
+    write_country_intros=False,
     columns_to_drop=None,
 ):
     """
@@ -79,6 +95,11 @@ def save_model_output(
         step where n is the number of countries, and values
         represent the origin-destination probability of
         establishment. Default is False.
+    write_intro_probs : bool
+        Indicates whether to save n x n matrices for each time
+        step where n is the number of countries, and values
+        represent the origin-destination probability of
+        introduction. Default is False.
     columns_to_drop : list
         Optional list of columns used or created by the model that are to drop
         from the final output (e.g., Koppen climate classifications)
@@ -118,23 +139,15 @@ def save_model_output(
     for i in range(0, len(date_list)):
         ts = date_list[i]
 
-        country_int_pd = pd.DataFrame(country_intro[i])
-        country_int_pd.columns = example_trade_matrix.columns
-        country_int_pd.index = example_trade_matrix.index
-        country_int_pd.to_csv(
-            outpath + f"/country_introduction/country_introduction_{str(ts)}.csv",
-            float_format="%.4f",
-            na_rep="NAN!",
-        )
-
-        pro_intro_pd = pd.DataFrame(prob_intro[i])
-        pro_intro_pd.columns = example_trade_matrix.columns
-        pro_intro_pd.index = example_trade_matrix.index
-        pro_intro_pd.to_csv(
-            outpath + f"/prob_intro/probability_of_introduction_{str(ts)}.csv",
-            float_format="%.4f",
-            na_rep="NAN!",
-        )
+        if write_country_intros is True:
+            country_int_pd = pd.DataFrame(country_intro[i])
+            country_int_pd.columns = example_trade_matrix.columns
+            country_int_pd.index = example_trade_matrix.index
+            country_int_pd.to_csv(
+                outpath + f"/country_introduction/country_introduction_{str(ts)}.csv",
+                float_format="%.4f",
+                na_rep="NAN!",
+            )
 
         if write_entry_probs is True:
             pro_entry_pd = pd.DataFrame(prob_entry[i])
@@ -152,6 +165,16 @@ def save_model_output(
             pro_est_pd.index = example_trade_matrix.index
             pro_est_pd.to_csv(
                 outpath + f"/prob_est/probability_of_establishment_{str(ts)}.csv",
+                float_format="%.4f",
+                na_rep="NAN!",
+            )
+
+        if write_intro_probs is True:
+            pro_intro_pd = pd.DataFrame(prob_intro[i])
+            pro_intro_pd.columns = example_trade_matrix.columns
+            pro_intro_pd.index = example_trade_matrix.index
+            pro_intro_pd.to_csv(
+                outpath + f"/prob_intro/probability_of_introduction_{str(ts)}.csv",
                 float_format="%.4f",
                 na_rep="NAN!",
             )
