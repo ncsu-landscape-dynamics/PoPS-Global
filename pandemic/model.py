@@ -9,16 +9,19 @@ from dotenv import load_dotenv
 
 from pandemic.helpers import create_trades_list
 from pandemic.model_equations import pandemic_multiple_time_steps
-from pandemic.output_files import (aggregate_monthly_output_to_annual,
-                                   create_model_dirs, save_model_output,
-                                   write_model_metadata)
+from pandemic.output_files import (
+    aggregate_monthly_output_to_annual,
+    create_model_dirs,
+    save_model_output,
+    write_model_metadata
+)
 
 # Read environmental variables
-load_dotenv(os.path.join('.env'))
-data_dir = os.getenv('DATA_PATH')
-input_dir = os.getenv('INPUT_PATH')
-out_dir = os.getenv('OUTPUT_PATH')
-countries_path = os.getenv('COUNTRIES_PATH')
+load_dotenv(os.path.join(".env"))
+data_dir = os.getenv("DATA_PATH")
+input_dir = os.getenv("INPUT_PATH")
+out_dir = os.getenv("OUTPUT_PATH")
+countries_path = os.getenv("COUNTRIES_PATH")
 
 # Read model arguments from configuration file
 path_to_config_json = sys.argv[1]
@@ -43,15 +46,15 @@ transmission_lag_type = config["transmission_lag_type"]
 time_infect = config["time_to_infectivity"]
 gamma_shape = config["transmission_lag_shape"]
 gamma_scale = config["transmission_lag_scale"]
-save_entry = config['save_entry']
-save_estab = config['save_estab']
-save_intro = config['save_intro']
-save_country_intros = config['save_country_intros']
+save_entry = config["save_entry"]
+save_estab = config["save_estab"]
+save_intro = config["save_intro"]
+save_country_intros = config["save_country_intros"]
 
 countries = geopandas.read_file(countries_path, driver="GPKG")
-distances = np.load(input_dir + '/distance_matrix_wTWN.npy')
+distances = np.load(input_dir + "/distance_matrix_wTWN.npy")
 # climate_similarities = np.load(input_dir + '/climate_similarities.npy')
-climate_similarities = np.load(input_dir + '/climate_similarities_hiiMask_wTWN.npy')
+climate_similarities = np.load(input_dir + "/climate_similarities_hiiMask_wTWN.npy")
 
 # Read & format trade data
 trades_list, file_list_filtered, code_list, commodities_available = create_trades_list(
@@ -168,7 +171,7 @@ for i in range(len(trades_list)):
             write_entry_probs=save_entry,
             write_estab_probs=save_estab,
             write_intro_probs=save_intro,
-            write_country_intros=save_country_intros
+            write_country_intros=save_country_intros,
         )
 
         # If time steps are monthly, aggregate predictions to
@@ -202,9 +205,9 @@ for i in range(len(trades_list)):
             native_countries_list=native_countries_list,
             commodities_available=commodities_available[i],
             commodity_forecast_path=commodity_forecast_path,
-            phyto_weights=list(locations['Phytosanitary Capacity'].unique()),
+            phyto_weights=list(locations["Phytosanitary Capacity"].unique()),
             outpath=outpath,
-            run_num=run_num
+            run_num=run_num,
         )
     else:
         print("\tskipping as pest is not transported with this commodity")

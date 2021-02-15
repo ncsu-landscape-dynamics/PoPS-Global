@@ -10,7 +10,7 @@ def create_model_dirs(
     write_entry_probs=False,
     write_estab_probs=False,
     write_intro_probs=False,
-    write_country_intros=False
+    write_country_intros=False,
 ):
     """
     Creates directory and folders for model output files.
@@ -487,4 +487,3 @@ def write_model_metadata(
 
     with open(f"{outpath}/run_{run_num}_meta.json", "w") as file:
         json.dump(meta, file, indent=4)
-

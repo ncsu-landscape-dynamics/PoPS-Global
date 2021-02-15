@@ -5,7 +5,6 @@ import json
 from urllib.request import urlopen
 import pandas as pd
 import numpy as np
-from dotenv import load_dotenv
 
 
 def nested_list(original_list, list_length):
@@ -194,7 +193,7 @@ def query_comtrade(
     start_year,
     end_year,
     temporal_res,
-    crosswalk_path
+    crosswalk_path,
 ):
     """
     Runs trade data request and download process, including
@@ -216,9 +215,9 @@ def query_comtrade(
         First year (YYYY) requested
     end_year : int
         Last year (YYYY) requested
-    temporal_res: str
+    temporal_res : str
         temporal resolution of data, "A" for annual, "M" for monthly
-    crosswalk_path: str
+    crosswalk_path : str
         Location of UN code to ISO3 code crosswalk csv
 
     """
@@ -277,8 +276,9 @@ def query_comtrade(
             if str(year) in list(country_availability["ps"]):
                 year_summary["annual_avail"] = 1
             country_monthly = list(
-                country_availability[country_availability["freq"] == "MONTHLY"]["ps"]
-                .str[:4]
+                country_availability[country_availability["freq"] == "MONTHLY"][
+                    "ps"
+                ].str[:4]
             )
             monthly_sum = sum(1 for i in country_monthly if i == str(year))
             if monthly_sum == 12:
@@ -343,9 +343,7 @@ def query_comtrade(
         for hs in hs_list:
             # Download either annual or monthly depending on availability
             freq = "A"
-            annual_data = download_trade_data(
-                str(hs), freq, use_annual_dict, auth_code
-            )
+            annual_data = download_trade_data(str(hs), freq, use_annual_dict, auth_code)
             freq = "M"
             monthly_data = download_trade_data(
                 str(hs), freq, use_monthly_dict, auth_code

@@ -81,7 +81,13 @@ def probability_of_entry(
 
 
 def probability_of_establishment(
-    alpha, beta, delta_kappa_ijt, sigma_kappa, h_jt, sigma_h, phi, w_phi,
+    alpha, beta,
+    delta_kappa_ijt,
+    sigma_kappa,
+    h_jt,
+    sigma_h,
+    phi,
+    w_phi,
 ):
     """
     Returns the probability of establishment between origin (i) and destination

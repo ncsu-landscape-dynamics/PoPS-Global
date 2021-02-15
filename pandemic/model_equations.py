@@ -15,7 +15,6 @@ http://www.opensource.org/licenses/gpl-license.html
 http://www.gnu.org/copyleft/gpl.html
 """
 
-import math
 import numpy as np
 import pandas as pd
 

@@ -223,8 +223,8 @@ def simple_trade_forecast(
     # For monthly forecasts
     if len(str(start_forecast_date)) == 6:
         for month in month_list:
-            hist_trade_to_use_subsample = (
-                fnmatch.filter(hist_trade_to_use, f"*{month}.csv")
+            hist_trade_to_use_subsample = (fnmatch.filter(
+                hist_trade_to_use, f"*{month}.csv")
             )
             hist_arr, forecast_arr = create_trade_arrays(
                 hist_trade_to_use_subsample, num_yrs_forecast
@@ -242,10 +242,7 @@ def simple_trade_forecast(
             hist_trade_to_use, num_yrs_forecast
         )
         write_forecast_arrays(
-            hist_trade_to_use,
-            forecast_arr,
-            forecast_ts_list,
-            output_dir
+            hist_trade_to_use, forecast_arr, forecast_ts_list, output_dir
         )
     else:
         print("format start_forecast_date as YYYY or YYYYMM")
