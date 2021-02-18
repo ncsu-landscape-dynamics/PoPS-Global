@@ -56,6 +56,7 @@ def download_trade_data(hs_str, freq_str, year_country_dict, auth_code_str):
                 + hs_str
                 + "&r="
                 + country_code_str
+                # rg=1 (imports only)
                 + "&rg=1&p=all&freq="
                 + freq_str
                 + "&ps="
@@ -143,11 +144,7 @@ def save_hs_timestep_matrices(
 
             # Merge to commodity/year df
             HS_matrix = pd.merge(
-                HS_matrix,
-                reporter_data,
-                how="left",
-                left_on="UN",
-                right_on="ptCode",
+                HS_matrix, reporter_data, how="left", left_on="UN", right_on="ptCode",
             )
             HS_matrix.drop("ptCode", axis=1, inplace=True)
             HS_matrix.rename(columns={"TradeValue": reporter}, inplace=True)
@@ -177,6 +174,9 @@ def save_hs_timestep_matrices(
             HS_matrix = HS_matrix.reset_index()
             HS_matrix = HS_matrix.groupby("index", sort=False).sum().transpose()
         assert len(HS_matrix.columns.to_list()) == len(set(HS_matrix.columns.to_list()))
+        # Tranpose matrix so that columns are exporting partners (origins) and
+        # rows are importing reporters (destinations) to match other model input data
+        HS_matrix = HS_matrix.transpose()
         # create a directory to save downloaded data
         if not os.path.exists(hs_str):
             os.makedirs(hs_str)
