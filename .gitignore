@@ -19,7 +19,6 @@ lib64/
 parts/
 sdist/
 var/
-wheels/
 pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
@@ -50,7 +49,5 @@ notebooks/.ipynb_checkpoints/map_multiple_simulations-checkpoint.ipynb
 notebooks/.ipynb_checkpoints/map_results-checkpoint.ipynb
 notebooks/summary_stats.ipynb
 pandemic/model_summary_statistics.py
-notebooks/compare_all_simulations.ipynb
-notebooks/map_multiple_simulations.ipynb
 notebooks/compare_all_simulations.ipynb
 notebooks/map_multiple_simulations.ipynb
