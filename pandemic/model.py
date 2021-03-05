@@ -1,12 +1,10 @@
 import json
 import os
 import sys
-
 import geopandas
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-
 from pandemic.helpers import create_trades_list
 from pandemic.model_equations import pandemic_multiple_time_steps
 from pandemic.output_files import (
@@ -46,6 +44,8 @@ transmission_lag_type = config["transmission_lag_type"]
 time_infect = config["time_to_infectivity"]
 gamma_shape = config["transmission_lag_shape"]
 gamma_scale = config["transmission_lag_scale"]
+save_main_output = config["save_main_output"]
+save_metadata = config["save_metadata"]
 save_entry = config["save_entry"]
 save_estab = config["save_estab"]
 save_intro = config["save_intro"]

@@ -41,9 +41,8 @@ def pandemic_single_time_step(
     sigma_h,
     sigma_kappa,
     w_phi,
-    # min_Tc,
-    # max_Tc,
-    sigma_Tc,
+    min_Tc,
+    max_Tc,
     time_step,
     season_dict,
     transmission_lag_type,
@@ -103,9 +102,12 @@ def pandemic_single_time_step(
         of host families
     w_phi : int
         The degree of polyphagy weight
-    sigma_Tc : float
-        Standard deviation of annual trade value/volume for all origin and destination
-        pairs for commodity (c) for year of timestep (t) in dollar value or metric tons
+    min_Tc : float
+        The minimum value/volume of trade for the year of timestep (t) for all
+        origin and desitnation pairs for commodity (c) in dollar value or metric tons.
+    max_Tc : float
+        The maximum value/volume of trade for the year of timestep (t) for all
+        origin and desitnation pairs for commodity (c) in dollar value or metric tons.
     time_step : str
         String representing the name of the discrete time step (i.e., YYYYMM
         for monthly or YYYY for annual)
@@ -144,9 +146,6 @@ def pandemic_single_time_step(
     introduction_country = np.zeros_like(trade, dtype=float)
     locations["Probability of introduction"] = np.zeros(len(locations))
     origin_destination = pd.DataFrame(columns=["Origin", "Destination"])
-
-    # avg_h_t = (1 - locations["Host Percent Area"]).mean()
-    # avg_kappa_t = np.nanmean(1 - climate_similarities)
 
     for k in range(len(locations_list)):
         # get position index of location k with known host presence
@@ -212,9 +211,8 @@ def pandemic_single_time_step(
                     zeta_it,
                     lamda_c,
                     T_ijct,
-                    # min_Tc,
-                    # max_Tc,
-                    sigma_Tc,
+                    min_Tc,
+                    max_Tc,
                     mu,
                     d_ij,
                     chi_it,
@@ -223,10 +221,8 @@ def pandemic_single_time_step(
                 alpha,
                 beta,
                 delta_kappa_ijt,
-                # avg_kappa_t,
                 sigma_kappa,
                 h_jt,
-                # avg_h_t,
                 sigma_h,
                 phi,
                 w_phi,
@@ -242,11 +238,6 @@ def pandemic_single_time_step(
         entry_probabilities[j, i] = probability_of_entry_ijct
         establishment_probabilities[j, i] = probability_of_establishment_ijt
         introduction_probabilities[j, i] = probability_of_introduction_ijtc
-        # print(
-        #     f"Entry:\t{probability_of_entry_ijct:.4f}\t",
-        #     f"Estab:\t{probability_of_establishment_ijt:.4f}\t",
-        #     f"Intro:\t{probability_of_introduction_ijtc:.4f}\t",
-        # )
 
         # decide if an introduction happens
         introduced = np.random.binomial(1, probability_of_introduction_ijtc)
@@ -442,8 +433,6 @@ def pandemic_multiple_time_steps(
         from the probability_of_establishment and probability_of_entry
     """
 
-    # time_steps = trades.shape[0]
-
     entry_probabilities = np.zeros_like(trades, dtype=float)
     establishment_probabilities = np.zeros_like(trades, dtype=float)
     introduction_probabilities = np.zeros_like(trades, dtype=float)
@@ -463,9 +452,8 @@ def pandemic_multiple_time_steps(
         # Extract relevant trade arrays based on index position
         year_trade_data = [trades[i] for i in same_year_idx]
         # Get annual standard deviation of nonzero trade value
-        # min_Tc = np.min(np.ma.masked_equal(year_trade_data, 0))
-        # max_Tc = np.nanmax(sum(year_trade_data))
-        sigma_Tc = np.nanstd(sum(year_trade_data))
+        min_Tc = np.min(np.ma.masked_equal(year_trade_data, 0))
+        max_Tc = np.nanmax(year_trade_data)
 
         trade = trades[t]
 
@@ -504,9 +492,8 @@ def pandemic_multiple_time_steps(
             sigma_h=sigma_h,
             sigma_kappa=sigma_kappa,
             w_phi=w_phi,
-            # min_Tc=min_Tc,
-            # max_Tc=max_Tc,
-            sigma_Tc=sigma_Tc,
+            min_Tc=min_Tc,
+            max_Tc=max_Tc,
             time_step=ts,
             season_dict=season_dict,
             transmission_lag_type=transmission_lag_type,
