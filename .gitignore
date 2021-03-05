@@ -31,7 +31,7 @@ MANIFEST
 # Environmental variables
 *.env
 
-# Model parameter testing files
+# Model parameter testing and visualization files
 pandemic/create_config.py
 pandemic/config.json
 pandemic/model_runs.py
@@ -48,3 +48,9 @@ notebooks/.ipynb_checkpoints/4_map_results-checkpoint.ipynb
 notebooks/.ipynb_checkpoints/compare_all_simulations-checkpoint.ipynb
 notebooks/.ipynb_checkpoints/map_multiple_simulations-checkpoint.ipynb
 notebooks/.ipynb_checkpoints/map_results-checkpoint.ipynb
+notebooks/summary_stats.ipynb
+pandemic/model_summary_statistics.py
+notebooks/compare_all_simulations.ipynb
+notebooks/map_multiple_simulations.ipynb
+notebooks/compare_all_simulations.ipynb
+notebooks/map_multiple_simulations.ipynb
