@@ -19,7 +19,6 @@ lib64/
 parts/
 sdist/
 var/
-wheels/
 pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
@@ -31,8 +30,24 @@ MANIFEST
 # Environmental variables
 *.env
 
-# Model parameter testing files
+# Model parameter testing and visualization files
 pandemic/create_config.py
 pandemic/config.json
 pandemic/model_runs.py
 pandemic/create_header_file.py
+notebooks/create_env_file.ipynb
+pandemic/model_runs_grid_search.py
+pandemic/create_config_params.py
+notebooks/.ipynb_checkpoints/0_create_env_file-checkpoint.ipynb
+notebooks/.ipynb_checkpoints/1_data_acquisition_format_wTWN-checkpoint.ipynb
+notebooks/.ipynb_checkpoints/1_data_acquisition_format-checkpoint.ipynb
+notebooks/.ipynb_checkpoints/2_create_model_config-checkpoint.ipynb
+notebooks/.ipynb_checkpoints/3_run_model-checkpoint.ipynb
+notebooks/.ipynb_checkpoints/4_map_results-checkpoint.ipynb
+notebooks/.ipynb_checkpoints/compare_all_simulations-checkpoint.ipynb
+notebooks/.ipynb_checkpoints/map_multiple_simulations-checkpoint.ipynb
+notebooks/.ipynb_checkpoints/map_results-checkpoint.ipynb
+notebooks/summary_stats.ipynb
+pandemic/model_summary_statistics.py
+notebooks/compare_all_simulations.ipynb
+notebooks/map_multiple_simulations.ipynb

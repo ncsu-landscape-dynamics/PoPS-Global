@@ -38,11 +38,11 @@ def pandemic_single_time_step(
     mu,
     lamda_c,
     phi,
-    sigma_epsilon,
     sigma_h,
     sigma_kappa,
-    sigma_phi,
-    sigma_T,
+    w_phi,
+    min_Tc,
+    max_Tc,
     time_step,
     season_dict,
     transmission_lag_type,
@@ -97,15 +97,17 @@ def pandemic_single_time_step(
         The climate dissimilarity normalizing constant
     sigma_h : float
         The host normalizing constant
-    sigma_epsilon : float
-        The ecological disturbance normalizing constant
     phi : int
         The degree of polyphagy of the pest of interest described as the number
         of host families
-    sigma_phi : int
-        The degree of polyphagy normalizing constant
-    sigma_T : int
-        The trade volume normalizing constant
+    w_phi : int
+        The degree of polyphagy weight
+    min_Tc : float
+        The minimum value/volume of trade for the year of timestep (t) for all
+        origin and desitnation pairs for commodity (c) in dollar value or metric tons.
+    max_Tc : float
+        The maximum value/volume of trade for the year of timestep (t) for all
+        origin and desitnation pairs for commodity (c) in dollar value or metric tons.
     time_step : str
         String representing the name of the discrete time step (i.e., YYYYMM
         for monthly or YYYY for annual)
@@ -181,22 +183,16 @@ def pandemic_single_time_step(
         # based on the geographic location of the origin
         # country (i.e., Northern or Southern Hemisphere)
         if len(time_step) > 4:
-            if (
-                origin["centroid_lat"] >= 0
-                and time_step[-2:] not in season_dict["NH_season"]
-            ):
+            if origin["LAT"] >= 0 and time_step[-2:] not in season_dict["NH_season"]:
                 chi_it = 0
-            elif (
-                origin["centroid_lat"] < 0
-                and time_step[-2:] not in season_dict["SH_season"]
-            ):
+            elif origin["LAT"] < 0 and time_step[-2:] not in season_dict["SH_season"]:
                 chi_it = 0
             else:
                 chi_it = 1
         else:
             chi_it = 1
 
-        h_jt = destination["Host Percent Area"]
+        h_jt = 1 - destination["Host Percent Area"]
 
         # check if species is present in origin country
         # and sufficient time has passed to faciliate transmission
@@ -204,16 +200,23 @@ def pandemic_single_time_step(
             int(time_step) >= int(origin["Infective"])
         ):
             zeta_it = 1
-            delta_kappa_ijt = climate_similarities[j, i]
+            delta_kappa_ijt = 1 - climate_similarities[j, i]
 
-            if "Ecological Disturbance" in destination:
-                epsilon_jt = destination["Ecological Disturbance"]
+            if T_ijct == 0:
+                probability_of_entry_ijct = 0
             else:
-                epsilon_jt = 0
-
-            probability_of_entry_ijct = probability_of_entry(
-                rho_i, rho_j, zeta_it, lamda_c, T_ijct, sigma_T, mu, d_ij, chi_it
-            )
+                probability_of_entry_ijct = probability_of_entry(
+                    rho_i,
+                    rho_j,
+                    zeta_it,
+                    lamda_c,
+                    T_ijct,
+                    min_Tc,
+                    max_Tc,
+                    mu,
+                    d_ij,
+                    chi_it,
+                )
             probability_of_establishment_ijt = probability_of_establishment(
                 alpha,
                 beta,
@@ -221,10 +224,8 @@ def pandemic_single_time_step(
                 sigma_kappa,
                 h_jt,
                 sigma_h,
-                epsilon_jt,
-                sigma_epsilon,
                 phi,
-                sigma_phi,
+                w_phi,
             )
         else:
             zeta_it = 0
@@ -271,7 +272,9 @@ def pandemic_single_time_step(
             # Stochastic lag draws from a gamma distribution to determine
             # the number of time units until infectivity for each introduction
             if transmission_lag_type == "stochastic":
-                time_infect = round(np.random.gamma(gamma_shape, gamma_scale, 1)[0])
+                time_infect = int(
+                    round(np.random.gamma(gamma_shape, gamma_scale, 1)[0])
+                )
                 if locations.iloc[j, locations.columns.get_loc("Infective")] is None:
                     print("\t\t\tfirst intro...")
                     print("\t\t\ttime to infectious: ", time_infect)
@@ -343,11 +346,9 @@ def pandemic_multiple_time_steps(
     mu,
     lamda_c,
     phi,
-    sigma_epsilon,
     sigma_h,
     sigma_kappa,
-    sigma_phi,
-    sigma_T,
+    w_phi,
     start_year,
     date_list,
     season_dict,
@@ -357,6 +358,7 @@ def pandemic_multiple_time_steps(
     gamma_shape,
     gamma_scale,
 ):
+
     """
     Returns the probability of establishment, probability of entry, and
     probability of introduction as an n x n matrices betweem every origin (i)
@@ -398,15 +400,8 @@ def pandemic_multiple_time_steps(
         The climate dissimilarity normalizing constant
     sigma_h : float
         The host normalizing constant
-    sigma_epsilon : float
-        The ecological disturbance normalizing constant
-    phi : int
-        The degree of polyphagy of the pest of interest described as the number
-        of host families
-    sigma_phi : int
+    w_phi : int
         The degree of polyphagy normalizing constant
-    sigma_T : int
-        The trade volume normalizing constant
     start_year : int
         The year in which to start the simulation
     date_list : list
@@ -438,8 +433,6 @@ def pandemic_multiple_time_steps(
         from the probability_of_establishment and probability_of_entry
     """
 
-    # time_steps = trades.shape[0]
-
     entry_probabilities = np.zeros_like(trades, dtype=float)
     establishment_probabilities = np.zeros_like(trades, dtype=float)
     introduction_probabilities = np.zeros_like(trades, dtype=float)
@@ -451,6 +444,17 @@ def pandemic_multiple_time_steps(
     for t in range(trades.shape[0]):
         ts = date_list[t]
         print("TIME STEP: ", ts)
+
+        # Get index for time steps in date list that match the year of the current ts
+        same_year_idx = [
+            idx for idx, element in enumerate(date_list) if element[:4] == ts[:4]
+        ]
+        # Extract relevant trade arrays based on index position
+        year_trade_data = [trades[i] for i in same_year_idx]
+        # Get annual standard deviation of nonzero trade value
+        min_Tc = np.min(np.ma.masked_equal(year_trade_data, 0))
+        max_Tc = np.nanmax(year_trade_data)
+
         trade = trades[t]
 
         if f"Host Percent Area T{t}" in locations.columns:
@@ -485,11 +489,11 @@ def pandemic_multiple_time_steps(
             mu=mu,
             lamda_c=lamda_c,
             phi=phi,
-            sigma_epsilon=sigma_epsilon,
             sigma_h=sigma_h,
             sigma_kappa=sigma_kappa,
-            sigma_phi=sigma_phi,
-            sigma_T=sigma_T,
+            w_phi=w_phi,
+            min_Tc=min_Tc,
+            max_Tc=max_Tc,
             time_step=ts,
             season_dict=season_dict,
             transmission_lag_type=transmission_lag_type,

@@ -1,36 +1,69 @@
 import os
 import numpy as np
 import pandas as pd
+import json
 
 
-def create_model_dirs(outpath, output_dict):
+def create_model_dirs(
+    outpath,
+    output_dict,
+    write_entry_probs=False,
+    write_estab_probs=False,
+    write_intro_probs=False,
+    write_country_intros=False,
+):
     """
     Creates directory and folders for model output files.
 
     Parameters
     ----------
-    run_num : Integer
-        Number identifying the model run
     outpath : String
         Absolute path of directory where model output are saved
     output_dict : Dictionary
         Key-value pairs identifying the object name and folder name
         of model output components.
-
-    Returns
-    -------
-    None
-
+    write_entry_probs : bool
+        Indicates whether to save n x n matrices for each time
+        step where n is the number of countries, and values
+        represent the origin-destination probability of
+        entry. Default is False.
+    write_estab_probs : bool
+        Indicates whether to save n x n matrices for each time
+        step where n is the number of countries, and values
+        represent the origin-destination probability of
+        establishment. Default is False.
+    write_intro_probs : bool
+        Indicates whether to save n x n matrices for each time
+        step where n is the number of countries, and values
+        represent the origin-destination probability of
+        introduction. Default is False.
     """
 
     os.makedirs(outpath, exist_ok=True)
+
+    if write_entry_probs is False:
+        del output_dict["prob_entry"]
+    if write_estab_probs is False:
+        del output_dict["prob_est"]
+    if write_intro_probs is False:
+        del output_dict["prob_intro"]
+    if write_country_intros is False:
+        del output_dict["country_introduction"]
 
     for key in output_dict.keys():
         os.makedirs(outpath + key, exist_ok=True)
 
 
 def save_model_output(
-    model_output_object, columns_to_drop, example_trade_matrix, outpath, date_list
+    model_output_object,
+    example_trade_matrix,
+    outpath,
+    date_list,
+    write_entry_probs=False,
+    write_estab_probs=False,
+    write_intro_probs=False,
+    write_country_intros=False,
+    columns_to_drop=None,
 ):
     """
     Saves model output, including probabilities for entry, establishment,
@@ -45,82 +78,108 @@ def save_model_output(
         3) probability of establishment; 4) probability of introduction;
         5) origin - destination pairs; and 6) list of countries where pest is
         predicted to be introduced
-
-    columns_to_drop : list
-        List of columns used or created by the model that are to be dropped
-        from the final output (e.g., Koppen climate classifications)
-
     example_trade_matrix : numpy array
         Array of trade data from one time step as example to format
         output dataframe columns and indices
-
     outpath : str
         String specifying absolute path of output directory
-
     date_list : list
         List of unique time step values (YYYY or YYYYMM)
+    write_entry_probs : bool
+        Indicates whether to save n x n matrices for each time
+        step where n is the number of countries, and values
+        represent the origin-destination probability of
+        entry. Default is False.
+    write_estab_probs : bool
+        Indicates whether to save n x n matrices for each time
+        step where n is the number of countries, and values
+        represent the origin-destination probability of
+        establishment. Default is False.
+    write_intro_probs : bool
+        Indicates whether to save n x n matrices for each time
+        step where n is the number of countries, and values
+        represent the origin-destination probability of
+        introduction. Default is False.
+    columns_to_drop : list
+        Optional list of columns used or created by the model that are to drop
+        from the final output (e.g., Koppen climate classifications)
 
     Returns
     -------
-    out_df : geodataframe
+    model_output_df : geodataframe
         Geodataframe of model outputs
 
 
     """
 
-    model_output_df = model_output_object[0]
+    model_output_gdf = model_output_object[0]
     prob_entry = model_output_object[1]
     prob_est = model_output_object[2]
     prob_intro = model_output_object[3]
     origin_dst = model_output_object[4]
     country_intro = model_output_object[5]
 
-    out_df = model_output_df.drop(columns_to_drop, axis=1)
-    out_pdf = pd.DataFrame(out_df.drop(columns="geometry", axis=1))
+    # saving main model output with overall introduction
+    # probabilities for each time step
+    if columns_to_drop is not None:
+        model_output_gdf = model_output_gdf.drop(columns_to_drop, axis=1)
+    else:
+        model_output_gdf = model_output_gdf.drop(
+            columns=["Probability of introduction", "Presence"]
+        )
+    out_pdf = pd.DataFrame(model_output_gdf.drop(columns="geometry", axis=1))
     out_pdf.to_csv(outpath + "/pandemic_output.csv")
 
     origin_dst.to_csv(outpath + "/origin_destination.csv")
 
+    # saving origin-destination pairs resulting in introduction
+    # for each time step; saving intermediate probabilities
+    # of entry, establishment, and introduction for each
+    # origin-destination pair
     for i in range(0, len(date_list)):
         ts = date_list[i]
 
-        pro_entry_pd = pd.DataFrame(prob_entry[i])
-        pro_entry_pd.columns = example_trade_matrix.columns
-        pro_entry_pd.index = example_trade_matrix.index
-        pro_entry_pd.to_csv(
-            outpath + f"/prob_entry/probability_of_entry_{str(ts)}.csv",
-            float_format="%.4f",
-            na_rep="NAN!",
-        )
+        if write_country_intros is True:
+            country_int_pd = pd.DataFrame(country_intro[i])
+            country_int_pd.columns = example_trade_matrix.columns
+            country_int_pd.index = example_trade_matrix.index
+            country_int_pd.to_csv(
+                outpath + f"/country_introduction/country_introduction_{str(ts)}.csv",
+                float_format="%.4f",
+                na_rep="NAN!",
+            )
 
-        pro_intro_pd = pd.DataFrame(prob_intro[i])
-        pro_intro_pd.columns = example_trade_matrix.columns
-        pro_intro_pd.index = example_trade_matrix.index
-        pro_intro_pd.to_csv(
-            outpath + f"/prob_intro/probability_of_introduction_{str(ts)}.csv",
-            float_format="%.4f",
-            na_rep="NAN!",
-        )
+        if write_entry_probs is True:
+            pro_entry_pd = pd.DataFrame(prob_entry[i])
+            pro_entry_pd.columns = example_trade_matrix.columns
+            pro_entry_pd.index = example_trade_matrix.index
+            pro_entry_pd.to_csv(
+                outpath + f"/prob_entry/probability_of_entry_{str(ts)}.csv",
+                float_format="%.4f",
+                na_rep="NAN!",
+            )
 
-        pro_est_pd = pd.DataFrame(prob_est[i])
-        pro_est_pd.columns = example_trade_matrix.columns
-        pro_est_pd.index = example_trade_matrix.index
-        pro_est_pd.to_csv(
-            outpath + f"/prob_est/probability_of_establishment_{str(ts)}.csv",
-            float_format="%.4f",
-            na_rep="NAN!",
-        )
+        if write_estab_probs is True:
+            pro_est_pd = pd.DataFrame(prob_est[i])
+            pro_est_pd.columns = example_trade_matrix.columns
+            pro_est_pd.index = example_trade_matrix.index
+            pro_est_pd.to_csv(
+                outpath + f"/prob_est/probability_of_establishment_{str(ts)}.csv",
+                float_format="%.4f",
+                na_rep="NAN!",
+            )
 
-        country_int_pd = pd.DataFrame(country_intro[i])
-        country_int_pd.columns = example_trade_matrix.columns
-        country_int_pd.index = example_trade_matrix.index
-        country_int_pd.to_csv(
-            outpath + f"/country_introduction/country_introduction_{str(ts)}.csv",
-            float_format="%.4f",
-            na_rep="NAN!",
-        )
+        if write_intro_probs is True:
+            pro_intro_pd = pd.DataFrame(prob_intro[i])
+            pro_intro_pd.columns = example_trade_matrix.columns
+            pro_intro_pd.index = example_trade_matrix.index
+            pro_intro_pd.to_csv(
+                outpath + f"/prob_intro/probability_of_introduction_{str(ts)}.csv",
+                float_format="%.4f",
+                na_rep="NAN!",
+            )
 
-    return out_df
+    return model_output_gdf
 
 
 def agg_prob(row, column_list):
@@ -294,3 +353,137 @@ def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
     out_csv.to_csv(
         outpath + "/pandemic_output_aggregated.csv", float_format="%.2f", na_rep="NAN!"
     )
+
+
+def write_model_metadata(
+    main_model_output,
+    alpha,
+    beta,
+    mu,
+    lamda_c_list,
+    phi,
+    w_phi,
+    sigma_h,
+    sigma_kappa,
+    start_year,
+    stop_year,
+    transmission_lag_type,
+    time_infect,
+    time_infect_units,
+    gamma_shape,
+    gamma_scale,
+    random_seed,
+    native_countries_list,
+    commodities_available,
+    commodity_forecast_path,
+    phyto_weights,
+    outpath,
+    run_num,
+):
+    """
+    Write model parameters and configuration to metadata file
+
+    Parameters
+    ----------
+    numpy array
+        List of 6 n x n arrays created by running pandemic model, ordered as
+        1) full forecast dataframe; 2) probability of entry;
+        3) probability of establishment; 4) probability of introduction;
+        5) origin - destination pairs; and 6) list of countries where pest is
+        predicted to be introduced
+    alpha : float
+        A parameter that allows the equation to be adapated to various discrete
+        time steps
+    beta : float
+        A parameter that allows the equation to be adapted to various discrete
+        time steps
+    mu : float
+        The mortality rate of the pest or pathogen during transport
+    lamda_c_list : list
+        List of commodity importance values [0,1] for commodities (c)
+        in transporting the pest or pathogen
+    phi : int
+        The degree of polyphagy of the pest of interest described as the number
+        of host families
+    w_phi: float
+        The degree of polyphagy weight.
+    sigma_kappa : float
+        The climate dissimilarity normalizing constant
+    sigma_h : float
+        The host normalizing constant
+    sigma_epsilon : float
+        The ecological disturbance normalizing constant
+    start_year : str
+        The first year of the simulation
+    stop_year : str
+        The final year of the simulation
+    transmission_lag_type : str
+        Type of transmission lag used in the simulation (i.e., None,
+        static, or stochastic)
+    time_infect_units : str
+        Units associated with the transmission lag value (i.e., years, months)
+    time_infect : int
+        Time until a country is infectious, set for static transmission lag
+    gamma_shape : float
+        Shape parameter for gamma distribution used in stochastic transmission
+    gamma_scale: float
+        Scale parameter for gamma distribution used in stochastic transmission.
+    native_countries_list : list
+        Countries with pest or pathogen present at first time step of simulation
+    commodities_available :
+        Commodity simulated
+    commodity_forecast_path : str
+        Path to forecasted trade data
+    phyto_weights : list
+        Phytosanitary capacity weights
+    outpath : str
+        Directory path to save json file
+    run_num : int
+        Stochastic run number
+
+    Returns
+    -------
+    none
+
+    """
+
+    final_presence_col = sorted(
+        [c for c in main_model_output.columns if c.startswith("Presence")]
+    )[-1]
+    meta = {}
+    meta["PARAMETERS"] = []
+    meta["PARAMETERS"].append(
+        {
+            "alpha": str(alpha),
+            "beta": str(beta),
+            "mu": str(mu),
+            "lamda_c": str(lamda_c_list),
+            "phi": str(phi),
+            "w_phi": str(w_phi),
+            "sigma_h": str(sigma_h),
+            "sigma_kappa": str(sigma_kappa),
+            "start_year": str(start_year),
+            "stop_year": str(stop_year),
+            "transmission_lag_type": str(transmission_lag_type),
+            "infectivity_lag": time_infect,
+            "transmission_lag_units": time_infect_units,
+            "gamma_shape": gamma_shape,
+            "gamma_scale": gamma_scale,
+            "random_seed": str(random_seed),
+        }
+    )
+    if (transmission_lag_type == "static") | (transmission_lag_type is None):
+        meta["PARAMETERS"][0].update({"infectivity_lag": time_infect})
+    if transmission_lag_type == "stochastic":
+        meta["PARAMETERS"][0].update({"infectivity_lag": None})
+    meta["NATIVE_COUNTRIES_T0"] = native_countries_list
+    meta["COMMODITY"] = commodities_available
+    meta["FORECASTED"] = commodity_forecast_path
+    meta["PHYTOSANITARY_CAPACITY_WEIGHTS"] = phyto_weights
+    meta["TOTAL COUNTRIES INTRODUCTED"] = str(
+        main_model_output[final_presence_col].value_counts()[1]
+        - len(native_countries_list)
+    )
+
+    with open(f"{outpath}/run_{run_num}_meta.json", "w") as file:
+        json.dump(meta, file, indent=4)
