@@ -37,6 +37,7 @@ lamda_c_list = config["lamda_c_list"]
 phi = config["phi"]
 w_phi = config["w_phi"]
 start_year = config["start_year"]
+stop_year = config["stop_year"]
 random_seed = config["random_seed"]
 cols_to_drop = config["columns_to_drop"]
 time_infect_units = config["transmission_lag_unit"]
@@ -61,6 +62,7 @@ trades_list, file_list_filtered, code_list, commodities_available = create_trade
     commodity_path=commodity_path,
     commodity_forecast_path=commodity_forecast_path,
     start_year=start_year,
+    stop_year=stop_year,
     distances=distances,
 )
 
@@ -71,7 +73,7 @@ for f in file_list_filtered:
     ts = str.split(os.path.splitext(fn)[0], "_")[-1]
     date_list.append(ts)
 date_list.sort()
-stop_year = date_list[-1][:4]
+end_sim_year = date_list[-1][:4]
 
 # Example trade array for formatting outputs
 traded = pd.read_csv(
@@ -195,7 +197,7 @@ for i in range(len(trades_list)):
             w_phi=w_phi,
             sigma_kappa=sigma_kappa,
             start_year=start_year,
-            stop_year=stop_year,
+            end_sim_year=end_sim_year,
             transmission_lag_type=transmission_lag_type,
             time_infect_units=time_infect_units,
             gamma_shape=gamma_shape,

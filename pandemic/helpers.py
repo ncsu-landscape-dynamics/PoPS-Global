@@ -87,7 +87,11 @@ def location_pairs_with_host(locations):
     return location_tuples
 
 
-def filter_trades_list(file_list, start_year):
+def filter_trades_list(
+    file_list,
+    start_year,
+    stop_year=None
+):
     """
     Returns filtered list of trade data based on start
     year
@@ -96,9 +100,11 @@ def filter_trades_list(file_list, start_year):
     -----------
     file_list : list
         List of all trade data files in a directory
-    start_year : str
-        Simulation start year (YYYY) used to filter
-        trade data files that are prior to that year
+    start_year : int
+        Simulation start year (YYYY)
+    stop_year : int (optional)
+        Simulation end year (YYYY) used to filter
+        trade data if files are after that year
 
     Returns:
     --------
@@ -109,14 +115,20 @@ def filter_trades_list(file_list, start_year):
     """
     for i, f in enumerate(file_list):
         date_tag = str.split(os.path.splitext(os.path.split(f)[1])[0], "_")[-1][:4]
-        if int(date_tag) < int(start_year):
+        if (int(date_tag) < int(start_year)) | (int(date_tag) > int(stop_year)):
             file_list[i] = None
     file_list_filtered = [f for f in file_list if f is not None]
 
     return file_list_filtered
 
 
-def create_trades_list(commodity_path, commodity_forecast_path, start_year, distances):
+def create_trades_list(
+    commodity_path,
+    commodity_forecast_path,
+    start_year,
+    distances,
+    stop_year=None,
+):
     """
     Returns list (c) of n x n x t matrices, filtered by start year, where c is
     the number of commodities, n is the number of locations, t is the number
@@ -128,12 +140,15 @@ def create_trades_list(commodity_path, commodity_forecast_path, start_year, dist
         path to all historical commodity trade data
     commodity_forecast_path : str
         path to forecasted commodity trade data
-    start_year : str
+    start_year : int
         Simulation start year (YYYY) used to filter
         trade data files that are prior to that year
     distances : numpy.array
         n x n matrix of distances from one location to another where n is
         number of locations
+    stop_year : int (optional)
+        Simulation end year (YYYY) used to filter
+        trade data if files are after that year
 
     Returns:
     --------
@@ -167,7 +182,7 @@ def create_trades_list(commodity_path, commodity_forecast_path, start_year, dist
             file_list = file_list_historical
 
         file_list_filtered = filter_trades_list(
-            file_list=file_list, start_year=start_year
+            file_list=file_list, start_year=start_year, stop_year=stop_year,
         )
         trades = np.zeros(
             shape=(len(file_list_filtered), distances.shape[0], distances.shape[0])
