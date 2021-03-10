@@ -474,19 +474,13 @@ def pandemic_multiple_time_steps(
     locations["Probability of introduction"] = np.zeros(shape=len(locations))
     origin_destination = pd.DataFrame(columns=["Origin", "Destination", "Year"])
 
+    # Get minimum and maximum trade values for scaling
+    min_Tc = np.min(trades)
+    max_Tc = np.nanmax(trades)
+
     for t in range(trades.shape[0]):
         ts = date_list[t]
         print("TIME STEP: ", ts)
-
-        # Get index for time steps in date list that match the year of the current ts
-        same_year_idx = [
-            idx for idx, element in enumerate(date_list) if element[:4] == ts[:4]
-        ]
-        # Extract relevant trade arrays based on index position
-        year_trade_data = [trades[i] for i in same_year_idx]
-        # Get annual standard deviation of nonzero trade value
-        min_Tc = np.min(np.ma.masked_equal(year_trade_data, 0))
-        max_Tc = np.nanmax(year_trade_data)
 
         trade = trades[t]
 
