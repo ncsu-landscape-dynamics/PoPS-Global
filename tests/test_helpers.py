@@ -1,5 +1,9 @@
 import pandas as pd
-from pandemic.helpers import location_pairs_with_host, filter_trades_list
+from pandemic.helpers import (
+    location_pairs_with_host,
+    filter_trades_list,
+    adjust_trade_scenario
+)
 
 
 def test_location_filter():
@@ -33,5 +37,25 @@ def test_filter_trades_list():
         "trades_test_2025.csv",
     ]
 
-    assert len(filter_trades_list(monthly_file_list, start_year)) == 3
+    assert len(filter_trades_list(monthly_file_list, start_year, stop_year=2020)) == 3
+    assert len(filter_trades_list(annual_file_list, start_year, stop_year=2020)) == 3
+
+    annual_file_list = [
+        "trades_test_2000.csv",
+        "trades_test_2005.csv",
+        "trades_test_2010.csv",
+        "trades_test_2015.csv",
+        "trades_test_2020.csv",
+        "trades_test_2025.csv",
+    ]
+
     assert len(filter_trades_list(annual_file_list, start_year)) == 4
+
+
+def test_adjust_trade_scenario():
+    T_ijct = 1000
+    scenario = [
+        [2015, 'CHN', 'USA', 'decrease', 1],
+    ]
+
+    assert adjust_trade_scenario(T_ijct, scenario) == 0
