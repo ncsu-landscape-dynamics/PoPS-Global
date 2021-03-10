@@ -115,7 +115,11 @@ def filter_trades_list(
     """
     for i, f in enumerate(file_list):
         date_tag = str.split(os.path.splitext(os.path.split(f)[1])[0], "_")[-1][:4]
-        if (int(date_tag) < int(start_year)) | (int(date_tag) > int(stop_year)):
+        # File time step before start year
+        if (int(date_tag) < int(start_year)):
+            file_list[i] = None
+        # File time step after stop year if specified
+        if stop_year is not None and (int(date_tag) > int(stop_year)):
             file_list[i] = None
     file_list_filtered = [f for f in file_list if f is not None]
 
@@ -227,3 +231,32 @@ def create_trades_list(
             trades_list.append(trades)
 
     return trades_list, file_list_filtered, code_list, commodities_available
+
+
+def adjust_trade_scenario(T_ijct, scenario):
+    """
+    Returns adjusted trade value for an origin-destination pair based on a
+    adjustment type (e.g., increase, decrease) and percentage.
+
+    Parameters:
+    -----------
+    T_ijct : float
+        Original value/volume of trade between origin and destination.
+        of commodity c at time t.
+    scenario : list
+        Nested list of scenario elements, with elements ordered as: year (YYYY),
+        origin ISO3 code, destination ISO3 code, adjustment type (e.g.,
+        "increase", "decrease"), and adjustment percent.
+
+    Returns:
+    --------
+    Adjusted trade value/volume for origin(i) - destination(j) pair at time (t)
+    for commodity (c) based on scenario.
+
+    """
+    adjustment_type = scenario[0][3]
+    adjustment_pct = scenario[0][4]
+    if adjustment_type == 'decrease':
+        return T_ijct * (1 - adjustment_pct)
+    if adjustment_type == 'increase':
+        return T_ijct * (1 + adjustment_pct)
