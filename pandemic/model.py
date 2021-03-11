@@ -5,6 +5,7 @@ import geopandas
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
+sys.path.append("C:/Users/cawalden/Documents/GitHub/Pandemic_Model")
 from pandemic.helpers import create_trades_list
 from pandemic.model_equations import pandemic_multiple_time_steps
 from pandemic.output_files import (
@@ -54,8 +55,7 @@ save_country_intros = config["save_country_intros"]
 
 countries = geopandas.read_file(countries_path, driver="GPKG")
 distances = np.load(input_dir + "/distance_matrix_wTWN.npy")
-# climate_similarities = np.load(input_dir + '/climate_similarities.npy')
-climate_similarities = np.load(input_dir + "/climate_similarities_hiiMask_wTWN.npy")
+climate_similarities = np.load(input_dir + "/climate_similarities_hiiMask16_wTWN.npy")
 
 # Read & format trade data
 trades_list, file_list_filtered, code_list, commodities_available = create_trades_list(
@@ -153,7 +153,7 @@ for i in range(len(trades_list)):
         add_descript = sys.argv[3]
         run_num = sys.argv[4]
 
-        run_prefix = f"{sim_name}_{add_descript}_{code}"
+        run_prefix = f"{add_descript}_{code}"
 
         arr_dict = {
             "prob_entry": "probability_of_entry",
@@ -205,6 +205,7 @@ for i in range(len(trades_list)):
             random_seed=random_seed,
             time_infect=time_infect,
             native_countries_list=native_countries_list,
+            countries_path=countries_path,
             commodities_available=commodities_available[i],
             commodity_forecast_path=commodity_forecast_path,
             phyto_weights=list(locations["Phytosanitary Capacity"].unique()),
