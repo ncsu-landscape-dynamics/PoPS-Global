@@ -127,8 +127,8 @@ def save_model_output(
         model_output_gdf = model_output_gdf.drop(
             columns=["Probability of introduction", "Presence"]
         )
-    out_pdf = pd.DataFrame(model_output_gdf.drop(columns="geometry", axis=1))
-    out_pdf.to_csv(outpath + "/pandemic_output.csv")
+    # out_pdf = pd.DataFrame(model_output_gdf.drop(columns="geometry", axis=1))
+    # out_pdf.to_csv(outpath + "/pandemic_output.csv")
 
     origin_dst.to_csv(outpath + "/origin_destination.csv")
 

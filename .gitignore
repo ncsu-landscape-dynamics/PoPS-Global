@@ -42,4 +42,4 @@ notebooks/.ipynb_checkpoints/
 notebooks/summary_stats.ipynb
 pandemic/model_summary_statistics.py
 notebooks/dev_notebooks/
-pandemic/runs/
+runs/
