@@ -52,6 +52,7 @@ save_entry = config["save_entry"]
 save_estab = config["save_estab"]
 save_intro = config["save_intro"]
 save_country_intros = config["save_country_intros"]
+scenario_list = config['scenario_list']
 
 countries = geopandas.read_file(countries_path, driver="GPKG")
 distances = np.load(input_dir + "/distance_matrix_wTWN.npy")
@@ -147,6 +148,7 @@ for i in range(len(trades_list)):
             time_infect=time_infect,
             gamma_shape=gamma_shape,
             gamma_scale=gamma_scale,
+            scenario_list=scenario_list,
         )
 
         sim_name = sys.argv[2]
@@ -211,6 +213,7 @@ for i in range(len(trades_list)):
             phyto_weights=list(locations["Phytosanitary Capacity"].unique()),
             outpath=outpath,
             run_num=run_num,
+            scenario_list=scenario_list,
         )
     else:
         print("\tskipping as pest is not transported with this commodity")

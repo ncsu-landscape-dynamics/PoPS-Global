@@ -380,6 +380,7 @@ def write_model_metadata(
     phyto_weights,
     outpath,
     run_num,
+    scenario_list=None,
 ):
     """
     Write model parameters and configuration to metadata file
@@ -488,6 +489,7 @@ def write_model_metadata(
         main_model_output[final_presence_col].value_counts()[1]
         - len(native_countries_list)
     )
+    meta["TRADE SCENARIO"] = scenario_list
 
     with open(f"{outpath}/run_{run_num}_meta.json", "w") as file:
         json.dump(meta, file, indent=4)
