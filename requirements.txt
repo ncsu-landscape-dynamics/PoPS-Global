@@ -1,7 +1,7 @@
 -i https://pypi.org/simple
 .
 Fiona==1.8.13
-Rtree==0.9.4
+Rtree==0.9.7
 argparse==1.4.0
 attrs==19.3.0
 certifi==2020.4.5.1
@@ -13,7 +13,9 @@ country-list==0.2.0
 cycler==0.10.0
 decorator==4.4.2
 enum34==1.1.10
-gdal==3.0.4
+scipy==1.6.1
+numpy==1.20.1
+# gdal==3.2.2
 geographiclib==1.50
 geopandas==0.7.0
 geopy==1.22.0
@@ -23,7 +25,6 @@ kiwisolver==1.2.0
 matplotlib==3.2.1
 munch==2.5.1.dev12
 networkx==2.4
-numpy==1.19.0rc2
 pandas==1.0.4
 psycopg2==2.8.5
 pydot==1.4.1
@@ -32,7 +33,6 @@ pyproj==2.6.1.post1
 python-dateutil==2.8.1
 pytz==2020.1
 requests==2.23.0
-scipy==1.5.0rc1
 shapely==1.7.0
 six==1.15.0
 urllib3==1.25.9
