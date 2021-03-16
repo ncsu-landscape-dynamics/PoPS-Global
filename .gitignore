@@ -37,7 +37,7 @@ pandemic/model_runs.py
 # pandemic/create_header_file.py
 notebooks/create_env_file.ipynb
 pandemic/model_runs_grid_search.py
-pandemic/create_config_params.py
+# pandemic/create_config_params.py
 notebooks/.ipynb_checkpoints/
 notebooks/summary_stats.ipynb
 pandemic/model_summary_statistics.py
