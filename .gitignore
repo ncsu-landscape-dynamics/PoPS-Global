@@ -34,7 +34,7 @@ MANIFEST
 pandemic/create_config.py
 pandemic/config.json
 pandemic/model_runs.py
-pandemic/create_header_file.py
+# pandemic/create_header_file.py
 notebooks/create_env_file.ipynb
 pandemic/model_runs_grid_search.py
 pandemic/create_config_params.py
