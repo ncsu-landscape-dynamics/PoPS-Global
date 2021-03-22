@@ -1,13 +1,14 @@
-# import sys
-# import os
-# import itertools
+import sys
+import os
+import itertools
 import numpy as np
 # from dotenv import load_dotenv
 import multiprocessing
 import subprocess
 
-from pandemic.create_config_params import create_config_args
+sys.path.append('C:/Users/cawalden/Documents/GitHub/Pandemic_Model')
 
+from pandemic.create_config_params import create_config_args
 
 def create_params(
     model_script_path,
@@ -92,41 +93,84 @@ def execute_model_runs(
     )
     return model_script_path, config_file_path, sim_name, add_descript, run_num
 
+def create_scenario_list(
+    scenario_list,
+    origin, 
+    destination, 
+    start_scenario_ts, 
+    end_scenario_ts, 
+    adjustment_type, 
+    percent_change
+):
+    for i in range(start_scenario_ts, end_scenario_ts + 1):
+        start_scenario = (
+            [start_scenario_ts, str(origin), str(destination), adjustment_type, float(percent_change)]
+        )
+        new_scenario = start_scenario
+        new_scenario[0] = i
+        scenario_list .append(new_scenario)
+    return scenario_list
+
 
 if __name__ == '__main__':
+    # env_file_path = "C:/Users/cawalden/Documents/Projects/Pandemic"
+    # load_dotenv(os.path.join(env_file_path, '.env'))
+    # input_dir = os.getenv('INPUT_PATH')
+    # out_dir = os.getenv('OUTPUT_PATH')
+
     input_dir = "H:/Shared drives/Pandemic Data/slf_model/inputs/"
     out_dir = "H:/Shared drives/Pandemic Data/slf_model/outputs/"
 
-    # First Search
-    # alphas = [round(a, 2) for a in list(np.arange(0.10, 0.26, 0.05))]
-    # lamdas = [round(l, 2) for l in list(np.arange(1.0, 4.1, 0.05))]
+    scenario1 = []
+    scenario1 = create_scenario_list(
+        scenario1,
+        "CHN",
+        "USA",
+        2014,
+        2029,
+        "decrease",
+        1.0
+    )
 
-    # Second Search
-    # alphas = [round(a, 2) for a in list(np.arange(0.20, 0.27, 0.02))]
-    # lamdas = [round(l, 2) for l in list(np.arange(3.6, 3.9, 0.04))]
+    scenario2 = []
+    scenario2 = create_scenario_list(
+        scenario2,
+        "CHN",
+        "USA",
+        2014,
+        2029,
+        "decrease",
+        1
+    )
+    scenario2 = create_scenario_list(
+        scenario2,
+        "KOR",
+        "USA",
+        2016,
+        2029,
+        "decrease",
+        1
+    )
 
-    # param_list = [alphas, lamdas]
-    # param_sets = list(itertools.product(*param_list))
+    scenario2 = create_scenario_list(
+        scenario2,
+        "JPN",
+        "USA",
+        2016,
+        2029,
+        "decrease",
+        1
+    )
 
-    # Specific values
-    # param_sets = [
-    #     (0.2, 3.64),  # top maximize temporal accuracy
-    #     (0.25, 3.7),  # second maximize temporal accuracy
-    #     (0.2, 1.4),   # lowest # countries MSE
-    #     (0.1, 3.9),   # second lowest # countries MSE
-    #     (0.25, 2.0),  # mix of both; third lowest MSE but still relatively high
-    # ]
+    scenarios = [scenario1] + [scenario2]
 
-    param_sets = [
-        (0.22, 3.8),
-    ]
-
-    for i in range(0, len(param_sets)):
-        alpha = param_sets[i][0]
+    for i in range(0, len(scenarios)):
+        scenario_list = scenarios[i]
+        alpha = 0.22
         transmission_lag_type = "stochastic"
-        gamma_shape = 4
-        gamma_scale = 1
-        lamda_c_list = [param_sets[i][1]]
+        gamma_shape = 4  
+        gamma_scale = 1  
+        lamda_c_list = [3.8]
 
         threshold_val = 16
         scaled_min = 0.3
@@ -134,8 +178,8 @@ if __name__ == '__main__':
 
         config_out_path = (
             rf"H:/Shared drives/Pandemic Data/slf_model/"
-            rf"inputs/config_files/slf_inflationAdjusted"
-            rf"_alpha{alpha}_lamda{lamda_c_list[0]}"
+            rf"inputs/config_files/slf"
+            rf"_scenario{i}"
             rf"_6801-6804/config.json"
         )
 
@@ -167,20 +211,21 @@ if __name__ == '__main__':
             gamma_scale=gamma_scale,
             random_seed=None,
             cols_to_drop=None,
+            scenario_list=scenario_list,
         )
 
         param_list = create_params(
             model_script_path=(
-                "pandemic/model.py"
+                    "pandemic/model.py"
             ),
             config_file_path=config_file_path,
             sim_name=(
-                "slf_inflationAdjusted_gridSearch_top"
-            ),
+                    rf"slf_scenario{i}"
+                ),
             add_descript=(
-                rf"alpha{param_vals['alpha']}_"
-                rf"lamda{param_vals['lamda_c_list'][0]}"
-            ),
+                    rf"alpha{param_vals['alpha']}_"
+                    rf"lamda{param_vals['lamda_c_list'][0]}"
+                ),
             iteration_start=0,
             iteration_end=999
         )
