@@ -11,7 +11,7 @@ from pandemic.output_files import (
     aggregate_monthly_output_to_annual,
     create_model_dirs,
     save_model_output,
-    write_model_metadata
+    write_model_metadata,
 )
 
 # Read environmental variables
