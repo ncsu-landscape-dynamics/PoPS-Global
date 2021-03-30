@@ -41,6 +41,7 @@ def download_trade_data(hs_str, freq_str, year_country_dict, auth_code_str):
     auth_code_str: str
         premium API authorization code
     """
+    print(f"Downloading HS{hs_str} data from Comtrade...")
     data = pd.DataFrame()
     for key in year_country_dict.keys():
         country_codes = year_country_dict[key]
@@ -120,6 +121,7 @@ def save_hs_timestep_matrices(
     un_to_iso_dict: dict
         dictionary crosswalk of UN to ISO3 codes
     """
+    print(f"Saving HS{hs_str} matrices for each timestep...")
     for timestep in timesteps_list:
         timestep_data = trade_data[trade_data.period.eq(timestep)]
         HS_matrix = un_country_df.copy()
@@ -144,7 +146,11 @@ def save_hs_timestep_matrices(
 
             # Merge to commodity/year df
             HS_matrix = pd.merge(
-                HS_matrix, reporter_data, how="left", left_on="UN", right_on="ptCode",
+                HS_matrix,
+                reporter_data,
+                how="left",
+                left_on="UN",
+                right_on="ptCode",
             )
             HS_matrix.drop("ptCode", axis=1, inplace=True)
             HS_matrix.rename(columns={"TradeValue": reporter}, inplace=True)
@@ -316,6 +322,9 @@ def query_comtrade(
     #     & (data_summary["partial_monthly_avail"] == 0)
     # ]
     # Save data summary as CSV for future reference
+    # create a directory to save summary if needed
+    if not os.path.exists(model_inputs_dir):
+        os.makedirs(model_inputs_dir)
     data_summary.to_csv(
         model_inputs_dir
         + "/comtrade_data_availability_summary_"

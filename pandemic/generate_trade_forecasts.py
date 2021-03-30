@@ -74,7 +74,7 @@ def create_date_lists(
     return hist_ts_list, forecast_ts_list, month_list
 
 
-def create_trade_arrays(list_of_csvs, number_forecast_years):
+def create_trade_arrays(list_of_csvs, number_forecast_years, random_seed):
     """
     Generate matrices of forecasted trade data based on selection
     of historical trade data.
@@ -87,6 +87,8 @@ def create_trade_arrays(list_of_csvs, number_forecast_years):
     number_forecast_years : int
         Number of years to forecast trade into the future
         (e.g., 10)
+    random_seed : int
+        Seed used to initialize the random number generator
 
     Returns:
     --------
@@ -122,6 +124,7 @@ def create_trade_arrays(list_of_csvs, number_forecast_years):
     # Randomly choose a value from the historical trade matrices
     # to populate the trade forecast for each destination (j) -
     # origin (i) pair and forecasted time step (k)
+    random.seed(random_seed)
     for k in range(0, forecast_arr.shape[0]):
         for j in range(0, hist_arr.shape[1]):
             for i in range(0, hist_arr.shape[2]):
@@ -180,6 +183,7 @@ def simple_trade_forecast(
     num_yrs_historical,
     num_yrs_forecast,
     hist_data_dir,
+    random_seed,
 ):
     """
     Generates a simple trade forecast by randomly
@@ -204,6 +208,8 @@ def simple_trade_forecast(
         Number of years for which to generate a trade forecast.
     hist_data_dir : str
         Path to location of historical trade data
+    random_seed : int
+        Seed used to initialize the random number generator
     """
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
@@ -223,11 +229,11 @@ def simple_trade_forecast(
     # For monthly forecasts
     if len(str(start_forecast_date)) == 6:
         for month in month_list:
-            hist_trade_to_use_subsample = (fnmatch.filter(
-                hist_trade_to_use, f"*{month}.csv")
+            hist_trade_to_use_subsample = fnmatch.filter(
+                hist_trade_to_use, f"*{month}.csv"
             )
             hist_arr, forecast_arr = create_trade_arrays(
-                hist_trade_to_use_subsample, num_yrs_forecast
+                hist_trade_to_use_subsample, num_yrs_forecast, random_seed
             )
             forecast_ts_list_filtered = fnmatch.filter(forecast_ts_list, f"*{month}")
             write_forecast_arrays(
