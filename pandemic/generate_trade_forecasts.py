@@ -87,7 +87,7 @@ def create_trade_arrays(list_of_csvs, number_forecast_years, random_seed):
         (e.g., 10)
     random_seed : int
         Seed used to initialize the random number generator
-        
+
     Returns:
     --------
     hist_arr : numpy.array
