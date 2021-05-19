@@ -1,12 +1,11 @@
-import sys
-import os
-import itertools
+# import sys
+# import os
+# import itertools
 import numpy as np
 # from dotenv import load_dotenv
 import multiprocessing
 import subprocess
 
-sys.path.append("C:/Users/cawalden/Documents/GitHub/Pandemic_Model")
 from pandemic.create_config_params import create_config_args
 
 
@@ -116,8 +115,8 @@ if __name__ == '__main__':
     for i in range(0, len(param_sets)):
         alpha = param_sets[i][0]
         transmission_lag_type = "stochastic"
-        gamma_shape = 4  
-        gamma_scale = 1 
+        gamma_shape = 4
+        gamma_scale = 1
         lamda_c_list = [param_sets[i][1]]
 
         threshold_val = 16
@@ -164,17 +163,17 @@ if __name__ == '__main__':
 
         param_list = create_params(
             model_script_path=(
-                    "pandemic/model.py"
+                "pandemic/model.py"
             ),
             config_file_path=config_file_path,
             sim_name=(
                     rf"slf_inflationAdjusted_gridSearch_noTWN_wChinaVietnam_top"
                 ),
             add_descript=(
-                    rf"alpha{param_vals['alpha']}_"
-                    rf"lamda{param_vals['lamda_c_list'][0]}"
-                ),
-            iteration_start=50,
+                rf"alpha{param_vals['alpha']}_"
+                rf"lamda{param_vals['lamda_c_list'][0]}"
+            ),
+            iteration_start=0,
             iteration_end=999
         )
 

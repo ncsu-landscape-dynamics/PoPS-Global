@@ -1,3 +1,4 @@
+#%%
 import sys
 import os
 import re
@@ -8,10 +9,10 @@ import pandas as pd
 # Directory and file paths
 # root_dir = sys.argv[1]  # directory with model outputs
 # sim_name = sys.argv[2]  # name of simulation
-
-root_dir = "H:/Shared drives/Pandemic Data/slf_model/outputs"
-sim_name = "slf_inflationAdjusted_gridSearch_top"
-
+#%%
+root_dir = "H:/Shared drives/SLF Paper Outputs/outputs"
+sim_name = "slf_scenarios_noTWN_wChinaVietnam"
+#%%
 # Generate header attributes from subdirectory names,
 # and model output metadata
 sim_path = os.path.join(root_dir, sim_name)
@@ -20,29 +21,37 @@ run_prefix_list = [
 ]
 if "header.csv" in run_prefix_list:
     run_prefix_list.remove("header.csv")
-commodity_codes_list = list(set([d.split("_")[-1] for d in run_prefix_list]))
-add_descript_list = (
-    [d.split(f"_{i}")[0] for d in run_prefix_list for i in commodity_codes_list]
-)
+if "summary_data" in run_prefix_list:
+    run_prefix_list.remove("summary_data")
+#%%
+# commodity_codes_list = list(set([d.split("_")[-1] for d in run_prefix_list]))
+commodity_codes_list = ["6801-6804"]
+# add_descript_list = (
+#     [d.split(f"_{i}")[0] for d in run_prefix_list for i in commodity_codes_list]
+# )
+add_descript_list = [
+    os.path.basename(i) for i in glob.glob(sim_path + '/*/*')
+    ]
 
+#%%
 num_runs_list = []
 for i in run_prefix_list:
-    run_list = [r for r in glob.glob(sim_path + f"/{i}/run_*")]
+    run_list = [r for r in glob.glob(sim_path + f"/{i}/{add_descript_list[0]}/run_*")]
     num_runs_list.append(len(run_list))
 
 parameter_values_list = []
 starting_countries_list = []
 start_year_list = []
 stop_year_list = []
-
+#%%
 for i in range(len(run_prefix_list)):
     run_prefix = run_prefix_list[i]
     run0 = re.sub(
         'run_',
         '',
-        os.path.basename(glob.glob(f"{sim_path}/{run_prefix}/run_*")[0])
+        os.path.basename(glob.glob(f"{sim_path}/{run_prefix}/{add_descript_list[0]}/run_*")[0])
     )
-    file_path = f"{sim_path}/{run_prefix}/run_{run0}/run_{run0}_meta.json"
+    file_path = f"{sim_path}/{run_prefix}/{add_descript_list[0]}/run_{run0}/run_{run0}_meta.json"
     metadata_file = open(file_path)
     meta_contents = json.load(metadata_file)
     parameter_values = meta_contents["PARAMETERS"]
@@ -88,3 +97,5 @@ header_dict = {
 header_df = pd.DataFrame.from_dict(header_dict)
 print("saving header file: ", header_file_path)
 header_df.to_csv(header_file_path, header=True)
+
+# %%

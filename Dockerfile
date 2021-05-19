@@ -10,7 +10,6 @@ ENV PYTHONDONTWRITEBYTECODE 1
 WORKDIR /app
 COPY . /app
 
-
 RUN pip install -r requirements.txt
 RUN pip install GDAL==2.4.0 --global-option=build_ext --global-option="-I/usr/include/gdal/"
 
