@@ -55,8 +55,8 @@ save_country_intros = config["save_country_intros"]
 scenario_list = config['scenario_list']
 
 countries = geopandas.read_file(countries_path, driver="GPKG")
-distances = np.load(input_dir + "/distance_matrix_wTWN.npy")
-climate_similarities = np.load(input_dir + "/climate_similarities_hiiMask16_wTWN.npy")
+distances = np.load(input_dir + "/distance_matrix.npy")
+climate_similarities = np.load(input_dir + "/climate_similarities_hiiMask16.npy")
 
 # Read & format trade data
 trades_list, file_list_filtered, code_list, commodities_available = create_trades_list(

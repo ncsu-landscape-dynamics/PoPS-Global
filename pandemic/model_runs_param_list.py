@@ -6,7 +6,7 @@ import numpy as np
 import multiprocessing
 import subprocess
 
-
+sys.path.append("C:/Users/cawalden/Documents/GitHub/Pandemic_Model")
 from pandemic.create_config_params import create_config_args
 
 
@@ -95,31 +95,22 @@ def execute_model_runs(
 
 
 if __name__ == '__main__':
-    input_dir = "H:/Shared drives/Pandemic Data/slf_model/inputs/"
-    out_dir = "H:/Shared drives/Pandemic Data/slf_model/outputs/"
+    input_dir = "H:/Shared drives/Pandemic Data/slf_model/inputs/noTWN/"
+    out_dir = "H:/Shared drives/SLF Paper Outputs/outputs/"
 
-    ## First Search
-    # alphas = [round(a, 2) for a in list(np.arange(0.10, 0.26, 0.05))]
+    # First Search
+    # alphas = [round(a, 2) for a in list(np.arange(0.10, 0.36, 0.05))]
     # lamdas = [round(l, 2) for l in list(np.arange(1.0, 4.1, 0.05))]
-
-    ## Second Search
-    # alphas = [round(a, 2) for a in list(np.arange(0.20, 0.27, 0.02))]
-    # lamdas = [round(l, 2) for l in list(np.arange(3.6, 3.9, 0.04))]
 
     # param_list = [alphas, lamdas]
     # param_sets = list(itertools.product(*param_list))
 
-    ## Specific values 
-    # param_sets = [
-    #     (0.2, 3.64),  # top maximize temporal accuracy
-    #     (0.25, 3.7),  # second maximize temporal accuracy
-    #     (0.2, 1.4),   # lowest # countries MSE
-    #     (0.1, 3.9),   # second lowest # countries MSE
-    #     (0.25, 2.0),  # mix of both; third lowest MSE but still relatively high
-    # ]
-
     param_sets = [
-        (0.22, 3.8),
+        (0.35, 3.25),
+        (0.2, 3.9),
+        (0.35, 1.9),
+        (0.2, 2.2),
+        (0.2, 3.85),
     ]
 
     for i in range(0, len(param_sets)):
@@ -136,14 +127,15 @@ if __name__ == '__main__':
         config_out_path = (
             rf"H:/Shared drives/Pandemic Data/slf_model/"
             rf"inputs/config_files/slf_inflationAdjusted"
+            rf"_noTWN_wChinaVietnam"
             rf"_alpha{alpha}_lamda{lamda_c_list[0]}"
             rf"_6801-6804/config.json"
         )
 
         param_vals, config_file_path = create_config_args(
             config_out_path=config_out_path,
-            commodity_path=input_dir + "/comtrade_wTWN/monthly_agg/6801-6804",
-            native_countries_list=["China"],
+            commodity_path=input_dir + "/comtrade/monthly_agg/6801-6804",
+            native_countries_list=["China", "Viet Nam"],
             alpha=alpha,
             mu=0,
             lamda_c_list=lamda_c_list,
@@ -156,7 +148,7 @@ if __name__ == '__main__':
             save_intro=False,
             save_country_intros=False,
             commodity_forecast_path=(
-                input_dir + "/comtrade_wTWN/trade_forecast/monthly_agg/6801-6804"
+                input_dir + "/comtrade/trade_forecast/monthly_agg/6801-6804"
             ),
             season_dict={
                 "NH_season": ["09", "10", "11", "12", "01", "02", "03", "04"],
@@ -176,7 +168,7 @@ if __name__ == '__main__':
             ),
             config_file_path=config_file_path,
             sim_name=(
-                    rf"slf_inflationAdjusted_gridSearch_top"
+                    rf"slf_inflationAdjusted_gridSearch_noTWN_wChinaVietnam_top"
                 ),
             add_descript=(
                     rf"alpha{param_vals['alpha']}_"

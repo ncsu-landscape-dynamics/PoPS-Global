@@ -118,59 +118,34 @@ if __name__ == '__main__':
     # input_dir = os.getenv('INPUT_PATH')
     # out_dir = os.getenv('OUTPUT_PATH')
 
-    input_dir = "H:/Shared drives/Pandemic Data/slf_model/inputs/"
-    out_dir = "H:/Shared drives/Pandemic Data/slf_model/outputs/"
+    input_dir = "H:/Shared drives/Pandemic Data/slf_model/inputs/noTWN/"
+    out_dir = "H:/Shared drives/SLF Paper Outputs/outputs/"
 
     scenario1 = []
-    scenario1 = create_scenario_list(
-        scenario1,
-        "CHN",
-        "USA",
-        2014,
-        2029,
-        "decrease",
-        1.0
-    )
-
+    scenario1 = create_scenario_list(scenario1, "CHN", "USA", 2014, 2029, "decrease", 1)
+    scenario1 = create_scenario_list(scenario1, "VNM", "USA", 2014, 2029, "decrease", 1)
+    
     scenario2 = []
-    scenario2 = create_scenario_list(
-        scenario2,
-        "CHN",
-        "USA",
-        2014,
-        2029,
-        "decrease",
-        1
-    )
-    scenario2 = create_scenario_list(
-        scenario2,
-        "KOR",
-        "USA",
-        2016,
-        2029,
-        "decrease",
-        1
-    )
+    scenario2 = create_scenario_list(scenario2, "CHN", "USA", 2014, 2029, "decrease", 1)
+    scenario2 = create_scenario_list(scenario2, "VNM", "USA", 2014, 2029, "decrease", 1)
+    scenario2 = create_scenario_list(scenario2, "JPN", "USA", 2014, 2029, "decrease", 1)
+    scenario2 = create_scenario_list(scenario2, "KOR", "USA", 2014, 2029, "decrease", 1)
+    scenario2 = create_scenario_list(scenario2, "TUR", "USA", 2014, 2029, "decrease", 1)
+    scenario2 = create_scenario_list(scenario2, "ITA", "USA", 2015, 2029, "decrease", 1)
 
-    scenario2 = create_scenario_list(
-        scenario2,
-        "JPN",
-        "USA",
-        2016,
-        2029,
-        "decrease",
-        1
-    )
 
     scenarios = [scenario1] + [scenario2]
+    scenario_names = ['stopOrigins', 'stopBridgeheads']
+    # scenarios = [scenario1]
 
     for i in range(0, len(scenarios)):
         scenario_list = scenarios[i]
-        alpha = 0.22
+        scenario_name = scenario_names[i]
+        alpha = 0.2
         transmission_lag_type = "stochastic"
         gamma_shape = 4  
         gamma_scale = 1  
-        lamda_c_list = [3.8]
+        lamda_c_list = [3.9]
 
         threshold_val = 16
         scaled_min = 0.3
@@ -179,14 +154,14 @@ if __name__ == '__main__':
         config_out_path = (
             rf"H:/Shared drives/Pandemic Data/slf_model/"
             rf"inputs/config_files/slf"
-            rf"_scenario{i}"
+            rf"_scenarios_noTWN"
             rf"_6801-6804/config.json"
         )
 
         param_vals, config_file_path = create_config_args(
             config_out_path=config_out_path,
-            commodity_path=input_dir + "/comtrade_wTWN/monthly_agg/6801-6804",
-            native_countries_list=["China"],
+            commodity_path=input_dir + "/comtrade/monthly_agg/6801-6804",
+            native_countries_list=["China", "Viet Nam"],
             alpha=alpha,
             mu=0,
             lamda_c_list=lamda_c_list,
@@ -199,7 +174,7 @@ if __name__ == '__main__':
             save_intro=False,
             save_country_intros=False,
             commodity_forecast_path=(
-                input_dir + "/comtrade_wTWN/trade_forecast/monthly_agg/6801-6804"
+                input_dir + "/comtrade/trade_forecast/monthly_agg/6801-6804"
             ),
             season_dict={
                 "NH_season": ["09", "10", "11", "12", "01", "02", "03", "04"],
@@ -220,7 +195,7 @@ if __name__ == '__main__':
             ),
             config_file_path=config_file_path,
             sim_name=(
-                    rf"slf_scenario{i}"
+                    rf"slf_scenarios_noTWN_wChinaVietnam/{scenario_name}"
                 ),
             add_descript=(
                     rf"alpha{param_vals['alpha']}_"
