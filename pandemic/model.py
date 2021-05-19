@@ -5,7 +5,7 @@ import geopandas
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-sys.path.append("C:/Users/cawalden/Documents/GitHub/Pandemic_Model")
+
 from pandemic.helpers import create_trades_list
 from pandemic.model_equations import pandemic_multiple_time_steps
 from pandemic.output_files import (
