@@ -1,4 +1,3 @@
-#%%
 import sys
 import os
 import re
@@ -7,12 +6,12 @@ import json
 import pandas as pd
 
 # Directory and file paths
-# root_dir = sys.argv[1]  # directory with model outputs
-# sim_name = sys.argv[2]  # name of simulation
-#%%
-root_dir = "H:/Shared drives/SLF Paper Outputs/outputs"
-sim_name = "slf_scenarios_noTWN_wChinaVietnam"
-#%%
+root_dir = sys.argv[1]  # directory with model outputs
+sim_name = sys.argv[2]  # name of simulation
+
+# root_dir = "H:/Shared drives/SLF Paper Outputs/outputs"
+# sim_name = "slf_scenarios_noTWN_wChinaVietnam"
+
 # Generate header attributes from subdirectory names,
 # and model output metadata
 sim_path = os.path.join(root_dir, sim_name)
@@ -23,7 +22,7 @@ if "header.csv" in run_prefix_list:
     run_prefix_list.remove("header.csv")
 if "summary_data" in run_prefix_list:
     run_prefix_list.remove("summary_data")
-#%%
+
 # commodity_codes_list = list(set([d.split("_")[-1] for d in run_prefix_list]))
 commodity_codes_list = ["6801-6804"]
 # add_descript_list = (
@@ -33,7 +32,7 @@ add_descript_list = [
     os.path.basename(i) for i in glob.glob(sim_path + '/*/*')
     ]
 
-#%%
+
 num_runs_list = []
 for i in run_prefix_list:
     run_list = [r for r in glob.glob(sim_path + f"/{i}/{add_descript_list[0]}/run_*")]
@@ -43,7 +42,7 @@ parameter_values_list = []
 starting_countries_list = []
 start_year_list = []
 stop_year_list = []
-#%%
+
 for i in range(len(run_prefix_list)):
     run_prefix = run_prefix_list[i]
     run0 = re.sub(
@@ -97,5 +96,3 @@ header_dict = {
 header_df = pd.DataFrame.from_dict(header_dict)
 print("saving header file: ", header_file_path)
 header_df.to_csv(header_file_path, header=True)
-
-# %%
