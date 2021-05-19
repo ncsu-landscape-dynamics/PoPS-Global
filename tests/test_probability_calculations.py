@@ -79,7 +79,7 @@ def test_probability_of_entry():
     #         lamda_c=1,
     #         T_ijct=200,
     #         min_Tc=0,
-     #        max_Tc=10000,
+    #         max_Tc=10000,
     #         mu=0.0002,
     #         d_ij=2000,
     #         chi_it=1,
