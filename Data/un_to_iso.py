@@ -16,8 +16,7 @@ countries
 # %%
 # UN to ISO crosswalk
 crosswalk = pd.read_csv(
-    dir_path + "Comtrade Country Code and ISO list.csv",
-    encoding="ISO-8859-1",
+    dir_path + "Comtrade Country Code and ISO list.csv", encoding="ISO-8859-1",
 )
 
 

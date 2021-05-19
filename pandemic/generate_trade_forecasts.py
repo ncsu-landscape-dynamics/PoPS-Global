@@ -8,9 +8,7 @@ import pandas as pd
 
 
 def create_date_lists(
-    start_forecast_date,
-    number_historical_years,
-    number_forecast_years,
+    start_forecast_date, number_historical_years, number_forecast_years,
 ):
     """
     Create lists of trade file to use as historical values for trade forecasts.
@@ -113,11 +111,7 @@ def create_trade_arrays(list_of_csvs, number_forecast_years):
 
     for i in range(len(list_of_csvs)):
         hist_arr[i] = pd.read_csv(
-            list_of_csvs[i],
-            sep=",",
-            header=0,
-            index_col=0,
-            encoding="latin1",
+            list_of_csvs[i], sep=",", header=0, index_col=0, encoding="latin1",
         ).values
     # Randomly choose a value from the historical trade matrices
     # to populate the trade forecast for each destination (j) -
@@ -130,10 +124,7 @@ def create_trade_arrays(list_of_csvs, number_forecast_years):
 
 
 def write_forecast_arrays(
-    list_of_csvs,
-    forecast_arr,
-    forecast_ts_list,
-    output_dir,
+    list_of_csvs, forecast_arr, forecast_ts_list, output_dir,
 ):
     """
     Saves the trade forecasts files to the specified directory.
@@ -223,8 +214,8 @@ def simple_trade_forecast(
     # For monthly forecasts
     if len(str(start_forecast_date)) == 6:
         for month in month_list:
-            hist_trade_to_use_subsample = (fnmatch.filter(
-                hist_trade_to_use, f"*{month}.csv")
+            hist_trade_to_use_subsample = fnmatch.filter(
+                hist_trade_to_use, f"*{month}.csv"
             )
             hist_arr, forecast_arr = create_trade_arrays(
                 hist_trade_to_use_subsample, num_yrs_forecast

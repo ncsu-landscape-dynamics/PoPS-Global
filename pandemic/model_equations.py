@@ -189,14 +189,13 @@ def pandemic_single_time_step(
                 time_step_year = int(time_step[:4])
             elif len(time_step) == 4:
                 time_step_year = int(time_step)
-            scenario = (
-                [
-                    item for item in scenario_list
-                    if item[0] == time_step_year
-                    and item[1] == origin["ISO3"]
-                    and item[2] == destination["ISO3"]
-                ]
-            )
+            scenario = [
+                item
+                for item in scenario_list
+                if item[0] == time_step_year
+                and item[1] == origin["ISO3"]
+                and item[2] == destination["ISO3"]
+            ]
             if len(scenario) == 1:
                 print(f"\tAdjusting trade for {origin['ISO3']}-{destination['ISO3']}")
                 print(f"\t\tfrom: {T_ijct}")
@@ -246,14 +245,7 @@ def pandemic_single_time_step(
                     chi_it,
                 )
             probability_of_establishment_ijt = probability_of_establishment(
-                alpha,
-                beta,
-                delta_kappa_ijt,
-                sigma_kappa,
-                h_jt,
-                sigma_h,
-                phi,
-                w_phi,
+                alpha, beta, delta_kappa_ijt, sigma_kappa, h_jt, sigma_h, phi, w_phi,
             )
         else:
             zeta_it = 0

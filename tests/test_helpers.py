@@ -2,7 +2,7 @@ import pandas as pd
 from pandemic.helpers import (
     location_pairs_with_host,
     filter_trades_list,
-    adjust_trade_scenario
+    adjust_trade_scenario,
 )
 
 
@@ -55,7 +55,7 @@ def test_filter_trades_list():
 def test_adjust_trade_scenario():
     T_ijct = 1000
     scenario = [
-        [2015, 'CHN', 'USA', 'decrease', 1],
+        [2015, "CHN", "USA", "decrease", 1],
     ]
 
     assert adjust_trade_scenario(T_ijct, scenario) == 0

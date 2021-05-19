@@ -12,7 +12,7 @@ from pandemic.output_files import (
     aggregate_monthly_output_to_annual,
     create_model_dirs,
     save_model_output,
-    write_model_metadata
+    write_model_metadata,
 )
 
 # Read environmental variables
@@ -52,7 +52,7 @@ save_entry = config["save_entry"]
 save_estab = config["save_estab"]
 save_intro = config["save_intro"]
 save_country_intros = config["save_country_intros"]
-scenario_list = config['scenario_list']
+scenario_list = config["scenario_list"]
 
 countries = geopandas.read_file(countries_path, driver="GPKG")
 distances = np.load(input_dir + "/distance_matrix.npy")

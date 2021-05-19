@@ -28,9 +28,7 @@ commodity_codes_list = ["6801-6804"]
 # add_descript_list = (
 #     [d.split(f"_{i}")[0] for d in run_prefix_list for i in commodity_codes_list]
 # )
-add_descript_list = [
-    os.path.basename(i) for i in glob.glob(sim_path + '/*/*')
-    ]
+add_descript_list = [os.path.basename(i) for i in glob.glob(sim_path + "/*/*")]
 
 
 num_runs_list = []
@@ -46,11 +44,16 @@ stop_year_list = []
 for i in range(len(run_prefix_list)):
     run_prefix = run_prefix_list[i]
     run0 = re.sub(
-        'run_',
-        '',
-        os.path.basename(glob.glob(f"{sim_path}/{run_prefix}/{add_descript_list[0]}/run_*")[0])
+        "run_",
+        "",
+        os.path.basename(
+            glob.glob(f"{sim_path}/{run_prefix}/{add_descript_list[0]}/run_*")[0]
+        ),
     )
-    file_path = f"{sim_path}/{run_prefix}/{add_descript_list[0]}/run_{run0}/run_{run0}_meta.json"
+    file_path = (
+        rf"{sim_path}/{run_prefix}/{add_descript_list[0]}",
+        rf"/run_{run0}/run_{run0}_meta.json",
+    )
     metadata_file = open(file_path)
     meta_contents = json.load(metadata_file)
     parameter_values = meta_contents["PARAMETERS"]

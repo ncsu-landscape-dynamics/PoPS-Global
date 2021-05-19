@@ -87,11 +87,7 @@ def location_pairs_with_host(locations):
     return location_tuples
 
 
-def filter_trades_list(
-    file_list,
-    start_year,
-    stop_year=None
-):
+def filter_trades_list(file_list, start_year, stop_year=None):
     """
     Returns filtered list of trade data based on start
     year
@@ -116,7 +112,7 @@ def filter_trades_list(
     for i, f in enumerate(file_list):
         date_tag = str.split(os.path.splitext(os.path.split(f)[1])[0], "_")[-1][:4]
         # File time step before start year
-        if (int(date_tag) < int(start_year)):
+        if int(date_tag) < int(start_year):
             file_list[i] = None
         # File time step after stop year if specified
         if stop_year is not None and (int(date_tag) > int(stop_year)):
@@ -127,11 +123,7 @@ def filter_trades_list(
 
 
 def create_trades_list(
-    commodity_path,
-    commodity_forecast_path,
-    start_year,
-    distances,
-    stop_year=None,
+    commodity_path, commodity_forecast_path, start_year, distances, stop_year=None,
 ):
     """
     Returns list (c) of n x n x t matrices, filtered by start year, where c is
@@ -256,7 +248,7 @@ def adjust_trade_scenario(T_ijct, scenario):
     """
     adjustment_type = scenario[0][3]
     adjustment_pct = scenario[0][4]
-    if adjustment_type == 'decrease':
+    if adjustment_type == "decrease":
         return T_ijct * (1 - adjustment_pct)
-    if adjustment_type == 'increase':
+    if adjustment_type == "increase":
         return T_ijct * (1 + adjustment_pct)
