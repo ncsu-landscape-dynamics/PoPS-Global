@@ -123,7 +123,11 @@ def filter_trades_list(file_list, start_year, stop_year=None):
 
 
 def create_trades_list(
-    commodity_path, commodity_forecast_path, start_year, distances, stop_year=None,
+    commodity_path,
+    commodity_forecast_path,
+    start_year,
+    distances,
+    stop_year=None,
 ):
     """
     Returns list (c) of n x n x t matrices, filtered by start year, where c is
@@ -178,7 +182,9 @@ def create_trades_list(
             file_list = file_list_historical
 
         file_list_filtered = filter_trades_list(
-            file_list=file_list, start_year=start_year, stop_year=stop_year,
+            file_list=file_list,
+            start_year=start_year,
+            stop_year=stop_year,
         )
         trades = np.zeros(
             shape=(len(file_list_filtered), distances.shape[0], distances.shape[0])
