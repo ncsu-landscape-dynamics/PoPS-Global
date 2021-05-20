@@ -150,8 +150,7 @@ def pandemic_single_time_step(
 
     introduction_country = np.zeros_like(trade, dtype=float)
     locations["Probability of introduction"] = np.zeros(len(locations))
-    origin_destination = pd.DataFrame(
-        columns=["Origin", "Destination"], dtype=np.str)
+    origin_destination = pd.DataFrame(columns=["Origin", "Destination"])
 
     for k in range(len(locations_list)):
         # get position index of location k with known host presence
