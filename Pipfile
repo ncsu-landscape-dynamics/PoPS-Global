@@ -18,18 +18,14 @@ graphviz = "*"
 pydot = "*"
 pandas = "*"
 scipy = "*"
-pandemic = {editable = true, path = "."}
 shapely = "*"
-pyproj = {path = "./wheels/pyproj-2.6.1.post1-cp37-cp37m-win_amd64.whl"}
 geopy = "*"
 psycopg2 = "*"
-rtree = {path = "./wheels/Rtree-0.9.4-cp37-cp37m-win_amd64.whl"}
 munch = "*"
 cligj = "*"
 six = "*"
 enum34 = "*"
 argparse = "*"
-fiona = {path = "./wheels/Fiona-1.8.13-cp37-cp37m-win_amd64.whl"}
 geopandas = "*"
 requests = "*"
 setuptools = "*"
@@ -40,3 +36,16 @@ python_version = "3.7"
 
 [pipenv]
 allow_prereleases = true
+
+[packages.pandemic]
+editable = true
+path = "."
+
+[packages.pyproj]
+path = "./wheels/pyproj-2.6.1.post1-cp37-cp37m-win_amd64.whl"
+
+[packages.rtree]
+path = "./wheels/Rtree-0.9.4-cp37-cp37m-win_amd64.whl"
+
+[packages.fiona]
+path = "./wheels/Fiona-1.8.13-cp37-cp37m-win_amd64.whl"

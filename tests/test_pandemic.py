@@ -9,7 +9,7 @@ def test_pandemic_runs():
     trade = np.array([[0, 500, 15], [50, 0, 10], [20, 30, 0]])
     min_Tc = np.min(trade)
     max_Tc = np.max(trade)
-    distances = np.array([[1, 5000, 105000], [5000, 1, 7500], [10500, 7500, 1]])
+    distances = np.array([[0, 5000, 105000], [5000, 0, 7500], [10500, 7500, 0]])
     climate_similarities = np.array([[1, 0.95, 0.4], [0.95, 1, 0.5], [0.4, 0.5, 1]])
     time_step = "2015"
     season_dict = {
