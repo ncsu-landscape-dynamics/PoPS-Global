@@ -71,22 +71,6 @@ def test_probability_of_entry():
         == 0
     )
 
-    # assert (
-    #     probability_of_entry(
-    #         rho_i=0,
-    #         rho_j=0,
-    #         zeta_it=1,
-    #         lamda_c=1,
-    #         T_ijct=200,
-    #         min_Tc=0,
-    #         max_Tc=10000,
-    #         mu=0.0002,
-    #         d_ij=2000,
-    #         chi_it=1,
-    #     )
-    #     == 0
-    # )
-
 
 def test_probability_of_establishment():
     assert (
