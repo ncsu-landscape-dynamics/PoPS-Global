@@ -11,7 +11,7 @@ pytest-cov = "*"
 
 [packages]
 country-list = "*"
-numpy = "*"
+numpy = "==1.19.2"
 networkx = "*"
 matplotlib = "*"
 graphviz = "*"
