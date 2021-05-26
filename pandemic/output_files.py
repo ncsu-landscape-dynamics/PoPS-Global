@@ -127,8 +127,8 @@ def save_model_output(
         model_output_gdf = model_output_gdf.drop(
             columns=["Probability of introduction", "Presence"]
         )
-    out_pdf = pd.DataFrame(model_output_gdf.drop(columns="geometry", axis=1))
-    out_pdf.to_csv(outpath + "/pandemic_output.csv")
+    # out_pdf = pd.DataFrame(model_output_gdf.drop(columns="geometry", axis=1))
+    # out_pdf.to_csv(outpath + "/pandemic_output.csv")
 
     origin_dst.to_csv(outpath + "/origin_destination.csv")
 
@@ -366,7 +366,7 @@ def write_model_metadata(
     sigma_h,
     sigma_kappa,
     start_year,
-    stop_year,
+    end_sim_year,
     transmission_lag_type,
     time_infect,
     time_infect_units,
@@ -374,11 +374,13 @@ def write_model_metadata(
     gamma_scale,
     random_seed,
     native_countries_list,
+    countries_path,
     commodities_available,
     commodity_forecast_path,
     phyto_weights,
     outpath,
     run_num,
+    scenario_list=None,
 ):
     """
     Write model parameters and configuration to metadata file
@@ -415,7 +417,7 @@ def write_model_metadata(
         The ecological disturbance normalizing constant
     start_year : str
         The first year of the simulation
-    stop_year : str
+    end_sim_year : str
         The final year of the simulation
     transmission_lag_type : str
         Type of transmission lag used in the simulation (i.e., None,
@@ -430,6 +432,8 @@ def write_model_metadata(
         Scale parameter for gamma distribution used in stochastic transmission.
     native_countries_list : list
         Countries with pest or pathogen present at first time step of simulation
+    countries_path : str
+        File path to countries geopackage used
     commodities_available :
         Commodity simulated
     commodity_forecast_path : str
@@ -463,7 +467,7 @@ def write_model_metadata(
             "sigma_h": str(sigma_h),
             "sigma_kappa": str(sigma_kappa),
             "start_year": str(start_year),
-            "stop_year": str(stop_year),
+            "end_sim_year": str(end_sim_year),
             "transmission_lag_type": str(transmission_lag_type),
             "infectivity_lag": time_infect,
             "transmission_lag_units": time_infect_units,
@@ -477,6 +481,7 @@ def write_model_metadata(
     if transmission_lag_type == "stochastic":
         meta["PARAMETERS"][0].update({"infectivity_lag": None})
     meta["NATIVE_COUNTRIES_T0"] = native_countries_list
+    meta["COUNTRIES GPKG"] = countries_path
     meta["COMMODITY"] = commodities_available
     meta["FORECASTED"] = commodity_forecast_path
     meta["PHYTOSANITARY_CAPACITY_WEIGHTS"] = phyto_weights
@@ -484,6 +489,7 @@ def write_model_metadata(
         main_model_output[final_presence_col].value_counts()[1]
         - len(native_countries_list)
     )
+    meta["TRADE SCENARIO"] = scenario_list
 
     with open(f"{outpath}/run_{run_num}_meta.json", "w") as file:
         json.dump(meta, file, indent=4)

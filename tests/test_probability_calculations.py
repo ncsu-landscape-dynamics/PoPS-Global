@@ -14,7 +14,8 @@ def test_probability_of_entry():
             zeta_it=1,
             lamda_c=1,
             T_ijct=500,
-            sigma_T=200,
+            min_Tc=0,
+            max_Tc=10000,
             mu=0.02,
             d_ij=150,
             chi_it=1,
@@ -29,7 +30,8 @@ def test_probability_of_entry():
             zeta_it=1,
             lamda_c=1,
             T_ijct=500,
-            sigma_T=200,
+            min_Tc=0,
+            max_Tc=10000,
             mu=0.02,
             d_ij=150,
             chi_it=1,
@@ -44,7 +46,8 @@ def test_probability_of_entry():
             zeta_it=0,
             lamda_c=1,
             T_ijct=500,
-            sigma_T=200,
+            min_Tc=0,
+            max_Tc=10000,
             mu=0.02,
             d_ij=150,
             chi_it=1,
@@ -59,28 +62,14 @@ def test_probability_of_entry():
             zeta_it=1,
             lamda_c=1,
             T_ijct=500,
-            sigma_T=200,
+            min_Tc=0,
+            max_Tc=10000,
             mu=0.02,
             d_ij=150,
             chi_it=0,
         )
         == 0
     )
-
-    # assert (
-    #     probability_of_entry(
-    #         rho_i=0,
-    #         rho_j=0,
-    #         zeta_it=1,
-    #         lamda_c=1,
-    #         T_ijct=200,
-    #         sigma_T=200,
-    #         mu=0.0002,
-    #         d_ij=2000,
-    #         chi_it=1,
-    #     )
-    #     == 0
-    # )
 
 
 def test_probability_of_establishment():
@@ -92,10 +81,8 @@ def test_probability_of_establishment():
             sigma_kappa=1,
             h_jt=1,
             sigma_h=1,
-            epsilon_jt=1,
-            sigma_epsilon=1,
             phi=1,
-            sigma_phi=2,
+            w_phi=2,
         )
         == 0
     )
@@ -109,10 +96,8 @@ def test_probability_of_establishment():
             sigma_kappa=1,
             h_jt=1,
             sigma_h=1,
-            epsilon_jt=1,
-            sigma_epsilon=1,
             phi=1,
-            sigma_phi=2,
+            w_phi=2,
         )
         <= 1.0
     )
@@ -126,10 +111,8 @@ def test_probability_of_establishment():
             sigma_kappa=0.5,
             h_jt=1,
             sigma_h=1,
-            epsilon_jt=1,
-            sigma_epsilon=1,
             phi=5,
-            sigma_phi=2,
+            w_phi=2,
         )
         <= 1.0
     )

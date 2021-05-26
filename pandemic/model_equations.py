@@ -24,7 +24,7 @@ from pandemic.probability_calculations import (
     probability_of_introduction,
 )
 
-from pandemic.helpers import location_pairs_with_host
+from pandemic.helpers import location_pairs_with_host, adjust_trade_scenario
 
 
 def pandemic_single_time_step(
@@ -50,6 +50,7 @@ def pandemic_single_time_step(
     time_infect,
     gamma_shape,
     gamma_scale,
+    scenario_list=None,
 ):
     """
     Returns the probability of establishment, probability of entry, and
@@ -124,8 +125,12 @@ def pandemic_single_time_step(
         Time until a country is infectious, set for static transmission lag
     gamma_shape : float
         Shape parameter for gamma distribution used in stochastic transmission
-    gamma_scale: float
+    gamma_scale : float
         Scale parameter for gamma distribution used in stochastic transmission
+    scenario_list : list (optional)
+        Nested list of scenarios, with elements ordered as: year (YYYY),
+        origin ISO3 code, destination ISO3 code, adjustment type (e.g.,
+        "increase", "decrease"), and adjustment percent.
 
     Returns
     -------
@@ -175,6 +180,28 @@ def pandemic_single_time_step(
             rho_i = 0
 
         T_ijct = trade[j, i]
+
+        # If trade scenarios exist, check if origin-destination
+        # pair has a scenario for this time step.
+        # If so, adjust T_ijct according to scenario.
+        if scenario_list:
+            if len(time_step) == 6:
+                time_step_year = int(time_step[:4])
+            elif len(time_step) == 4:
+                time_step_year = int(time_step)
+            scenario = [
+                item
+                for item in scenario_list
+                if item[0] == time_step_year
+                and item[1] == origin["ISO3"]
+                and item[2] == destination["ISO3"]
+            ]
+            if len(scenario) == 1:
+                print(f"\tAdjusting trade for {origin['ISO3']}-{destination['ISO3']}")
+                print(f"\t\tfrom: {T_ijct}")
+                T_ijct = adjust_trade_scenario(T_ijct=T_ijct, scenario=scenario)
+                print(f"\t\tto: {T_ijct}")
+
         d_ij = distances[j, i]
 
         # check if time steps are annual (YYYY) or monthly (YYYYMM)
@@ -357,6 +384,7 @@ def pandemic_multiple_time_steps(
     time_infect,
     gamma_shape,
     gamma_scale,
+    scenario_list=None,
 ):
 
     """
@@ -421,6 +449,10 @@ def pandemic_multiple_time_steps(
         Shape parameter for gamma distribution used in stochastic transmission
     gamma_scale: float
         Scale parameter for gamma distribution used in stochastic transmission
+    scenario_list : list (optional)
+        Nested list of scenarios, with elements ordered as: year (YYYY),
+        origin ISO3 code, destination ISO3 code, adjustment type (e.g.,
+        "increase", "decrease"), and adjustment percent.
 
     Returns
     -------
@@ -441,19 +473,13 @@ def pandemic_multiple_time_steps(
     locations["Probability of introduction"] = np.zeros(shape=len(locations))
     origin_destination = pd.DataFrame(columns=["Origin", "Destination", "Year"])
 
+    # Get minimum and maximum trade values for scaling
+    min_Tc = np.min(trades)
+    max_Tc = np.nanmax(trades)
+
     for t in range(trades.shape[0]):
         ts = date_list[t]
         print("TIME STEP: ", ts)
-
-        # Get index for time steps in date list that match the year of the current ts
-        same_year_idx = [
-            idx for idx, element in enumerate(date_list) if element[:4] == ts[:4]
-        ]
-        # Extract relevant trade arrays based on index position
-        year_trade_data = [trades[i] for i in same_year_idx]
-        # Get annual standard deviation of nonzero trade value
-        min_Tc = np.min(np.ma.masked_equal(year_trade_data, 0))
-        max_Tc = np.nanmax(year_trade_data)
 
         trade = trades[t]
 
@@ -501,6 +527,7 @@ def pandemic_multiple_time_steps(
             time_infect=time_infect,
             gamma_shape=gamma_shape,
             gamma_scale=gamma_scale,
+            scenario_list=scenario_list,
         )
 
         establishment_probabilities[t] = ts_out[1]
