@@ -2,9 +2,10 @@
 import math
 import os
 import json
-from urllib.request import urlopen
+import urllib
 import pandas as pd
 import numpy as np
+from time import sleep
 
 
 def nested_list(original_list, list_length):
@@ -52,19 +53,54 @@ def download_trade_data(hs_str, freq_str, year_country_dict, auth_code_str):
         for country_code_list in nested_country_codes:
             country_code_str = "%2C".join(country_code_list)
 
-            url = urlopen(
-                "http://comtrade.un.org/api/get?max=250000&type=C&px=HS&cc="
-                + hs_str
-                + "&r="
-                + country_code_str
-                # rg=1 (imports only)
-                + "&rg=1&p=all&freq="
-                + freq_str
-                + "&ps="
-                + str(key)
-                + "&fmt=json&token="
-                + auth_code_str
-            )
+            try:
+                url = urllib.request.urlopen(
+                    "http://comtrade.un.org/api/get?max=250000&type=C&px=HS&cc="
+                    + hs_str
+                    + "&r="
+                    + country_code_str
+                    # rg=1 (imports only)
+                    + "&rg=1&p=all&freq="
+                    + freq_str
+                    + "&ps="
+                    + str(key)
+                    + "&fmt=json&token="
+                    + auth_code_str
+                )
+            except urllib.error.HTTPError:
+                print("Just a second...")
+                sleep(20)
+                try:
+                    url = urllib.request.urlopen(
+                        "http://comtrade.un.org/api/get?max=250000&type=C&px=HS&cc="
+                        + hs_str
+                        + "&r="
+                        + country_code_str
+                        # rg=1 (imports only)
+                        + "&rg=1&p=all&freq="
+                        + freq_str
+                        + "&ps="
+                        + str(key)
+                        + "&fmt=json&token="
+                        + auth_code_str
+                    )
+                except urllib.error.HTTPError:
+                    print("Trying a minute...")
+                    sleep(60)
+                    url = urllib.request.urlopen(
+                        "http://comtrade.un.org/api/get?max=250000&type=C&px=HS&cc="
+                        + hs_str
+                        + "&r="
+                        + country_code_str
+                        # rg=1 (imports only)
+                        + "&rg=1&p=all&freq="
+                        + freq_str
+                        + "&ps="
+                        + str(key)
+                        + "&fmt=json&token="
+                        + auth_code_str
+                    )
+
             raw = json.loads(url.read().decode())
             url.close()
 
@@ -249,7 +285,7 @@ def query_comtrade(
     crosswalk_dict = pd.Series(crosswalk.ISO3.values, index=crosswalk.UN).to_dict()
 
     # Get data availability from Comtrade and compare to desired data
-    data_availability_url = urlopen(
+    data_availability_url = urllib.request.urlopen(
         "http://comtrade.un.org/api/refs/da/view?type=C&freq=all&ps=all&px=HS"
     )
     data_availability_raw = json.loads(data_availability_url.read().decode())
