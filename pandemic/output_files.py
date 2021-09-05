@@ -386,7 +386,7 @@ def write_annual_output(formatted_geojson, outpath):
     out_csv.to_csv(
         outpath + "/pandemic_output_aggregated.csv", float_format="%.2f", na_rep="NAN!"
     )
-    
+
 
 def write_model_metadata(
     main_model_output,
