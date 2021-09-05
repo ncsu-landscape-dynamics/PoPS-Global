@@ -186,12 +186,10 @@ for i in range(len(trades_list)):
             aggregate_monthly_output_to_annual(
                 formatted_geojson=full_out_df, outpath=outpath
             )
-
         # If time steps are annual, export the predictions
         if len(date_list[i]) == 4:
             print("exporting annual predictions...")
             write_annual_output(formatted_geojson=full_out_df, outpath=outpath)
-
         # Save model metadata to text file
         print("writing model metadata...")
         write_model_metadata(
