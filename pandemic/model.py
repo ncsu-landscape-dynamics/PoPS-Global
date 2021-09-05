@@ -10,6 +10,7 @@ from pandemic.helpers import create_trades_list
 from pandemic.model_equations import pandemic_multiple_time_steps
 from pandemic.output_files import (
     aggregate_monthly_output_to_annual,
+    write_annual_output,
     create_model_dirs,
     save_model_output,
     write_model_metadata,
@@ -183,6 +184,13 @@ for i in range(len(trades_list)):
         if len(date_list[i]) > 4:
             print("aggregating monthly predictions to annual time steps...")
             aggregate_monthly_output_to_annual(
+                formatted_geojson=full_out_df, outpath=outpath
+            )
+        
+        # If time steps are annual, export the predictions
+        if len(date_list[i]) == 4:
+            print("exporting annual predictions...")
+            write_annual_output(
                 formatted_geojson=full_out_df, outpath=outpath
             )
 
