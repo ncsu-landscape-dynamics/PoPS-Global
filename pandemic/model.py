@@ -167,7 +167,7 @@ for i in range(len(trades_list)):
 
         outpath = out_dir + f"/{sim_name}/{run_prefix}/run_{run_num}/"
         create_model_dirs(
-            outpath=outpath, 
+            outpath=outpath,
             output_dict=arr_dict,
             write_entry_probs=save_entry,
             write_estab_probs=save_estab,
