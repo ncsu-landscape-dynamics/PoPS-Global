@@ -173,7 +173,7 @@ for i in range(len(trades_list)):
             write_estab_probs=save_estab,
             write_intro_probs=save_intro,
             write_country_intros=save_country_intros,
-            )
+        )
         print("saving model outputs: ", outpath)
         full_out_df = save_model_output(
             model_output_object=e,
