@@ -1,10 +1,13 @@
 # Download and format data from Comtrade API
+import sys 
 import math
 import os
 import json
-from urllib.request import urlopen
+import urllib
 import pandas as pd
 import numpy as np
+import time 
+from datetime import datetime
 
 
 def nested_list(original_list, list_length):
@@ -24,10 +27,8 @@ def download_trade_data(hs_str, freq_str, year_country_dict, auth_code_str):
     """Loops over years and countries, calling Comtrade API for specified
     HS commodity code and appends downloaded data to dataframe. Prints
     messages to track progress.
-
     Returns dataframe of trade data, one row for each
     origin/destination/timestep combo.
-
     Parameters
     ----------
     hs_str : str
@@ -41,7 +42,7 @@ def download_trade_data(hs_str, freq_str, year_country_dict, auth_code_str):
     auth_code_str: str
         premium API authorization code
     """
-    print(f"Downloading HS{hs_str} data from Comtrade...")
+    print(f"Downloading HS{hs_str} @ {freq_str} data from Comtrade...")
     data = pd.DataFrame()
     for key in year_country_dict.keys():
         country_codes = year_country_dict[key]
@@ -51,8 +52,7 @@ def download_trade_data(hs_str, freq_str, year_country_dict, auth_code_str):
         # loop over all country lists countries and call API
         for country_code_list in nested_country_codes:
             country_code_str = "%2C".join(country_code_list)
-
-            url = urlopen(
+            url_str = (
                 "http://comtrade.un.org/api/get?max=250000&type=C&px=HS&cc="
                 + hs_str
                 + "&r="
@@ -65,35 +65,59 @@ def download_trade_data(hs_str, freq_str, year_country_dict, auth_code_str):
                 + "&fmt=json&token="
                 + auth_code_str
             )
-            raw = json.loads(url.read().decode())
-            url.close()
+            delay = 5
+            retries = 1
+            success = False
+            while success == False and retries <= 10:
+                try:
+                    url = urllib.request.urlopen(url_str)
+                    success = True 
+                    print('\t\t!! Success...')
+                except Exception as e: 
+                    print('\t', e)
+                    if delay < 60:
+                        print(f"\t\tRetry {retries} of 10 in {delay} seconds")
+                    else:
+                        print(f"\t\tRetry {retries} of 10 in {delay/60:.2f} minutes")
+                    sys.stdout.flush()
+                    time.sleep(delay)
+                    delay *= 2
+                    retries += 1
+                    
 
-            if len(raw["dataset"]) == 0:
+
+            if "url" in locals():
+                raw = json.loads(url.read().decode())
+                url.close()
+
+                if len(raw["dataset"]) == 0:
+                    print(
+                        "No data downloaded for HS"
+                        + hs_str
+                        + ", "
+                        + str(key)
+                        + ", UN code:"
+                        + ", ".join(map(str, country_code_list))
+                        + ". Message: "
+                        + str(raw["validation"]["message"])
+                    )
+                    continue
+
+                data = data.append(raw["dataset"])
+                data["ptCode"] = data["ptCode"].astype(str)
                 print(
-                    "No data downloaded for HS"
+                    "Freq: "
+                    + freq_str
+                    + " HS"
                     + hs_str
-                    + ", "
+                    + " "
                     + str(key)
                     + ", UN code:"
                     + ", ".join(map(str, country_code_list))
-                    + ". Message: "
-                    + str(raw["validation"]["message"])
+                    + ", downloaded"
                 )
-                continue
-
-            data = data.append(raw["dataset"])
-            data["ptCode"] = data["ptCode"].astype(str)
-            print(
-                "Freq: "
-                + freq_str
-                + " HS"
-                + hs_str
-                + " "
-                + str(key)
-                + ", UN code:"
-                + ", ".join(map(str, country_code_list))
-                + ", downloaded"
-            )
+            else:
+                print(f"***{key}: {hs_str} failed")
     return data
 
 
@@ -103,9 +127,7 @@ def save_hs_timestep_matrices(
     """Loops over timesteps and creates country x country matrix of import
     trade values. If no data were downloaded for a country pair, will add zeros and
     print a message. Changes US codes to ISO3 codes in column, row names.
-
     Saves a matrix for each timestep as CSVs.
-
     Parameters
     ----------
     hs_str : str
@@ -194,8 +216,7 @@ def save_hs_timestep_matrices(
 def query_comtrade(
     model_inputs_dir,
     auth_code,
-    start_code,
-    end_code,
+    hs_list,
     start_year,
     end_year,
     temporal_res,
@@ -204,19 +225,15 @@ def query_comtrade(
     """
     Runs trade data request and download process, including
     review of data completeness.
-
     Parameters
     ----------
     model_inputs_dir : str
         Directory path to where data will be saved
     auth_code_str: str
         premium API authorization code
-    start_code : int
-        HS commodity code, can be 2, 4, or 6 digits depending on desired
-        aggregation
-    end_code : int
-        HS commodity code, can be 2, 4, or 6 digits depending on desired
-        aggregation
+    hs_list : list
+        List of HS commodity codes, which can be 2, 4, or 6 
+        digits 
     start_year : int
         First year (YYYY) requested
     end_year : int
@@ -225,12 +242,10 @@ def query_comtrade(
         temporal resolution of data, "A" for annual, "M" for monthly
     crosswalk_path : str
         Location of UN code to ISO3 code crosswalk csv
-
     """
 
     # list HS commodity codes to query, will be downloaded individually
     # and aggregated (if needed) in later script
-    hs_list = np.arange(start_code, end_code + 1, 1)
 
     # Set time step for trade data
     years = np.arange(start_year, end_year + 1, 1)
@@ -249,7 +264,7 @@ def query_comtrade(
     crosswalk_dict = pd.Series(crosswalk.ISO3.values, index=crosswalk.UN).to_dict()
 
     # Get data availability from Comtrade and compare to desired data
-    data_availability_url = urlopen(
+    data_availability_url = urllib.request.urlopen(
         "http://comtrade.un.org/api/refs/da/view?type=C&freq=all&ps=all&px=HS"
     )
     data_availability_raw = json.loads(data_availability_url.read().decode())
@@ -354,65 +369,72 @@ def query_comtrade(
             freq = "A"
             annual_data = download_trade_data(str(hs), freq, use_annual_dict, auth_code)
             freq = "M"
+            print('Checking alternative temporal resolution to augment missing data...')
             monthly_data = download_trade_data(
                 str(hs), freq, use_monthly_dict, auth_code
             )
             # Sum monthly to get annual
-            monthly_data_agg = (
-                monthly_data.groupby(["yr", "rtCode", "ptCode"]).sum().reset_index()
-            )
-            annual_data = annual_data.append(monthly_data_agg)
+            if not monthly_data.empty:
+                monthly_data_agg = (
+                    monthly_data.groupby(["yr", "rtCode", "ptCode"]).sum().reset_index()
+                )
+                annual_data = annual_data.append(monthly_data_agg)
             # loop over timesteps (YYYY) and save a country x country matrix
             # per timestep per HS code as csv
             timesteps = years
-            save_hs_timestep_matrices(
-                str(hs), timesteps, annual_data, crosswalk[["UN"]], crosswalk_dict
-            )
+            if not annual_data.empty:
+                save_hs_timestep_matrices(
+                    str(hs), timesteps, annual_data, crosswalk[["UN"]], crosswalk_dict
+                )
+            else:
+                print('No annual data downloaded')
 
     if temporal_res == "M":
+        current_year = datetime.now().year
+        current_month = datetime.now().month
         for hs in hs_list:
             timesteps = []
+            months = [str(f'{i:02}') for i in range(1, 13)]
             for year in years:
-                months = [
-                    "01",
-                    "02",
-                    "03",
-                    "04",
-                    "05",
-                    "06",
-                    "07",
-                    "08",
-                    "09",
-                    "10",
-                    "11",
-                    "12",
-                ]
                 for month in months:
                     timesteps.append(str(year) + month)
             timesteps = list(map(int, timesteps))
+            timesteps_not_complete = list(
+                range(
+                    (int(str(current_year) + str(f'{current_month:02}'))),
+                    (int(str(current_year) + '13')),
+                )
+            )
+            timesteps = [ts for ts in timesteps if ts not in timesteps_not_complete]
             # Download either annual or monthly depending on availability
             freq = "M"
             monthly_data = download_trade_data(
                 str(hs), freq, use_monthly_dict, auth_code
             )
-            freq = "A"
-            annual_data = download_trade_data(str(hs), freq, use_annual_dict, auth_code)
-            # Split annual data into monthly by dividing by 12
-            annual_split = pd.DataFrame()
-            for month in months:
-                month_portion = annual_data.copy()
-                month_portion["TradeValue"] = month_portion["TradeValue"].apply(
-                    lambda x: x / 12
-                )
-                month_portion["period"] = month_portion["period"].astype(str) + month
-                month_portion["period"] = month_portion["period"].astype(int)
-                annual_split = annual_split.append(month_portion)
-            monthly_data = monthly_data.append(annual_split)
+
+            if year != current_year:
+                freq = "A"
+                annual_data = download_trade_data(str(hs), freq, use_annual_dict, auth_code)
+                if not annual_data.empty:
+                    # Split annual data into monthly by dividing by 12
+                    annual_split = pd.DataFrame()
+                    for month in months:
+                        month_portion = annual_data.copy()
+                        month_portion["TradeValue"] = month_portion["TradeValue"].apply(
+                            lambda x: x / 12
+                        )
+                        month_portion["period"] = month_portion["period"].astype(str) + month
+                        month_portion["period"] = month_portion["period"].astype(int)
+                        annual_split = annual_split.append(month_portion)
+                monthly_data = monthly_data.append(annual_split)
             # loop over timesteps (YYYY or YYYYMM) and save a country x country matrix
             # per timestep per HS code as csv
-            save_hs_timestep_matrices(
-                str(hs), timesteps, monthly_data, crosswalk[["UN"]], crosswalk_dict
-            )
+            if not monthly_data.empty:
+                save_hs_timestep_matrices(
+                    str(hs), timesteps, monthly_data, crosswalk[["UN"]], crosswalk_dict
+                )
+            # else:
+            #     print('\tNo monthly data available to download')
 
 
 # project_path = "H:/My drive/Projects/Pandemic"
