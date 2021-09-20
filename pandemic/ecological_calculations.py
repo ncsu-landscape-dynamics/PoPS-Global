@@ -1,11 +1,13 @@
 """
-PoPS Pandemic - Simulation
+PoPS Global
 
 Module containing all calcualtions for ecological similarity
 
-Copyright (C) 2019-2020 by the authors.
+Copyright (C) 2020-2021 by the authors.
 
 Authors: Chris Jones (cmjone25 ncsu edu)
+         Chelsey Walden-Schreiner (cawalden ncsu edu)
+
 
 The code contained herein is licensed under the GNU General Public
 License. You may obtain a copy of the GNU General Public License
