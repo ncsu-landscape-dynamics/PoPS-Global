@@ -7,7 +7,7 @@ Copyright (C) 2019-2020 by the authors.
 
 Authors: Chris Jones (cmjone25 ncsu edu)
          Chelsey Walden-Schreiner (cawalden ncsu edu)
-         Kellyn Montgomery 
+         Kellyn Montgomery
          Ariel Saffer
 
 The code contained herein is licensed under the GNU General Public

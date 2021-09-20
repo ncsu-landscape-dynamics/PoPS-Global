@@ -1,12 +1,12 @@
 # Download and format data from Comtrade API
-import sys 
+import sys
 import math
 import os
 import json
 import urllib
 import pandas as pd
 import numpy as np
-import time 
+import time
 from datetime import datetime
 
 
@@ -68,13 +68,13 @@ def download_trade_data(hs_str, freq_str, year_country_dict, auth_code_str):
             delay = 5
             retries = 1
             success = False
-            while success == False and retries <= 10:
+            while not success and retries <= 10:
                 try:
                     url = urllib.request.urlopen(url_str)
-                    success = True 
-                    print('\t\t!! Success...')
-                except Exception as e: 
-                    print('\t', e)
+                    success = True
+                    print("\t\t!! Success...")
+                except Exception as e:
+                    print("\t", e)
                     if delay < 60:
                         print(f"\t\tRetry {retries} of 10 in {delay} seconds")
                     else:
@@ -83,8 +83,6 @@ def download_trade_data(hs_str, freq_str, year_country_dict, auth_code_str):
                     time.sleep(delay)
                     delay *= 2
                     retries += 1
-                    
-
 
             if "url" in locals():
                 raw = json.loads(url.read().decode())
@@ -232,8 +230,8 @@ def query_comtrade(
     auth_code_str: str
         premium API authorization code
     hs_list : list
-        List of HS commodity codes, which can be 2, 4, or 6 
-        digits 
+        List of HS commodity codes, which can be 2, 4, or 6
+        digits
     start_year : int
         First year (YYYY) requested
     end_year : int
@@ -369,7 +367,7 @@ def query_comtrade(
             freq = "A"
             annual_data = download_trade_data(str(hs), freq, use_annual_dict, auth_code)
             freq = "M"
-            print('Checking alternative temporal resolution to augment missing data...')
+            print("Checking alternative temporal resolution to augment missing data...")
             monthly_data = download_trade_data(
                 str(hs), freq, use_monthly_dict, auth_code
             )
@@ -387,22 +385,22 @@ def query_comtrade(
                     str(hs), timesteps, annual_data, crosswalk[["UN"]], crosswalk_dict
                 )
             else:
-                print('No annual data downloaded')
+                print("No annual data downloaded")
 
     if temporal_res == "M":
         current_year = datetime.now().year
         current_month = datetime.now().month
         for hs in hs_list:
             timesteps = []
-            months = [str(f'{i:02}') for i in range(1, 13)]
+            months = [str(f"{i:02}") for i in range(1, 13)]
             for year in years:
                 for month in months:
                     timesteps.append(str(year) + month)
             timesteps = list(map(int, timesteps))
             timesteps_not_complete = list(
                 range(
-                    (int(str(current_year) + str(f'{current_month:02}'))),
-                    (int(str(current_year) + '13')),
+                    (int(str(current_year) + str(f"{current_month:02}"))),
+                    (int(str(current_year) + "13")),
                 )
             )
             timesteps = [ts for ts in timesteps if ts not in timesteps_not_complete]
@@ -414,7 +412,9 @@ def query_comtrade(
 
             if year != current_year:
                 freq = "A"
-                annual_data = download_trade_data(str(hs), freq, use_annual_dict, auth_code)
+                annual_data = download_trade_data(
+                    str(hs), freq, use_annual_dict, auth_code
+                )
                 if not annual_data.empty:
                     # Split annual data into monthly by dividing by 12
                     annual_split = pd.DataFrame()
@@ -423,7 +423,9 @@ def query_comtrade(
                         month_portion["TradeValue"] = month_portion["TradeValue"].apply(
                             lambda x: x / 12
                         )
-                        month_portion["period"] = month_portion["period"].astype(str) + month
+                        month_portion["period"] = (
+                            month_portion["period"].astype(str) + month
+                        )
                         month_portion["period"] = month_portion["period"].astype(int)
                         annual_split = annual_split.append(month_portion)
                 monthly_data = monthly_data.append(annual_split)

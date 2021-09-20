@@ -2,7 +2,7 @@
 PoPS Global
 
 Module containing all calcualtions for generating
-trade forecasts. 
+trade forecasts.
 
 Copyright (C) 2019-2021 by the authors.
 
