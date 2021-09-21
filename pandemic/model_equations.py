@@ -244,35 +244,16 @@ def pandemic_single_time_step(
                     d_ij,
                     chi_it,
                 )
-            if len(time_step) == 4:
-                probability_of_establishment_ijt = (
-                    1
-                    - (
-                        1
-                        - probability_of_establishment(
-                            alpha,
-                            beta,
-                            delta_kappa_ijt,
-                            sigma_kappa,
-                            h_jt,
-                            sigma_h,
-                            phi,
-                            w_phi,
-                        )
-                    )
-                    ** 12
-                )
-            else:
-                probability_of_establishment_ijt = probability_of_establishment(
-                    alpha,
-                    beta,
-                    delta_kappa_ijt,
-                    sigma_kappa,
-                    h_jt,
-                    sigma_h,
-                    phi,
-                    w_phi,
-                )
+            probability_of_establishment_ijt = probability_of_establishment(
+                alpha,
+                beta,
+                delta_kappa_ijt,
+                sigma_kappa,
+                h_jt,
+                sigma_h,
+                phi,
+                w_phi,
+            )
         else:
             zeta_it = 0
             probability_of_entry_ijct = 0.0
