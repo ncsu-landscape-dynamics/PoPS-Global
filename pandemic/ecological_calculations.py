@@ -15,7 +15,7 @@
 # this program; if not, see https://www.gnu.org/licenses/gpl-2.0.html
 
 """Module containing functions to compute climatic similarity between all
-nodes.
+nodes used in the PoPS Global simulation.
 """
 
 import numpy as np
