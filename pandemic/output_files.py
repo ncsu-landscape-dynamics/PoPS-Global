@@ -1,3 +1,22 @@
+# PoPS Global - Network model of global pest introductions and spread over time.
+# Copyright (C) 2019-2021 by the authors.
+
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 2 of the License, or (at your option) any later
+# version.
+
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
+
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, see https://www.gnu.org/licenses/gpl-2.0.html
+
+"""Contains functions for saving outputs from the PoPS Global simulation.
+"""
+
 import os
 import numpy as np
 import pandas as pd
@@ -24,19 +43,24 @@ def create_model_dirs(
         of model output components.
     write_entry_probs : bool
         Indicates whether to save n x n matrices for each time
-        step where n is the number of countries, and values
+        step where n is the number of nodes, and values
         represent the origin-destination probability of
         entry. Default is False.
     write_estab_probs : bool
         Indicates whether to save n x n matrices for each time
-        step where n is the number of countries, and values
+        step where n is the number of nodes, and values
         represent the origin-destination probability of
         establishment. Default is False.
     write_intro_probs : bool
         Indicates whether to save n x n matrices for each time
-        step where n is the number of countries, and values
+        step where n is the number of nodes, and values
         represent the origin-destination probability of
         introduction. Default is False.
+
+    Returns
+    -------
+    none
+
     """
 
     os.makedirs(outpath, exist_ok=True)
@@ -76,7 +100,7 @@ def save_model_output(
         List of 6 n x n arrays created by running pandemic model, ordered as
         1) full forecast dataframe; 2) probability of entry;
         3) probability of establishment; 4) probability of introduction;
-        5) origin - destination pairs; and 6) list of countries where pest is
+        5) origin - destination pairs; and 6) list of nodes where pest is
         predicted to be introduced
     example_trade_matrix : numpy array
         Array of trade data from one time step as example to format
@@ -87,17 +111,17 @@ def save_model_output(
         List of unique time step values (YYYY or YYYYMM)
     write_entry_probs : bool
         Indicates whether to save n x n matrices for each time
-        step where n is the number of countries, and values
+        step where n is the number of nodes, and values
         represent the origin-destination probability of
         entry. Default is False.
     write_estab_probs : bool
         Indicates whether to save n x n matrices for each time
-        step where n is the number of countries, and values
+        step where n is the number of nodes, and values
         represent the origin-destination probability of
         establishment. Default is False.
     write_intro_probs : bool
         Indicates whether to save n x n matrices for each time
-        step where n is the number of countries, and values
+        step where n is the number of nodes, and values
         represent the origin-destination probability of
         introduction. Default is False.
     columns_to_drop : list
@@ -108,7 +132,6 @@ def save_model_output(
     -------
     model_output_df : geodataframe
         Geodataframe of model outputs
-
 
     """
 
@@ -391,7 +414,7 @@ def write_model_metadata(
         List of 6 n x n arrays created by running pandemic model, ordered as
         1) full forecast dataframe; 2) probability of entry;
         3) probability of establishment; 4) probability of introduction;
-        5) origin - destination pairs; and 6) list of countries where pest is
+        5) origin - destination pairs; and 6) list of nodes where pest is
         predicted to be introduced
     alpha : float
         A parameter that allows the equation to be adapated to various discrete
@@ -413,8 +436,6 @@ def write_model_metadata(
         The climate dissimilarity normalizing constant
     sigma_h : float
         The host normalizing constant
-    sigma_epsilon : float
-        The ecological disturbance normalizing constant
     start_year : str
         The first year of the simulation
     end_sim_year : str
@@ -425,7 +446,7 @@ def write_model_metadata(
     time_infect_units : str
         Units associated with the transmission lag value (i.e., years, months)
     time_infect : int
-        Time until a country is infectious, set for static transmission lag
+        Time until a node is infectious, set for static transmission lag
     gamma_shape : float
         Shape parameter for gamma distribution used in stochastic transmission
     gamma_scale: float

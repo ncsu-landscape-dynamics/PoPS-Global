@@ -1,18 +1,21 @@
-"""
-PoPS Pandemic - Simulation
+# PoPS Global - Network model of global pest introductions and spread over time.
+# Copyright (C) 2019-2021 by the authors.
 
-Module containing all calcualtions for ecological similarity
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 2 of the License, or (at your option) any later
+# version.
 
-Copyright (C) 2019-2020 by the authors.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 
-Authors: Chris Jones (cmjone25 ncsu edu)
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, see https://www.gnu.org/licenses/gpl-2.0.html
 
-The code contained herein is licensed under the GNU General Public
-License. You may obtain a copy of the GNU General Public License
-Version 3 or later at the following locations:
-
-http://www.opensource.org/licenses/gpl-license.html
-http://www.gnu.org/copyleft/gpl.html
+"""Module containing functions to compute climatic similarity between all
+nodes.
 """
 
 import numpy as np
@@ -20,10 +23,10 @@ import numpy as np
 
 def climate_similarity(origin_climates, destination_climates):
     """
-    Returns the climate similarity between origin (i) and destion (j) by
+    Returns the climate similarity between origin (i) and destination (j) by
     simply checking whether or not the climate type is present in both the
-    origin (i) and destination (j) and summing the total area in the
-    destination (j) that is also in the origin (i).
+    origin (i) and destination (j) and summing the total area of climate classes
+    in the destination (j) that are also in the origin (i).
 
     Parameters
     ----------
@@ -37,7 +40,8 @@ def climate_similarity(origin_climates, destination_climates):
     Returns
     -------
     similarity : float
-        What percentage of the total area of the origin country
+        Percentage of area in destination that falls within a climate class found
+        in the origin
 
     """
 
@@ -59,16 +63,17 @@ def create_climate_similarities_matrix(array_template, countries):
     array_template : array (float)
         n x n template matrix where n is number of locations
     countries : data frame
-        data frame of countries, species presence, phytosanitry capacity,
-        koppen climate classifications % of total area for each class
+        data frame of nodes with species presence, phytosanitry capacity,
+        % of total area for each koppen climate class
 
     Returns
     -------
     climate_similarities : numpy.array (float)
-        n x n array of percentage of climate similarities between all
+        n x n array of climate similarities between all
         origins (i) and destinations (j)
 
     """
+
     climate_similarities = np.zeros_like(array_template, dtype=float)
 
     for j in range(len(countries)):

@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License along with
 # this program; if not, see https://www.gnu.org/licenses/gpl-2.0.html
 
-"""Module containing all calculations used in the PoPS Global model."""
+"""Module containing functions to run the PoPS Global simulation."""
 
 import numpy as np
 import pandas as pd
