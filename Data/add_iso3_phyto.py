@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License along with
 # this program; if not, see https://www.gnu.org/licenses/gpl-2.0.html
 
-"""Reads a file of phytosanitary capacity scores and matches the records to 
+"""Reads a file of phytosanitary capacity scores and matches the records to
 ISO3 codes.
 """
 
