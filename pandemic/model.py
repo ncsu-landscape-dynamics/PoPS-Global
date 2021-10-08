@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 
+sys.path.append("Q:/My Drive/GitHub/PoPS-Global")
+
 from pandemic.helpers import create_trades_list
 from pandemic.model_equations import pandemic_multiple_time_steps
 from pandemic.output_files import (
@@ -32,7 +34,7 @@ commodity_forecast_path = config["commodity_forecast_path"]
 native_countries_list = config["native_countries_list"]
 season_dict = config["season_dict"]
 alpha = config["alpha"]
-beta = 0.5
+beta = config["beta"]
 mu = config["mu"]
 lamda_c_list = config["lamda_c_list"]
 phi = config["phi"]
@@ -56,7 +58,7 @@ scenario_list = config["scenario_list"]
 
 countries = geopandas.read_file(countries_path, driver="GPKG")
 distances = np.load(input_dir + "/distance_matrix.npy")
-climate_similarities = np.load(input_dir + "/climate_similarities_hiiMask16.npy")
+climate_similarities = np.load(input_dir + "/climate_similarities.npy")
 
 # Read & format trade data
 trades_list, file_list_filtered, code_list, commodities_available = create_trades_list(
