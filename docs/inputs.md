@@ -36,7 +36,7 @@ Any non-raster data (lists, polygons) must have one data point per network node 
   * Any trade data source can be used as long as a value is available for every origin-destination node pair at each timestep. Different data formatting steps will be required if a source other than UN Comtrade is used.
 
 ## Configuration
-Users also must configure PoPS Global by specifying the following model run setting:
+Users also must configure PoPS Global by specifying the following model run settings:
 * Simulation timestep - monthly (M) or annual (A)
   * Use monthly if pest has seasonality in potential for being transporting via trade
   * Results are aggregated to annual time step for analysis and visualization
