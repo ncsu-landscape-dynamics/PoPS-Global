@@ -78,7 +78,7 @@ pipenv install "some package"
 
 ## Authors
 
-* Chelsey Walden-Schreider, NCSU Center for Geospatial Analytics
+* Chelsey Walden-Schreiner, NCSU Center for Geospatial Analytics
 * Chris Jones, NCSU Center for Geospatial Analytics
 * Kellyn P. Montgomery, NCSU Center for Geospatial Analytics
 * Ariel Saffer, NCSU Center for Geospatial Analytics
