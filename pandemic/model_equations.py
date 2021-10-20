@@ -248,14 +248,7 @@ def pandemic_single_time_step(
                     chi_it,
                 )
             probability_of_establishment_ijt = probability_of_establishment(
-                alpha,
-                beta,
-                delta_kappa_ijt,
-                sigma_kappa,
-                h_jt,
-                sigma_h,
-                phi,
-                w_phi,
+                alpha, beta, delta_kappa_ijt, sigma_kappa, h_jt, sigma_h, phi, w_phi,
             )
         else:
             zeta_it = 0
