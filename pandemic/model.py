@@ -12,6 +12,7 @@ from pandemic.helpers import create_trades_list
 from pandemic.model_equations import pandemic_multiple_time_steps
 from pandemic.output_files import (
     aggregate_monthly_output_to_annual,
+    write_annual_output,
     create_model_dirs,
     save_model_output,
     write_model_metadata,
@@ -167,7 +168,14 @@ for i in range(len(trades_list)):
         }
 
         outpath = out_dir + f"/{sim_name}/{run_prefix}/run_{run_num}/"
-        create_model_dirs(outpath=outpath, output_dict=arr_dict)
+        create_model_dirs(
+            outpath=outpath,
+            output_dict=arr_dict,
+            write_entry_probs=save_entry,
+            write_estab_probs=save_estab,
+            write_intro_probs=save_intro,
+            write_country_intros=save_country_intros,
+        )
         print("saving model outputs: ", outpath)
         full_out_df = save_model_output(
             model_output_object=e,
@@ -187,7 +195,10 @@ for i in range(len(trades_list)):
             aggregate_monthly_output_to_annual(
                 formatted_geojson=full_out_df, outpath=outpath
             )
-
+        # If time steps are annual, export the predictions
+        if len(date_list[i]) == 4:
+            print("exporting annual predictions...")
+            write_annual_output(formatted_geojson=full_out_df, outpath=outpath)
         # Save model metadata to text file
         print("writing model metadata...")
         write_model_metadata(
