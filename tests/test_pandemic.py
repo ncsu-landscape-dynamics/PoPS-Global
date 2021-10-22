@@ -50,7 +50,6 @@ def test_pandemic_runs():
         season_dict=season_dict,
         time_infect=time_infect,
         transmission_lag_type="static",
-        time_infect_units="year",
         gamma_shape=None,
         gamma_scale=None,
         scenario_list=None,
