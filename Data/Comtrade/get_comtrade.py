@@ -166,7 +166,11 @@ def save_hs_timestep_matrices(
 
             # Merge to commodity/year df
             HS_matrix = pd.merge(
-                HS_matrix, reporter_data, how="left", left_on="UN", right_on="ptCode",
+                HS_matrix, 
+                reporter_data, 
+                how="left", 
+                left_on="UN", 
+                right_on="ptCode",
             )
             HS_matrix.drop("ptCode", axis=1, inplace=True)
             HS_matrix.rename(columns={"TradeValue": reporter}, inplace=True)

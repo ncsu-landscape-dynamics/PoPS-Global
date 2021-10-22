@@ -5,9 +5,6 @@ import geopandas
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-
-sys.path.append("Q:/My Drive/GitHub/PoPS-Global")
-
 from pandemic.helpers import create_trades_list
 from pandemic.model_equations import pandemic_multiple_time_steps
 from pandemic.output_files import (
@@ -44,7 +41,6 @@ start_year = config["start_year"]
 stop_year = config["stop_year"]
 random_seed = config["random_seed"]
 cols_to_drop = config["columns_to_drop"]
-time_infect_units = config["transmission_lag_unit"]
 transmission_lag_type = config["transmission_lag_type"]
 time_infect = config["time_to_infectivity"]
 gamma_shape = config["transmission_lag_shape"]
@@ -147,7 +143,6 @@ for i in range(len(trades_list)):
             date_list=date_list,
             season_dict=season_dict,
             transmission_lag_type=transmission_lag_type,
-            time_infect_units=time_infect_units,
             time_infect=time_infect,
             gamma_shape=gamma_shape,
             gamma_scale=gamma_scale,
@@ -214,7 +209,6 @@ for i in range(len(trades_list)):
             start_year=start_year,
             end_sim_year=end_sim_year,
             transmission_lag_type=transmission_lag_type,
-            time_infect_units=time_infect_units,
             gamma_shape=gamma_shape,
             gamma_scale=gamma_scale,
             random_seed=random_seed,
