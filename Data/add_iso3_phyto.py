@@ -5,7 +5,8 @@ from fuzzywuzzy import process
 
 drive_letter = "Q"
 os.chdir(
-    f"{drive_letter}:/Shared drives/APHIS  Projects/Pandemic/Data/phytosanitary_capacity/"
+    rf"{drive_letter}:/Shared drives/APHIS  Projects/"
+    rf"Pandemic/Data/phytosanitary_capacity/"
 )
 
 capacities = pandas.read_csv(
