@@ -422,7 +422,6 @@ def write_model_metadata(
     end_sim_year,
     transmission_lag_type,
     time_infect,
-    time_infect_units,
     gamma_shape,
     gamma_scale,
     random_seed,
@@ -475,8 +474,6 @@ def write_model_metadata(
     transmission_lag_type : str
         Type of transmission lag used in the simulation (i.e., None,
         static, or stochastic)
-    time_infect_units : str
-        Units associated with the transmission lag value (i.e., years, months)
     time_infect : int
         Time until a country is infectious, set for static transmission lag
     gamma_shape : float
@@ -523,7 +520,6 @@ def write_model_metadata(
             "end_sim_year": str(end_sim_year),
             "transmission_lag_type": str(transmission_lag_type),
             "infectivity_lag": time_infect,
-            "transmission_lag_units": time_infect_units,
             "gamma_shape": gamma_shape,
             "gamma_scale": gamma_scale,
             "random_seed": str(random_seed),
