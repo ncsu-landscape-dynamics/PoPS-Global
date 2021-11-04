@@ -267,7 +267,10 @@ def pandemic_single_time_step(
         introduction_probabilities[j, i] = probability_of_introduction_ijtc
 
         # decide if an introduction happens
-        introduced = np.random.binomial(1, probability_of_introduction_ijtc)
+        if len(time_step) == 4:
+            introduced = np.random.binomial(12, probability_of_introduction_ijtc)
+        else:
+            introduced = np.random.binomial(1, probability_of_introduction_ijtc)
         if bool(introduced):
             print("\t\t", origin["NAME"], "-->", destination["NAME"])
             introduction_country[j, i] = bool(introduced)
