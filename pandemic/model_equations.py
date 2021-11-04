@@ -163,7 +163,6 @@ def pandemic_single_time_step(
         # in data frame with all locations for selecting attributes
         # and populating output matrices
         loc_pair = locations_list[k]
-        print("\t", loc_pair)
         j = locations.index[locations["ISO3"] == loc_pair[1]][0]
         destination = locations.iloc[j, :]
 
@@ -188,7 +187,6 @@ def pandemic_single_time_step(
             rho_i = 0
 
         T_ijct = trade[j, i]
-        print("\t\tTrade:", T_ijct)
 
         # If trade scenarios exist, check if origin-destination
         # pair has a scenario for this time step.
@@ -238,19 +236,8 @@ def pandemic_single_time_step(
             zeta_it = 1
             delta_kappa_ijt = 1 - climate_similarities[j, i]
 
-            print(
-                f"\t\t{origin['ISO3']} to {destination['ISO3']}:\n\t",
-                rho_i,
-                rho_j,
-                zeta_it,
-                lamda_c,
-                T_ijct,
-                chi_it,
-            )
-
             if T_ijct == 0:
                 probability_of_entry_ijct = 0
-                print("\t\tno lamda weight; trade=0")
             else:
                 if lamda_weights is not None:
                     lamda_c_weight = lamda_weights[
@@ -259,7 +246,6 @@ def pandemic_single_time_step(
                 else:
                     lamda_c_weight = 0
 
-                print(f"\t{lamda_c_weight}")
                 probability_of_entry_ijct = probability_of_entry(
                     rho_i,
                     rho_j,
@@ -273,7 +259,6 @@ def pandemic_single_time_step(
                     chi_it,
                     lamda_c_weight,
                 )
-            print(f"\t\tprob entry: {probability_of_entry_ijct}")
 
             probability_of_establishment_ijt = probability_of_establishment(
                 alpha,
