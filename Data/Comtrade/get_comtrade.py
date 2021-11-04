@@ -124,7 +124,7 @@ def save_hs_timestep_matrices(
 ):
     """Loops over timesteps and creates country x country matrix of import
     trade values. If no data were downloaded for a country pair, will add zeros and
-    print a message. Changes US codes to ISO3 codes in column, row names.
+    print a message. Changes UN codes to ISO3 codes in column, row names.
     Saves a matrix for each timestep as CSVs.
     Parameters
     ----------
