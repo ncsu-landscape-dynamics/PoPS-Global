@@ -23,7 +23,17 @@ import math
 
 
 def probability_of_entry(
-    rho_i, rho_j, zeta_it, lamda_c, T_ijct, min_Tc, max_Tc, mu, d_ij, chi_it
+    rho_i,
+    rho_j,
+    zeta_it,
+    lamda_c,
+    T_ijct,
+    min_Tc,
+    max_Tc,
+    mu,
+    d_ij,
+    chi_it,
+    lamda_c_weight=None,
 ):
     """
     Returns the probability of entry given trade volume, distance, and
@@ -73,7 +83,15 @@ def probability_of_entry(
         (1 - rho_i)
         * (1 - rho_j)
         * zeta_it
-        * (1 - math.exp((-1) * lamda_c * (T_ijct - min_Tc) / (max_Tc - min_Tc)))
+        # * (1 - math.exp((-1) * lamda_c * (T_ijct - min_Tc) / (max_Tc - min_Tc)))
+        * (
+            1
+            - math.exp(
+                (-1)
+                * ((1 + lamda_c_weight) * lamda_c)
+                * ((T_ijct - min_Tc) / (max_Tc - min_Tc))
+            )
+        )
         * math.exp((-1) * mu * d_ij)
         * chi_it
     )
