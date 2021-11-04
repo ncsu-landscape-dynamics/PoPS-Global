@@ -1,11 +1,14 @@
 """
-PoPS Pandemic - Simulation
+PoPS Global
 
-Module containing all calcualtions for the Pandemic model
+Module containing all calcualtions for the PoPS Global model
 
 Copyright (C) 2019-2020 by the authors.
 
 Authors: Chris Jones (cmjone25 ncsu edu)
+         Chelsey Walden-Schreiner (cawalden ncsu edu)
+         Kellyn Montgomery
+         Ariel Saffer
 
 The code contained herein is licensed under the GNU General Public
 License. You may obtain a copy of the GNU General Public License
@@ -46,7 +49,6 @@ def pandemic_single_time_step(
     time_step,
     season_dict,
     transmission_lag_type,
-    time_infect_units,
     time_infect,
     gamma_shape,
     gamma_scale,
@@ -119,8 +121,6 @@ def pandemic_single_time_step(
     transmission_lag_type : str
         Type of transmission lag used in the simulation (i.e., None,
         static, or stochastic)
-    time_infect_units : str
-        Units associated with the transmission lag value (i.e., years, months)
     time_infect : int
         Time until a country is infectious, set for static transmission lag
     gamma_shape : float
@@ -380,7 +380,6 @@ def pandemic_multiple_time_steps(
     date_list,
     season_dict,
     transmission_lag_type,
-    time_infect_units,
     time_infect,
     gamma_shape,
     gamma_scale,
@@ -441,8 +440,6 @@ def pandemic_multiple_time_steps(
     transmission_lag_type : str
         Type of transmission lag used in the simulation (i.e., None,
         static, or stochastic)
-    time_infect_units : str
-        Units associated with the transmission lag value (i.e., years, months)
     time_infect : int
         Time until a country is infectious, set for static transmission lag
     gamma_shape : float
@@ -523,7 +520,6 @@ def pandemic_multiple_time_steps(
             time_step=ts,
             season_dict=season_dict,
             transmission_lag_type=transmission_lag_type,
-            time_infect_units=time_infect_units,
             time_infect=time_infect,
             gamma_shape=gamma_shape,
             gamma_scale=gamma_scale,

@@ -3,7 +3,11 @@ import pycountry
 import pandas
 from fuzzywuzzy import process
 
-os.chdir("H:/Shared drives/APHIS  Projects/Pandemic/Data/phytosanitary_capacity/")
+drive_letter = "Q"
+os.chdir(
+    rf"{drive_letter}:/Shared drives/APHIS  Projects/"
+    rf"Pandemic/Data/phytosanitary_capacity/"
+)
 
 capacities = pandas.read_csv(
     "Report_summary_english_spanish_french_russian_arabic_forPatricia.csv",
@@ -58,10 +62,21 @@ for index in capacities.index:
 
 # Add UN codes if needed
 un_to_iso_path = (
-    "H:/Shared drives/APHIS  Projects/Pandemic/Data/Country_list_shapefile/temp.csv"
+    rf"{drive_letter}:/Shared drives/APHIS  Projects/"
+    rf"Pandemic/Data/Country_list_shapefile/temp.csv"
 )
 un_to_iso = pandas.read_csv(un_to_iso_path)
 capacities = capacities.merge(un_to_iso, "left", left_on="ISO3", right_on="alpha_3")
+capacities = capacities.append(
+    {
+        "Country_global": "United States",
+        "reactive": 3,
+        "proactive": 3,
+        "ISO3": "USA",
+        "UN": 840,
+    },
+    ignore_index=True,
+)
 # capacities.UN_id = capacities.UN_id.astype(int)
 capacities.sort_values(by="UN")
 capacities.to_csv("phytosanitary_capacity_iso3.csv")

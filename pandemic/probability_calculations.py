@@ -1,12 +1,15 @@
 """
-PoPS Pandemic - Simulation
+PoPS Global
 
 Module containing all probability calculations (entry, establishment, and
-introduction) used for the pandemic simulation.
+introduction) used for the PoPS Global model.
 
-Copyright (C) 2019-2020 by the authors.
+Copyright (C) 2019-2021 by the authors.
 
 Authors: Chris Jones (cmjone25 ncsu edu)
+         Chelsey Walden-Schreiner (cawalden ncsu edu)
+         Kellyn Montgomery
+         Ariel Saffer
 
 The code contained herein is licensed under the GNU General Public
 License. You may obtain a copy of the GNU General Public License
@@ -70,8 +73,7 @@ def probability_of_entry(
         (1 - rho_i)
         * (1 - rho_j)
         * zeta_it
-        * lamda_c
-        * ((T_ijct - min_Tc) / (max_Tc - min_Tc))
+        * (1 - math.exp((-1) * lamda_c * (T_ijct - min_Tc) / (max_Tc - min_Tc)))
         * math.exp((-1) * mu * d_ij)
         * chi_it
     )
