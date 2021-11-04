@@ -5,6 +5,7 @@ import geopandas
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
+
 from pandemic.helpers import create_trades_list
 from pandemic.model_equations import pandemic_multiple_time_steps
 from pandemic.output_files import (
@@ -52,6 +53,7 @@ save_estab = config["save_estab"]
 save_intro = config["save_intro"]
 save_country_intros = config["save_country_intros"]
 scenario_list = config["scenario_list"]
+lamda_weights_path = config["lamda_weights_path"]
 
 countries = geopandas.read_file(countries_path, driver="GPKG")
 distances = np.load(input_dir + "/distance_matrix.npy")
@@ -124,6 +126,10 @@ for i in range(len(trades_list)):
 
     np.random.seed(random_seed)
     lamda_c = lamda_c_list[i]
+    if lamda_weights_path is not None:
+        lamda_weights = pd.read_csv(lamda_weights_path)
+    else:
+        lamda_weights = None
 
     if lamda_c > 0:
         e = pandemic_multiple_time_steps(
@@ -147,6 +153,7 @@ for i in range(len(trades_list)):
             gamma_shape=gamma_shape,
             gamma_scale=gamma_scale,
             scenario_list=scenario_list,
+            lamda_weights=lamda_weights,
         )
 
         sim_name = sys.argv[2]
@@ -212,7 +219,6 @@ for i in range(len(trades_list)):
             gamma_shape=gamma_shape,
             gamma_scale=gamma_scale,
             random_seed=random_seed,
-            time_infect=time_infect,
             native_countries_list=native_countries_list,
             countries_path=countries_path,
             commodities_available=commodities_available[i],
