@@ -29,6 +29,13 @@ def test_pandemic_runs():
     )
 
     locations_list = [("USA", "CHN"), ("USA", "BRA"), ("BRA", "USA"), ("BRA", "CHN")]
+    lamda_weights = pd.DataFrame(
+        {
+            "ISO3 Code": ["USA", "CHN", "BRA"],
+            "Percent Area": [0.2, 0.8, 0],
+            "lamda_weight_scaled": [0.25, 1, 0],
+        }
+    )
 
     e = pandemic_single_time_step(
         trade=trade,
@@ -53,6 +60,7 @@ def test_pandemic_runs():
         gamma_shape=None,
         gamma_scale=None,
         scenario_list=None,
+        lamda_weights=lamda_weights,
     )
     assert (e[0] >= 0).all() and (e[0] <= 1).all()
     assert (e[1] >= 0).all() and (e[1] <= 1).all()
