@@ -1,0 +1,15 @@
+name: pops-global
+dependencies:
+  - numpy
+  - pandas
+  - geopandas
+  - python-dotenv
+  - requests
+  - rasterio
+  - rasterstats
+  - scipy
+  - matplotlib
+  - pathlib
+  - seaborn
+  - fuzzywuzzy
+  - pycountry
