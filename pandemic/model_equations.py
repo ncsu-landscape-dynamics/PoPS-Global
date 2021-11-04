@@ -53,6 +53,7 @@ def pandemic_single_time_step(
     gamma_shape,
     gamma_scale,
     scenario_list=None,
+    lamda_weights=None,
 ):
     """
     Returns the probability of establishment, probability of entry, and
@@ -91,7 +92,7 @@ def pandemic_single_time_step(
     mu : float
         The mortality rate of the pest or pathogen during transport
     lamda_c : float
-        The commodity importance [0,1] of commodity (c) in transporting the
+        The commodity importance of commodity (c) in transporting the
         pest or pathogen
     phi : int
         The degree of polyphagy of the pest of interest described as the number
@@ -131,6 +132,11 @@ def pandemic_single_time_step(
         Nested list of scenarios, with elements ordered as: year (YYYY),
         origin ISO3 code, destination ISO3 code, adjustment type (e.g.,
         "increase", "decrease"), and adjustment percent.
+    lamda_weights : data frame (optional)
+        Dataframe of weights applied to lamda when the commodity of interest
+        is aggregated with others in the HS code (e.g., tomato seed grouped
+        with vegetable seed in Comtrade data). Value can be the proportion
+        of the import thought to be the commodity of interest.
 
     Returns
     -------
@@ -157,6 +163,7 @@ def pandemic_single_time_step(
         # in data frame with all locations for selecting attributes
         # and populating output matrices
         loc_pair = locations_list[k]
+        print("\t", loc_pair)
         j = locations.index[locations["ISO3"] == loc_pair[1]][0]
         destination = locations.iloc[j, :]
 
@@ -172,6 +179,7 @@ def pandemic_single_time_step(
         # and populating output matrices
         i = locations.index[locations["ISO3"] == loc_pair[0]][0]
         origin = locations.iloc[i, :]
+
         # check that Phytosanitary capacity data is available if not
         # set value to 0 to remove this aspect of the equation
         if "Phytosanitary Capacity" in origin:
@@ -180,6 +188,7 @@ def pandemic_single_time_step(
             rho_i = 0
 
         T_ijct = trade[j, i]
+        print("\t\tTrade:", T_ijct)
 
         # If trade scenarios exist, check if origin-destination
         # pair has a scenario for this time step.
@@ -229,9 +238,28 @@ def pandemic_single_time_step(
             zeta_it = 1
             delta_kappa_ijt = 1 - climate_similarities[j, i]
 
+            print(
+                f"\t\t{origin['ISO3']} to {destination['ISO3']}:\n\t",
+                rho_i,
+                rho_j,
+                zeta_it,
+                lamda_c,
+                T_ijct,
+                chi_it,
+            )
+
             if T_ijct == 0:
                 probability_of_entry_ijct = 0
+                print("\t\tno lamda weight; trade=0")
             else:
+                if lamda_weights is not None:
+                    lamda_c_weight = lamda_weights[
+                        lamda_weights["ISO3"] == destination["ISO3"]
+                    ]["lamda_weight_scaled"].values[0]
+                else:
+                    lamda_c_weight = 0
+
+                print(f"\t{lamda_c_weight}")
                 probability_of_entry_ijct = probability_of_entry(
                     rho_i,
                     rho_j,
@@ -243,7 +271,10 @@ def pandemic_single_time_step(
                     mu,
                     d_ij,
                     chi_it,
+                    lamda_c_weight,
                 )
+            print(f"\t\tprob entry: {probability_of_entry_ijct}")
+
             probability_of_establishment_ijt = probability_of_establishment(
                 alpha,
                 beta,
@@ -384,6 +415,7 @@ def pandemic_multiple_time_steps(
     gamma_shape,
     gamma_scale,
     scenario_list=None,
+    lamda_weights=None,
 ):
 
     """
@@ -524,6 +556,7 @@ def pandemic_multiple_time_steps(
             gamma_shape=gamma_shape,
             gamma_scale=gamma_scale,
             scenario_list=scenario_list,
+            lamda_weights=lamda_weights,
         )
 
         establishment_probabilities[t] = ts_out[1]
