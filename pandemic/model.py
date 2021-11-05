@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 
-from pandemic.helpers import create_trades_list
-from pandemic.model_equations import pandemic_multiple_time_steps
-from pandemic.output_files import (
+from helpers import create_trades_list
+from model_equations import pandemic_multiple_time_steps
+from output_files import (
     aggregate_monthly_output_to_annual,
     write_annual_output,
     create_model_dirs,
@@ -216,6 +216,7 @@ for i in range(len(trades_list)):
             start_year=start_year,
             end_sim_year=end_sim_year,
             transmission_lag_type=transmission_lag_type,
+            time_infect=time_infect,
             gamma_shape=gamma_shape,
             gamma_scale=gamma_scale,
             random_seed=random_seed,
