@@ -1,0 +1,20 @@
+[tool.black]
+line-length = 88
+target-version = ['py37', 'py38', 'py39']
+include = '\.pyi?$'
+exclude = '''
+(
+    # exclude directories in the root of the project
+    /(
+          \.eggs
+        | \.git
+        | \.hg
+        | \.mypy_cache
+        | \.tox
+        | \.venv
+        | _build
+        | buck-out
+        | build
+    )/
+)
+'''
