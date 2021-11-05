@@ -8,6 +8,7 @@ black = "*"
 flake8 = "*"
 pytest = "*"
 pytest-cov = "*"
+ipykernel = "*"
 
 [packages]
 country-list = "*"
@@ -38,12 +39,7 @@ python_version = "3.7"
 [pipenv]
 allow_prereleases = true
 
-[packages.pandemic]
-editable = true
-path = "."
-
-[packages.rtree]
-path = "wheels/Rtree-0.9.4-cp37-cp37m-win_amd64.whl"
-
-[packages.fiona]
-path = "wheels/Fiona-1.8.13-cp37-cp37m-win_amd64.whl"
+[packages]
+pandemic = {editable = true, path = "."}
+rtree = {path = "wheels/Rtree-0.9.4-cp37-cp37m-win_amd64.whl"}
+fiona = {path = "wheels/Fiona-1.8.13-cp37-cp37m-win_amd64.whl"}

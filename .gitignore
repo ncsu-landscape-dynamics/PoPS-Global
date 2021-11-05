@@ -43,3 +43,5 @@ notebooks/summary_stats.ipynb
 pandemic/model_summary_statistics.py
 notebooks/dev_notebooks/
 runs/
+model_runs_param_list.py
+.gitignore
