@@ -47,7 +47,6 @@ def climate_similarity(origin_climates, destination_climates):
     for clim in range(len(origin_climates)):
         if origin_climates[clim] > 0 and destination_climates[clim] > 0:
             similarity += destination_climates[clim]
-
     return similarity
 
 
@@ -74,37 +73,37 @@ def create_climate_similarities_matrix(array_template, countries):
     climate_similarities = np.zeros_like(array_template, dtype=float)
 
     cat_list = [
-                    "Af",
-                    "Am",
-                    "Aw",
-                    "BWh",
-                    "BWk",
-                    "BSh",
-                    "BSk",
-                    "Csa",
-                    "Csb",
-                    "Csc",
-                    "Cwa",
-                    "Cwb",
-                    "Cwc",
-                    "Cfa",
-                    "Cfb",
-                    "Cfc",
-                    "Dsa",
-                    "Dsb",
-                    "Dsc",
-                    "Dsd",
-                    "Dwa",
-                    "Dwb",
-                    "Dwc",
-                    "Dwd",
-                    "Dfa",
-                    "Dfb",
-                    "Dfc",
-                    "Dfd",
-                    "ET",
-                    "EF",
-                ]
+        "Af",
+        "Am",
+        "Aw",
+        "BWh",
+        "BWk",
+        "BSh",
+        "BSk",
+        "Csa",
+        "Csb",
+        "Csc",
+        "Cwa",
+        "Cwb",
+        "Cwc",
+        "Cfa",
+        "Cfb",
+        "Cfc",
+        "Dsa",
+        "Dsb",
+        "Dsc",
+        "Dsd",
+        "Dwa",
+        "Dwb",
+        "Dwc",
+        "Dwd",
+        "Dfa",
+        "Dfb",
+        "Dfc",
+        "Dfd",
+        "ET",
+        "EF",
+    ]
 
     for j in range(len(countries)):
         destination = countries.iloc[j, :]
@@ -118,5 +117,4 @@ def create_climate_similarities_matrix(array_template, countries):
             delta_kappa_ij = climate_similarity(origin_climates, destination_climates)
 
             climate_similarities[j, i] = delta_kappa_ij
-
     return climate_similarities
