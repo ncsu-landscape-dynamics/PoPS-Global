@@ -73,80 +73,47 @@ def create_climate_similarities_matrix(array_template, countries):
     """
     climate_similarities = np.zeros_like(array_template, dtype=float)
 
+    cat_list = [
+                    "Af",
+                    "Am",
+                    "Aw",
+                    "BWh",
+                    "BWk",
+                    "BSh",
+                    "BSk",
+                    "Csa",
+                    "Csb",
+                    "Csc",
+                    "Cwa",
+                    "Cwb",
+                    "Cwc",
+                    "Cfa",
+                    "Cfb",
+                    "Cfc",
+                    "Dsa",
+                    "Dsb",
+                    "Dsc",
+                    "Dsd",
+                    "Dwa",
+                    "Dwb",
+                    "Dwc",
+                    "Dwd",
+                    "Dfa",
+                    "Dfb",
+                    "Dfc",
+                    "Dfd",
+                    "ET",
+                    "EF",
+                ]
+
     for j in range(len(countries)):
         destination = countries.iloc[j, :]
         for i in range(len(countries)):
             origin = countries.iloc[i, :]
 
-            origin_climates = origin.loc[
-                [
-                    "Af",
-                    "Am",
-                    "Aw",
-                    "BWh",
-                    "BWk",
-                    "BSh",
-                    "BSk",
-                    "Csa",
-                    "Csb",
-                    "Csc",
-                    "Cwa",
-                    "Cwb",
-                    "Cwc",
-                    "Cfa",
-                    "Cfb",
-                    "Cfc",
-                    "Dsa",
-                    "Dsb",
-                    "Dsc",
-                    "Dsd",
-                    "Dwa",
-                    "Dwb",
-                    "Dwc",
-                    "Dwd",
-                    "Dfa",
-                    "Dfb",
-                    "Dfc",
-                    "Dfd",
-                    "ET",
-                    "EF",
-                ]
-            ]
+            origin_climates = origin[origin.index.intersection(cat_list)]
 
-            destination_climates = destination.loc[
-                [
-                    "Af",
-                    "Am",
-                    "Aw",
-                    "BWh",
-                    "BWk",
-                    "BSh",
-                    "BSk",
-                    "Csa",
-                    "Csb",
-                    "Csc",
-                    "Cwa",
-                    "Cwb",
-                    "Cwc",
-                    "Cfa",
-                    "Cfb",
-                    "Cfc",
-                    "Dsa",
-                    "Dsb",
-                    "Dsc",
-                    "Dsd",
-                    "Dwa",
-                    "Dwb",
-                    "Dwc",
-                    "Dwd",
-                    "Dfa",
-                    "Dfb",
-                    "Dfc",
-                    "Dfd",
-                    "ET",
-                    "EF",
-                ]
-            ]
+            destination_climates = destination[destination.index.intersection(cat_list)]
 
             delta_kappa_ij = climate_similarity(origin_climates, destination_climates)
 
