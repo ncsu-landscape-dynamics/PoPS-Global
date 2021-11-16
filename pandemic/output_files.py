@@ -378,6 +378,39 @@ def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
     )
 
 
+def write_annual_output(formatted_geojson, outpath):
+    """
+    When the model is run with an annual timestep, export the annual
+    predictions of presence and probability of introduction
+    Parameters
+    ----------
+    formatted_geojson : geodataframe
+        Geodataframe containing original pandemic output as well as
+        additional columns with year: value dictionaries.
+    outpath : str
+        Directory path to save output (geojson and csv)
+    Returns
+    -------
+    none
+    """
+    prob_intro_cols = [
+        c
+        for c in formatted_geojson.columns
+        if c.startswith("Probability of introduction")
+    ]
+    annual_ts_list = sorted(set([y.split(" ")[-1][:4] for y in prob_intro_cols]))
+    for year in annual_ts_list:
+        formatted_geojson[f"Agg Prob Intro {year}"] = formatted_geojson[
+            f"Probability of introduction {year}"
+        ]
+
+    out_csv = pd.DataFrame(formatted_geojson)
+    out_csv.drop(["geometry"], axis=1, inplace=True)
+    out_csv.to_csv(
+        outpath + "/pandemic_output_aggregated.csv", float_format="%.2f", na_rep="NAN!"
+    )
+
+
 def write_model_metadata(
     main_model_output,
     alpha,

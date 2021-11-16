@@ -27,6 +27,7 @@ def create_config_args(
     commodity_path,
     native_countries_list,
     alpha,
+    beta,
     mu,
     lamda_c_list,
     phi,
@@ -147,6 +148,7 @@ def create_config_args(
     args["season_dict"] = season_dict
     # model parameter values
     args["alpha"] = alpha
+    args["beta"] = beta
     args["mu"] = mu
     args["lamda_c_list"] = lamda_c_list
     args["phi"] = phi

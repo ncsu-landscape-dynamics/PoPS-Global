@@ -47,7 +47,6 @@ def pandemic_single_time_step(
     time_step,
     season_dict,
     transmission_lag_type,
-    time_infect_units,
     time_infect,
     gamma_shape,
     gamma_scale,
@@ -116,8 +115,6 @@ def pandemic_single_time_step(
     transmission_lag_type : str
         Type of transmission lag used in the simulation (i.e., None,
         static, or stochastic)
-    time_infect_units : str
-        Units associated with the transmission lag value (i.e., years, months)
     time_infect : int
         Time until a node is infectious, set for static transmission lag
     gamma_shape : float
@@ -264,7 +261,10 @@ def pandemic_single_time_step(
         introduction_probabilities[j, i] = probability_of_introduction_ijtc
 
         # decide if an introduction happens
-        introduced = np.random.binomial(1, probability_of_introduction_ijtc)
+        if len(time_step) == 4:
+            introduced = np.random.binomial(12, probability_of_introduction_ijtc)
+        else:
+            introduced = np.random.binomial(1, probability_of_introduction_ijtc)
         if bool(introduced):
             print("\t\t", origin["NAME"], "-->", destination["NAME"])
             introduction_country[j, i] = bool(introduced)
@@ -377,7 +377,6 @@ def pandemic_multiple_time_steps(
     date_list,
     season_dict,
     transmission_lag_type,
-    time_infect_units,
     time_infect,
     gamma_shape,
     gamma_scale,
@@ -437,8 +436,6 @@ def pandemic_multiple_time_steps(
     transmission_lag_type : str
         Type of transmission lag used in the simulation (i.e., None,
         static, or stochastic)
-    time_infect_units : str
-        Units associated with the transmission lag value (i.e., years, months)
     time_infect : int
         Time until a node is infectious, set for static transmission lag
     gamma_shape : float
@@ -520,7 +517,6 @@ def pandemic_multiple_time_steps(
             time_step=ts,
             season_dict=season_dict,
             transmission_lag_type=transmission_lag_type,
-            time_infect_units=time_infect_units,
             time_infect=time_infect,
             gamma_shape=gamma_shape,
             gamma_scale=gamma_scale,
