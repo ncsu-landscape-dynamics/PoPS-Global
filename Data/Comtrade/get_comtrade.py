@@ -295,10 +295,6 @@ def query_comtrade(
 
     """
 
-    # list HS commodity codes to query, will be downloaded individually
-    # and aggregated (if needed) in later script
-    hs_list = np.arange(start_code, end_code + 1, 1)
-
     # Set time step for trade data
     years = np.arange(start_year, end_year + 1, 1)
 
@@ -316,7 +312,7 @@ def query_comtrade(
     crosswalk_dict = pd.Series(crosswalk.ISO3.values, index=crosswalk.UN).to_dict()
 
     # Get data availability from Comtrade and compare to desired data
-    data_availability_url = urlopen(
+    data_availability_url = urllib.request.urlopen(
         "http://comtrade.un.org/api/refs/da/view?type=C&freq=all&ps=all&px=HS"
     )
     data_availability_raw = json.loads(data_availability_url.read().decode())
@@ -360,7 +356,7 @@ def query_comtrade(
                 year_summary["partial_monthly_avail"] = 1
             data_summary = data_summary.append(year_summary)
 
-     # Create df specifying if annual or monthly should be download
+    # Create df specifying if annual or monthly should be download
     # based on desired temp res for each country and year
     if temporal_res == "A":
         use_annual = data_summary[data_summary["annual_avail"] == 1]
@@ -403,7 +399,7 @@ def query_comtrade(
 
     use_annual_dict = use_annual.groupby("year")["country"].apply(list).to_dict()
     use_monthly_dict = use_monthly.groupby("year")["country"].apply(list).to_dict()
-    
+
     # create a directory to save downloaded data
     if temporal_res == "A":
         if not os.path.exists(model_inputs_dir + "/annual"):
@@ -489,24 +485,3 @@ def query_comtrade(
                 save_hs_timestep_matrices(
                     str(hs), timesteps, monthly_data, crosswalk[["UN"]], crosswalk_dict
                 )
-      
-# project_path = "H:/My drive/Projects/Pandemic"
-# load_dotenv(os.path.join(project_path, ".env"))
-# # Root project data folder
-# data_path = os.getenv("DATA_PATH")
-# # Path to formatted model inputs
-# model_inputs_dir = data_path + "slf_model/test/"
-
-# # Premium subscription authorization code.
-# auth_code = os.getenv("COMTRADE_AUTH_KEY")
-
-# query_comtrade(
-#     model_inputs_dir=model_inputs_dir,
-#     auth_code=auth_code,
-#     start_code=6801,
-#     end_code=6804,
-#     start_year=2000,
-#     end_year=2019,
-#     temporal_res='M',
-#     crosswalk_path="H:/Shared drives/APHIS  Projects/Pandemic/Data/un_to_iso.csv",
-# )

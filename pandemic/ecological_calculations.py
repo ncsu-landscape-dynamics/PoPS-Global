@@ -75,40 +75,6 @@ def create_climate_similarities_matrix(array_template, countries):
 
     climate_similarities = np.zeros_like(array_template, dtype=float)
 
-<<<<<<< HEAD
-    cat_list = [
-        "Af",
-        "Am",
-        "Aw",
-        "BWh",
-        "BWk",
-        "BSh",
-        "BSk",
-        "Csa",
-        "Csb",
-        "Csc",
-        "Cwa",
-        "Cwb",
-        "Cwc",
-        "Cfa",
-        "Cfb",
-        "Cfc",
-        "Dsa",
-        "Dsb",
-        "Dsc",
-        "Dsd",
-        "Dwa",
-        "Dwb",
-        "Dwc",
-        "Dwd",
-        "Dfa",
-        "Dfb",
-        "Dfc",
-        "Dfd",
-        "ET",
-        "EF",
-    ]
-=======
     for j in range(len(countries)):
         destination = countries.iloc[j, :]
         for i in range(len(countries)):
@@ -148,7 +114,6 @@ def create_climate_similarities_matrix(array_template, countries):
                     "EF",
                 ]
             ]
->>>>>>> parent of 0a26e75 (missing change to allow incomplete set of climate categories)
 
             destination_climates = destination.loc[
                 [
