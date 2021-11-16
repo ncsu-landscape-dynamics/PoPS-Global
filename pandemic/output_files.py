@@ -433,6 +433,7 @@ def write_model_metadata(
     outpath,
     run_num,
     scenario_list=None,
+    lamda_weights_path=None,
 ):
     """
     Write model parameters and configuration to metadata file
@@ -539,6 +540,7 @@ def write_model_metadata(
         - len(native_countries_list)
     )
     meta["TRADE SCENARIO"] = scenario_list
+    meta["LAMDA WEIGHTS"] = lamda_weights_path
 
     with open(f"{outpath}/run_{run_num}_meta.json", "w") as file:
         json.dump(meta, file, indent=4)
