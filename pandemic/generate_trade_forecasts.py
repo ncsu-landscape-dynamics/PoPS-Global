@@ -1,21 +1,20 @@
-"""
-PoPS Global
+# PoPS Global - Network model of global pest introductions and spread over time.
+# Copyright (C) 2019-2021 by the authors.
 
-Module containing all calcualtions for generating
-trade forecasts.
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 2 of the License, or (at your option) any later
+# version.
 
-Copyright (C) 2019-2021 by the authors.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 
-Authors: Chelsey Walden-Schreiner (cawalden ncsu edu)
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, see https://www.gnu.org/licenses/gpl-2.0.html
 
-
-The code contained herein is licensed under the GNU General Public
-License. You may obtain a copy of the GNU General Public License
-Version 3 or later at the following locations:
-
-http://www.opensource.org/licenses/gpl-license.html
-http://www.gnu.org/copyleft/gpl.html
-"""
+"""Forecast trade values for use in PoPS Global simulation."""
 
 import os
 import glob
@@ -121,6 +120,7 @@ def create_trade_arrays(list_of_csvs, number_forecast_years, random_seed):
         the number of locations
 
     """
+
     print("Creating trade forecast...")
     example_matrix = pd.read_csv(
         list_of_csvs[0], header=0, index_col=0, encoding="latin1"
@@ -229,7 +229,13 @@ def simple_trade_forecast(
         Path to location of historical trade data
     random_seed : int
         Seed used to initialize the random number generator
+
+    Returns
+    -------
+    none
+
     """
+
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir)

@@ -1,4 +1,24 @@
-# Download and format data from Comtrade API
+# PoPS Global - Network model of global pest introductions and spread over time.
+# Copyright (C) 2019-2021 by the authors.
+
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 2 of the License, or (at your option) any later
+# version.
+
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
+
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, see https://www.gnu.org/licenses/gpl-2.0.html
+
+""" Downloads international trade data using the UN Comtrade data extraction
+API. Formats the downloaded data into a county x country matrix for each time
+step. Saves the formatted trade data locally.
+"""
+
 import sys
 import math
 import os
@@ -12,8 +32,21 @@ from datetime import datetime
 
 def nested_list(original_list, list_length):
     """Split long list into nested list of lists at specified length.
-    Returns nested list.
-    Ex: Create short lists of years or country codes for API calls."""
+    Ex: Create short lists of years or country codes for API calls.
+
+    Parameters
+    ----------
+    original_list : list
+        long list of objects to be split into shorter lists.
+    list_length : int
+        desired length of short lists
+
+    Returns
+    -------
+    nested_lists : list of lists
+
+    """
+
     nested_lists = []
     start = 0
     for unused_i in range(math.ceil(len(original_list) / list_length)):
@@ -27,8 +60,7 @@ def download_trade_data(hs_str, freq_str, year_country_dict, auth_code_str):
     """Loops over years and countries, calling Comtrade API for specified
     HS commodity code and appends downloaded data to dataframe. Prints
     messages to track progress.
-    Returns dataframe of trade data, one row for each
-    origin/destination/timestep combo.
+
     Parameters
     ----------
     hs_str : str
@@ -41,7 +73,15 @@ def download_trade_data(hs_str, freq_str, year_country_dict, auth_code_str):
         values are lists of UN country codes
     auth_code_str: str
         premium API authorization code
+
+    Returns
+    -------
+    data : dataframe
+        dataframe of trade data, one row for each
+        origin/destination/timestep combo.
+
     """
+
     print(f"Downloading HS{hs_str} @ {freq_str} data from Comtrade...")
     data = pd.DataFrame()
     for key in year_country_dict.keys():
@@ -124,8 +164,10 @@ def save_hs_timestep_matrices(
 ):
     """Loops over timesteps and creates country x country matrix of import
     trade values. If no data were downloaded for a country pair, will add zeros and
-    print a message. Changes UN codes to ISO3 codes in column, row names.
+    print a message. Changes US codes to ISO3 codes in column, row names.
+
     Saves a matrix for each timestep as CSVs.
+
     Parameters
     ----------
     hs_str : str
@@ -140,7 +182,13 @@ def save_hs_timestep_matrices(
         for HS matrix
     un_to_iso_dict: dict
         dictionary crosswalk of UN to ISO3 codes
+
+    Returns
+    -------
+    none
+
     """
+
     print(f"Saving HS{hs_str} matrices for each timestep...")
     for timestep in timesteps_list:
         timestep_data = trade_data[trade_data.period.eq(timestep)]
@@ -223,6 +271,7 @@ def query_comtrade(
     """
     Runs trade data request and download process, including
     review of data completeness.
+
     Parameters
     ----------
     model_inputs_dir : str
@@ -230,8 +279,7 @@ def query_comtrade(
     auth_code_str: str
         premium API authorization code
     hs_list : list
-        List of HS commodity codes, which can be 2, 4, or 6
-        digits
+        List of HS commodity code, can be 2, 4, or 6 digits
     start_year : int
         First year (YYYY) requested
     end_year : int
@@ -240,10 +288,16 @@ def query_comtrade(
         temporal resolution of data, "A" for annual, "M" for monthly
     crosswalk_path : str
         Location of UN code to ISO3 code crosswalk csv
+
+    Returns
+    -------
+    none
+
     """
 
     # list HS commodity codes to query, will be downloaded individually
     # and aggregated (if needed) in later script
+    hs_list = np.arange(start_code, end_code + 1, 1)
 
     # Set time step for trade data
     years = np.arange(start_year, end_year + 1, 1)
@@ -262,7 +316,7 @@ def query_comtrade(
     crosswalk_dict = pd.Series(crosswalk.ISO3.values, index=crosswalk.UN).to_dict()
 
     # Get data availability from Comtrade and compare to desired data
-    data_availability_url = urllib.request.urlopen(
+    data_availability_url = urlopen(
         "http://comtrade.un.org/api/refs/da/view?type=C&freq=all&ps=all&px=HS"
     )
     data_availability_raw = json.loads(data_availability_url.read().decode())
@@ -306,7 +360,7 @@ def query_comtrade(
                 year_summary["partial_monthly_avail"] = 1
             data_summary = data_summary.append(year_summary)
 
-    # Create df specifying if annual or monthly should be download
+     # Create df specifying if annual or monthly should be download
     # based on desired temp res for each country and year
     if temporal_res == "A":
         use_annual = data_summary[data_summary["annual_avail"] == 1]
@@ -349,7 +403,7 @@ def query_comtrade(
 
     use_annual_dict = use_annual.groupby("year")["country"].apply(list).to_dict()
     use_monthly_dict = use_monthly.groupby("year")["country"].apply(list).to_dict()
-
+    
     # create a directory to save downloaded data
     if temporal_res == "A":
         if not os.path.exists(model_inputs_dir + "/annual"):
@@ -435,10 +489,7 @@ def query_comtrade(
                 save_hs_timestep_matrices(
                     str(hs), timesteps, monthly_data, crosswalk[["UN"]], crosswalk_dict
                 )
-            # else:
-            #     print('\tNo monthly data available to download')
-
-
+      
 # project_path = "H:/My drive/Projects/Pandemic"
 # load_dotenv(os.path.join(project_path, ".env"))
 # # Root project data folder
