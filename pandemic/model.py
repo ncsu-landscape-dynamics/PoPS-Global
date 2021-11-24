@@ -117,10 +117,14 @@ for i in range(len(trades_list)):
 
     locations["Presence"] = pres_ts0
     locations["Infective"] = infect_ts0
-    iu1 = np.triu_indices(climate_similarities.shape[0], 1)
 
     sigma_h = (1 - countries["Host Percent Area"]).std()
-    sigma_kappa = np.std(1 - climate_similarities[iu1])
+
+    if len(climate_similarities.shape) == 1:
+        sigma_kappa = np.std(1 - climate_similarities)
+    else:
+        iu1 = np.triu_indices(climate_similarities.shape[0], 1)
+        sigma_kappa = np.std(1 - climate_similarities[iu1])
 
     np.random.seed(random_seed)
     lamda_c = lamda_c_list[i]
