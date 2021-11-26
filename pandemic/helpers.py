@@ -1,20 +1,23 @@
+# PoPS Global - Network model of global pest introductions and spread over time.
+# Copyright (C) 2019-2021 by the authors.
+
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 2 of the License, or (at your option) any later
+# version.
+
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
+
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, see https://www.gnu.org/licenses/gpl-2.0.html
+
+"""Module containing all calculations for helper functions for use in the PoPS
+Global simulation.
 """
-PoPS Global
 
-Module containing all calcualtions for helper functions
-
-Copyright (C) 2019-2020 by the authors.
-
-Authors: Chris Jones (cmjone25 ncsu edu)
-         Chelsey Walden-Schreiner (cawalden ncsu edu)
-
-The code contained herein is licensed under the GNU General Public
-License. You may obtain a copy of the GNU General Public License
-Version 3 or later at the following locations:
-
-http://www.opensource.org/licenses/gpl-license.html
-http://www.gnu.org/copyleft/gpl.html
-"""
 import os
 import glob
 import pandas as pd
@@ -61,15 +64,16 @@ def location_pairs_with_host(locations):
     Parameters
     ----------
     locations : data_frame
-        data frame of countries, species presence, phytosanitry capacity,
+        data frame of nodes with species presence, phytosanitry capacity,
         koppen climate classifications % of total area for each class,
         and host percent area.
 
     Returns
     --------
     locations_list : list
-        list of countries with their corresponding attributes as a series
-        for countries with host species presence greater than 0%
+        list of nodes with their corresponding attributes as a series
+        for nodes with host species presence greater than 0%
+
     """
 
     locations_with_host_df = locations.loc[locations["Host Percent Area"] > 0]
@@ -110,6 +114,7 @@ def filter_trades_list(file_list, start_year, stop_year=None):
         start year
 
     """
+
     for i, f in enumerate(file_list):
         date_tag = str.split(os.path.splitext(os.path.split(f)[1])[0], "_")[-1][:4]
         # File time step before start year
@@ -164,6 +169,7 @@ def create_trades_list(
         list of all commodity file paths
 
     """
+
     commodities_available = glob.glob(commodity_path + "*")
     commodities_available.sort()
     trades_list = []
@@ -253,6 +259,7 @@ def adjust_trade_scenario(T_ijct, scenario):
     for commodity (c) based on scenario.
 
     """
+
     adjustment_type = scenario[0][3]
     adjustment_pct = scenario[0][4]
     if adjustment_type == "decrease":
