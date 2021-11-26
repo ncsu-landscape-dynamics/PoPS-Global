@@ -1,22 +1,22 @@
+# PoPS Global - Network model of global pest introductions and spread over time.
+# Copyright (C) 2019-2021 by the authors.
+
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 2 of the License, or (at your option) any later
+# version.
+
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
+
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, see https://www.gnu.org/licenses/gpl-2.0.html
+
 """
-PoPS Global
-
 Module containing all probability calculations (entry, establishment, and
-introduction) used for the PoPS Global model.
-
-Copyright (C) 2019-2021 by the authors.
-
-Authors: Chris Jones (cmjone25 ncsu edu)
-         Chelsey Walden-Schreiner (cawalden ncsu edu)
-         Kellyn Montgomery
-         Ariel Saffer
-
-The code contained herein is licensed under the GNU General Public
-License. You may obtain a copy of the GNU General Public License
-Version 3 or later at the following locations:
-
-http://www.opensource.org/licenses/gpl-license.html
-http://www.gnu.org/copyleft/gpl.html
+introduction) used for the PoPS Global simulation.
 """
 
 import math
