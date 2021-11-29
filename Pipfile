@@ -31,6 +31,7 @@ geopandas = "*"
 requests = "*"
 setuptools = "*"
 black = "*"
+haversine = "*"
 
 [requires]
 python_version = "3.7"
