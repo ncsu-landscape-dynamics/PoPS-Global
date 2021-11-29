@@ -23,36 +23,44 @@ import glob
 import pandas as pd
 import numpy as np
 from scipy.spatial import distance
+from haversine import haversine
 
 # from shapely.geometry.polygon import Polygon
 # from shapely.geometry.multipolygon import MultiPolygon
 
 
-def distance_between(shapefile):
+def distance_between(array_template, shapefile):
     """
     Returns a n x n numpy array with the the distance from each element in a
     shapefile to all other elements in that shapefile.
 
     Parameters
     ----------
-    shapefile : geodataframe
+    array_template : array (float)
+        n x n template matrix where n is number of locations
+	shapefile : geodataframe
         A geopandas dataframe of countries with crs(epsg = 4326)
 
     Returns
     -------
-    distance : numpy array
-        An n x n numpy array of distances from each location to every other
-        location in kilometer
+    distance_array : numpy array
+        An n x n numpy array of Haversine distances (great circle) from each
+		location to every other location in kilometer
 
     """
-
+	
+    distance_array = np.zeros_like(array_template, dtype=float)
     centroids = shapefile.centroid.geometry
-    centroids = centroids.to_crs(epsg=3395)
     shapefile["centroid_lon"] = centroids.x
     shapefile["centroid_lat"] = centroids.y
-    centroids_array = shapefile.loc[:, ["centroid_lon", "centroid_lat"]].values
-    distance_array = distance.cdist(centroids_array, centroids_array, "euclidean")
-
+    centroids_array = shapefile.loc[:, ["centroid_lat", "centroid_lon"]].values
+    for j in range(len(shapefile)):
+        destination = centroids_array[j]
+        for i in range(len(shapefile)):
+            origin = centroids_array[i]
+            distance = haversine(origin, destination)
+            distance_array[j, i] = distance
+            
     return distance_array
 
 
