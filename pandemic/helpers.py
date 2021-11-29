@@ -22,7 +22,6 @@ import os
 import glob
 import pandas as pd
 import numpy as np
-from scipy.spatial import distance
 from haversine import haversine
 
 # from shapely.geometry.polygon import Polygon
@@ -38,17 +37,17 @@ def distance_between(array_template, shapefile):
     ----------
     array_template : array (float)
         n x n template matrix where n is number of locations
-	shapefile : geodataframe
+    shapefile : geodataframe
         A geopandas dataframe of countries with crs(epsg = 4326)
 
     Returns
     -------
     distance_array : numpy array
         An n x n numpy array of Haversine distances (great circle) from each
-		location to every other location in kilometer
+        location to every other location in kilometer
 
     """
-	
+    
     distance_array = np.zeros_like(array_template, dtype=float)
     centroids = shapefile.centroid.geometry
     shapefile["centroid_lon"] = centroids.x
