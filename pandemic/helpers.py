@@ -47,7 +47,7 @@ def distance_between(array_template, shapefile):
         location to every other location in kilometer
 
     """
-    
+
     distance_array = np.zeros_like(array_template, dtype=float)
     centroids = shapefile.centroid.geometry
     shapefile["centroid_lon"] = centroids.x
@@ -59,7 +59,7 @@ def distance_between(array_template, shapefile):
             origin = centroids_array[i]
             distance = haversine(origin, destination)
             distance_array[j, i] = distance
-            
+
     return distance_array
 
 
