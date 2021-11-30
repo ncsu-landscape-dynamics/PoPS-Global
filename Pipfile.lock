@@ -153,6 +153,14 @@
             "index": "pypi",
             "version": "==0.16"
         },
+        "haversine": {
+            "hashes": [
+                "sha256:6e76933a1042e6e62464b66ef686331e2798147eeedcb32b503db696d7bf0582",
+                "sha256:357e41dfddc4a0f2b1c941d92a590cac840f7ce4b3da14b45b68d968b3ad7cc7"
+            ],
+            "index": "pypi",
+            "version": "==2.5.1"
+        },
         "idna": {
             "hashes": [
                 "sha256:b307872f855b18632ce0c21c5e45be78c0ea7ae4c15c828c20788b26921eb3f6",
