@@ -36,3 +36,4 @@ requests==2.23.0
 shapely==1.7.0
 six==1.15.0
 urllib3==1.25.9
+haversine==2.5.1
