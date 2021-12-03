@@ -13,3 +13,4 @@ dependencies:
   - seaborn
   - fuzzywuzzy
   - pycountry
+  - haversine
