@@ -8,13 +8,21 @@ jobs:
   conda-pytest:
     runs-on: ubuntu-20.04
 
+    strategy:
+      matrix:
+        python-version:
+          - "3.7"
+          - "3.8"
+          - "3.9"
+          - "3.10"
+
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: pops-global
           environment-file: popsglobal_env.yml
-          python-version: 3.8
+          python-version: ${{ matrix.python-version }}
           auto-activate-base: false
       - name: Run pytest
         shell: bash -l {0}
