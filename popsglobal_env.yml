@@ -4,4 +4,4 @@ channels:
 dependencies:
   - pip
   - pip:
-      - -e pandemic
+      - -e .
