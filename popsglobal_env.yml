@@ -1,4 +1,6 @@
 name: pops-global
+channels:
+  - conda-forge
 dependencies:
   - numpy
   - pandas
