@@ -160,7 +160,7 @@ def climate_similarity_origins(origins_climate_list, destination_climates):
     """
     Returns the climate similarity between the destination (j) and the initial pest
     range by summing the total area in the destination (j) with climate types that
-    are present in origins at timestep 1.
+    are present in origin nodes (e.g., native countries) at the start of simulation.
 
     Parameters
     ----------
@@ -188,22 +188,21 @@ def climate_similarity_origins(origins_climate_list, destination_climates):
 
 def create_climate_similarities_matrix_origins(countries, origins_climate_list):
     """
-    Returns the climate similarities between all origins (i) and
-    the origin nodes at start of simulation
+    Returns the climate similarities between all nodes (i) and origin nodes
+    (e.g., native countries) at the start of simulation.
 
     Parameters
     ----------
-    countries : data frame
-        data frame of countries, species presence, phytosanitry capacity,
-        koppen climate classifications % of total area for each class
-    origins_climate_list : list (str)
-        list of climate categories in areas where pest is present at timestep 1
+    countries : data frame data frame of countries, species presence,
+        phytosanitry capacity, koppen climate classifications % of total area
+        for each class origins_climate_list : list (str) list of climate
+        categories in areas where pest is present at timestep 1
 
     Returns
     -------
-    climate_similarities : numpy.array (float)
-        n x 1 array of percentage of climate similarities between all
-        origins (i) and initial origins at start of simulation
+    climate_similarities : numpy.array (float) n x 1 array of percentage of
+        climate similarities between all origins (i) and initial origins at
+        start of simulation
 
     """
     climate_similarities = np.zeros(len(countries))
