@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 from pandemic.ecological_calculations import (
     climate_similarity,
-    climate_similarity_origins)
+    climate_similarity_origins
+)
 
 
 def test_climate_similarity():
@@ -50,7 +51,7 @@ def test_climate_similarity_origins():
         data=[1 / len(climate_classes)] * len(climate_classes), index=climate_classes
     )
 
-    assert climate_similarity_origins(
-        origins_climate_list, destination_climates
-    ) == (1 / len(climate_classes)) * 10
-
+    assert (
+        climate_similarity_origins(origins_climate_list, destination_climates)
+        == (1 / len(climate_classes)) * 10
+    )
