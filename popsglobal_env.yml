@@ -1,15 +1,9 @@
 name: pops-global
+channels:
+  - conda-forge
 dependencies:
-  - numpy
-  - pandas
   - geopandas
-  - python-dotenv
-  - requests
   - rasterio
-  - rasterstats
-  - scipy
-  - matplotlib
-  - pathlib
-  - seaborn
-  - fuzzywuzzy
-  - pycountry
+  - pip
+  - pip:
+      - -e .
