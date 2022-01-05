@@ -91,7 +91,7 @@ def probability_of_establishment(
 ):
     """
     Returns the probability of establishment between origin (i) and destination
-    (j) given climate similarity between (i and j), host area in (j),
+    (j) given climate similarity between origins and destinations, host area in (j),
     ecological distrubance in (j), and degree of polyphagy of the pest species.
 
     Parameters
@@ -103,8 +103,8 @@ def probability_of_establishment(
         A parameter that allows the equation to be adapted to various discrete
         time steps
     delta_kappa_ijt : float
-        The climate dissimilarity between the origin (i) and destination (j)
-        at time (t)
+        The climate dissimilarity between the origin (i) or initial origins and
+        destination (j) at time (t)
     sigma_kappa : float
         The climate dissimilarity normalizing constant
     h_jt : float

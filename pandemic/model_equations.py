@@ -56,9 +56,11 @@ def pandemic_single_time_step(
     Returns the probability of establishment, probability of entry, and
     probability of introduction as n x n matrices betweem every origin (i)
     and destination (j) and updates species presence and the combined
-    probability of presence for each origin (i) given climate similarity
-    between (i and j), host area in (j), degree of polyphagy of the pest
-    species, trade volumes, distance, and phytosanitary capacity.
+    probability of presence for each origin (i) given climate similarity,
+    host area in (j), ecological distrubance in (j), degree
+    of polyphagy of the pest species, trade volumes, distance, and
+    phytosanitary capacity.
+
 
     Parameters
     ----------
@@ -77,8 +79,9 @@ def pandemic_single_time_step(
         n x n matrix of distances from one location to another where n is
         number of locations.
     climate_similarities : data_frame
-        n x n matrix of climate similarity calculations between locations
-        where n is the number of locations
+        n x n or n x 1 matrix of climate similarity calculations between locations
+        where n is the number of locations. May be similarity between origin-destination
+        pairs or between initial origins and destinations
     alpha : float
         A parameter that allows the equation to be adapated to various discrete
         time steps
@@ -221,7 +224,10 @@ def pandemic_single_time_step(
             int(time_step) >= int(origin["Infective"])
         ):
             zeta_it = 1
-            delta_kappa_ijt = 1 - climate_similarities[j, i]
+            if len(climate_similarities.shape) == 1:
+                delta_kappa_ijt = 1 - climate_similarities[j]
+            else:
+                delta_kappa_ijt = 1 - climate_similarities[j, i]
 
             if T_ijct == 0:
                 probability_of_entry_ijct = 0
@@ -382,14 +388,14 @@ def pandemic_multiple_time_steps(
     gamma_scale,
     scenario_list=None,
 ):
-
     """
     Returns the probability of establishment, probability of entry, and
     probability of introduction as n x n matrices betweem every origin (i)
     and destination (j) and updates species presence and the combined
-    probability of presence for each origin (i) given climate similarity
-    between (i and j), host area in (j), degree of polyphagy of the
-    pest species, trade volumes, distance, and phytosanitary capacity.
+    probability of presence for each origin (i) given climate similarity,
+    host area in (j), ecological distrubance in (j), degree
+    of polyphagy of the pest species, trade volumes, distance, and
+    phytosanitary capacity.
 
     Parameters
     ----------
@@ -403,8 +409,9 @@ def pandemic_multiple_time_steps(
         n x n matrix of distances from one location to another where n is
         number of locations.
     climate_similarities : data_frame
-        n x n matrix of climate similarity calculations between locations
-        where n is the number of locations
+        n x n or n x 1 matrix of climate similarity calculations between locations
+        where n is the number of locations. May be similarity between origin-destination
+        pairs or between initial origins and destinations
     alpha : float
         A parameter that allows the equation to be adapated to various discrete
         time steps

@@ -154,3 +154,100 @@ def create_climate_similarities_matrix(array_template, countries):
 
             climate_similarities[j, i] = delta_kappa_ij
     return climate_similarities
+
+
+def climate_similarity_origins(origins_climate_list, destination_climates):
+    """
+    Returns the climate similarity between the destination (j) and the initial pest
+    range by summing the total area in the destination (j) with climate types that
+    are present in origin nodes (e.g., native countries) at the start of simulation.
+
+    Parameters
+    ----------
+    origins_climate_list : list (str)
+        A list of the Koppen climate zones present in the origins of timestep 1.
+    destination_climates : array (float)
+        An array with percent area for each of the Koppen climate zones for the
+        destination (j)
+
+    Returns
+    -------
+    similarity : float
+        Percentage of the total area of the destination country has climates that
+        are similar to the initial pest range
+
+    """
+
+    similarity = 0.00
+    for clim in range(len(origins_climate_list)):
+        if destination_climates[clim] > 0:
+            similarity += destination_climates[clim]
+
+    return similarity
+
+
+def create_climate_similarities_matrix_origins(countries, origins_climate_list):
+    """
+    Returns the climate similarities between all nodes (i) and origin nodes
+    (e.g., native countries) at the start of simulation.
+
+    Parameters
+    ----------
+    countries : data frame data frame of countries, species presence,
+        phytosanitry capacity, koppen climate classifications % of total area
+        for each class origins_climate_list : list (str) list of climate
+        categories in areas where pest is present at timestep 1
+
+    Returns
+    -------
+    climate_similarities : numpy.array (float) n x 1 array of percentage of
+        climate similarities between all origins (i) and initial origins at
+        start of simulation
+
+    """
+    climate_similarities = np.zeros(len(countries))
+
+    for j in range(len(countries)):
+        destination = countries.iloc[j, :]
+        destination_climates = destination.loc[
+            [
+                "Af",
+                "Am",
+                "Aw",
+                "BWh",
+                "BWk",
+                "BSh",
+                "BSk",
+                "Csa",
+                "Csb",
+                "Csc",
+                "Cwa",
+                "Cwb",
+                "Cwc",
+                "Cfa",
+                "Cfb",
+                "Cfc",
+                "Dsa",
+                "Dsb",
+                "Dsc",
+                "Dsd",
+                "Dwa",
+                "Dwb",
+                "Dwc",
+                "Dwd",
+                "Dfa",
+                "Dfb",
+                "Dfc",
+                "Dfd",
+                "ET",
+                "EF",
+            ]
+        ]
+
+        delta_kappa_j = climate_similarity_origins(
+            origins_climate_list, destination_climates
+        )
+
+        climate_similarities[j] = delta_kappa_j
+
+    return climate_similarities
