@@ -21,13 +21,13 @@ http://www.gnu.org/copyleft/gpl.html
 import numpy as np
 import pandas as pd
 
-from probability_calculations import (
+from pandemic.probability_calculations import (
     probability_of_entry,
     probability_of_establishment,
     probability_of_introduction,
 )
 
-from helpers import location_pairs_with_host, adjust_trade_scenario
+from pandemic.helpers import location_pairs_with_host, adjust_trade_scenario
 
 
 def pandemic_single_time_step(

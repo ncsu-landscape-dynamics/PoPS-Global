@@ -21,9 +21,6 @@ import pandas as pd
 import numpy as np
 from scipy.spatial import distance
 
-# from shapely.geometry.polygon import Polygon
-# from shapely.geometry.multipolygon import MultiPolygon
-
 
 def distance_between(shapefile):
     """

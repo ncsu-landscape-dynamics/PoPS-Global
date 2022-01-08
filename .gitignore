@@ -45,5 +45,3 @@ notebooks/dev_notebooks/
 runs/
 model_runs_param_list.py
 .gitignore
-lamda_weightsOff.prof
-lamda_weightsOn.prof
