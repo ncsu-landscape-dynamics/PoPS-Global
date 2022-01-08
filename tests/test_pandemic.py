@@ -31,7 +31,7 @@ def test_pandemic_runs():
     locations_list = [("USA", "CHN"), ("USA", "BRA"), ("BRA", "USA"), ("BRA", "CHN")]
     lamda_weights = pd.DataFrame(
         {
-            "ISO3 Code": ["USA", "CHN", "BRA"],
+            "ISO3": ["USA", "CHN", "BRA"],
             "Percent Area": [0.2, 0.8, 0],
             "lamda_weight_scaled": [0.25, 1, 0],
         }
