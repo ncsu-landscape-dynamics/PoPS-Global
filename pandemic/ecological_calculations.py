@@ -179,7 +179,7 @@ def climate_similarity_origins(origins_climate_list, destination_climates):
     """
 
     similarity = 0.00
-    for clim in range(len(origins_climate_list)):
+    for clim in origins_climate_list:
         if destination_climates[clim] > 0:
             similarity += destination_climates[clim]
 
