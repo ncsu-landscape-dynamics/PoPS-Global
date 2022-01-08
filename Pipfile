@@ -10,36 +10,9 @@ pytest = "*"
 pytest-cov = "*"
 ipykernel = "*"
 
-[packages]
-country-list = "*"
-numpy = "==1.19.2"
-networkx = "*"
-matplotlib = "*"
-graphviz = "*"
-pydot = "*"
-pyproj = "*"
-pandas = "*"
-scipy = "*"
-shapely = "*"
-geopy = "*"
-psycopg2 = "*"
-munch = "*"
-cligj = "*"
-six = "*"
-enum34 = "*"
-argparse = "*"
-geopandas = "*"
-requests = "*"
-setuptools = "*"
-black = "*"
-
-[requires]
-python_version = "3.7"
-
 [pipenv]
 allow_prereleases = true
 
-[packages]
-pandemic = {editable = true, path = "."}
-rtree = {path = "wheels/Rtree-0.9.4-cp37-cp37m-win_amd64.whl"}
-fiona = {path = "wheels/Fiona-1.8.13-cp37-cp37m-win_amd64.whl"}
+[packages.pandemic]
+editable = true
+path = "."

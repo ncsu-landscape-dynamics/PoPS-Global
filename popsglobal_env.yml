@@ -1,0 +1,9 @@
+name: pops-global
+channels:
+  - conda-forge
+dependencies:
+  - geopandas
+  - rasterio
+  - pip
+  - pip:
+      - -e .

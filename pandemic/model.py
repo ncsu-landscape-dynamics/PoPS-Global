@@ -1,3 +1,24 @@
+# PoPS Global - Network model of global pest introductions and spread over time.
+# Copyright (C) 2019-2021 by the authors.
+
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 2 of the License, or (at your option) any later
+# version.
+
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
+
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, see https://www.gnu.org/licenses/gpl-2.0.html
+
+"""Runs the PoPS Global simulation using parameters from the environmental and
+configuration files, node locations, distance matrix, climate similarity
+matrix, and trade data.
+"""
+
 import json
 import os
 import sys
@@ -120,10 +141,14 @@ for i in range(len(trades_list)):
 
     locations["Presence"] = pres_ts0
     locations["Infective"] = infect_ts0
-    iu1 = np.triu_indices(climate_similarities.shape[0], 1)
 
     sigma_h = (1 - countries["Host Percent Area"]).std()
-    sigma_kappa = np.std(1 - climate_similarities[iu1])
+
+    if len(climate_similarities.shape) == 1:
+        sigma_kappa = np.std(1 - climate_similarities)
+    else:
+        iu1 = np.triu_indices(climate_similarities.shape[0], 1)
+        sigma_kappa = np.std(1 - climate_similarities[iu1])
 
     np.random.seed(random_seed)
     lamda_c = lamda_c_list[i]
