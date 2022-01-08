@@ -16,10 +16,6 @@ from output_files import (
     write_model_metadata,
 )
 
-import time
-
-start_time_tot = time.time()
-print("***Start: ", start_time_tot)
 
 # Read environmental variables
 load_dotenv(os.path.join(".env"))
@@ -137,8 +133,6 @@ for i in range(len(trades_list)):
         lamda_weights = None
 
     if lamda_c > 0:
-        ts_loop_start = time.time()
-        print("***Starting TS loops: ", ts_loop_start)
         e = pandemic_multiple_time_steps(
             trades=trades,
             distances=distances,
@@ -162,8 +156,6 @@ for i in range(len(trades_list)):
             scenario_list=scenario_list,
             lamda_weights=lamda_weights,
         )
-        ts_loop_end = time.time()
-        print("***Loop time: ", ts_loop_end - ts_loop_start)
         sim_name = sys.argv[2]
         add_descript = sys.argv[3]
         run_num = sys.argv[4]
@@ -240,5 +232,3 @@ for i in range(len(trades_list)):
         )
     else:
         print("\tskipping as pest is not transported with this commodity")
-    end_time_tot = time.time()
-    print("***Sim complete: ", end_time_tot - start_time_tot)
