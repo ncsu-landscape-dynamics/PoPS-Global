@@ -273,3 +273,26 @@ def adjust_trade_scenario(T_ijct, scenario):
         return T_ijct * (1 - adjustment_pct)
     if adjustment_type == "increase":
         return T_ijct * (1 + adjustment_pct)
+
+
+def convert_to_binary(raster, threshold):
+    """
+    Returns a raster with values converted to a binary output
+    based on specified threshold.
+
+    Parameters:
+    -----------
+    raster : raster
+        Input raster with unique values.
+    threshold : float
+        The value at which original values are converted to either
+        zero (if below the value) or 1 (if above the value).
+
+    Returns:
+    --------
+    Binary raster.
+
+    """
+    raster[raster < threshold] = 0
+    raster[raster >= threshold] = 1
+    return raster
