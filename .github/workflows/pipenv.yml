@@ -3,11 +3,10 @@ name: pipenv
 on:
   push:
     branches:
-    - main
+      - main
   pull_request:
 
 jobs:
-
   pipenv-dev:
     runs-on: ubuntu-20.04
 

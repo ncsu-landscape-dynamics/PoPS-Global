@@ -1,4 +1,5 @@
-![CI](https://github.com/ncsu-landscape-dynamics/Pandemic_Model/workflows/CI/badge.svg)
+[![Flake8](actions/workflows/flake8.yml/badge.svg)](actions/workflows/flake8.yml)
+[![Conda Install](actions/workflows/conda.yml/badge.svg)](actions/workflows/conda.yml)
 [![Code style:
 black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
