@@ -295,6 +295,9 @@ def query_comtrade(
 
     """
 
+    # Get current working directory
+    current_dir = os.getcwd()
+
     # Set time step for trade data
     years = np.arange(start_year, end_year + 1, 1)
 
@@ -485,3 +488,6 @@ def query_comtrade(
                 save_hs_timestep_matrices(
                     str(hs), timesteps, monthly_data, crosswalk[["UN"]], crosswalk_dict
                 )
+
+    # Return to original working directory
+    os.chdir(current_dir)
