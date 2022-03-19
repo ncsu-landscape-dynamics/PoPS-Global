@@ -5,8 +5,7 @@ import pandas as pd
 import geopandas
 import os
 
-dir_path = "G:/Shared drives/APHIS  Projects/Pandemic/Data/"
-os.chdir(dir_path)
+dir_path = "Q:/Shared drives/APHIS  Projects/Pandemic/Data/"
 
 countries_path = dir_path + "Country_list_shapefile/TM_WORLD_BORDERS-0.3"
 countries = geopandas.read_file(countries_path)
@@ -128,6 +127,7 @@ crosswalk = crosswalk[
     [
         "Country Code",
         "ISO3-digit Alpha",
+        "ISO2-digit Alpha",
         "Country Name, Abbreviation",
         "Start Valid Year",
         "End Valid Year",
@@ -136,6 +136,7 @@ crosswalk = crosswalk[
     columns={
         "Country Code": "UN",
         "ISO3-digit Alpha": "ISO3",
+        "ISO2-digit Alpha": "ISO2",
         "Country Name, Abbreviation": "Name",
         "Start Valid Year": "Start",
         "End Valid Year": "End",
