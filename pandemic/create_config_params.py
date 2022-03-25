@@ -21,9 +21,13 @@ PoPS Global simulation.
 import json
 import os
 
+import os
+import json
+
 
 def create_config_args(
     config_out_path,
+    commodity_list,
     commodity_path,
     native_countries_list,
     alpha,
@@ -33,13 +37,13 @@ def create_config_args(
     phi,
     w_phi,
     start_year,
+    stop_year=None,
     save_main_output=True,
     save_metadata=True,
     save_entry=False,
     save_estab=False,
     save_intro=False,
     save_country_intros=False,
-    stop_year=None,
     commodity_forecast_path=None,
     season_dict=None,
     transmission_lag_type=None,
@@ -48,6 +52,7 @@ def create_config_args(
     gamma_scale=None,
     random_seed=None,
     cols_to_drop=None,
+    lamda_weights_path=None,
     scenario_list=None,
 ):
     """
@@ -57,6 +62,8 @@ def create_config_args(
     ----------
     config_out_path : str
         Path to directory for saving configuration JSON file.
+    commodity_list : list (str)
+        List of commodity codes for which the model will run.
     commodity_path : str
         Path to directory of trade data to use as model input.
     native_countries_list : list (str)
@@ -125,6 +132,9 @@ def create_config_args(
     cols_to_drop : list (str)
         Columns to drop from model output dataframe
         (Default is None)
+    lamda_weights_path : str
+        Lambda weights (by country) to apply to trade when a commodity is not specific
+        (Default is None)
     scenario_list : list (str)
         List of scenario model runs
         (Default is None)
@@ -141,16 +151,18 @@ def create_config_args(
 
     # Directory and file paths
     args["commodity_path"] = commodity_path
+    args["commodity_list"] = commodity_list
     args["commodity_forecast_path"] = commodity_forecast_path
     # List of countries where pest is present at time T0
     args["native_countries_list"] = native_countries_list
     # List of months when pest can be transported
     args["season_dict"] = season_dict
-    # model parameter values
+    # pandemic parameter values
     args["alpha"] = alpha
     args["beta"] = beta
     args["mu"] = mu
     args["lamda_c_list"] = lamda_c_list
+    args["lamda_weights_path"] = lamda_weights_path
     args["phi"] = phi
     args["w_phi"] = w_phi
     args["start_year"] = start_year
@@ -158,9 +170,9 @@ def create_config_args(
     args["transmission_lag_unit"] = "year"
     # Transmission lag type can be static, stochastic or none
     args["transmission_lag_type"] = transmission_lag_type
-    args["time_to_infectivity"] = time_to_infectivity  # only for lag type static
-    args["transmission_lag_shape"] = gamma_shape  # only for lag type stochastic
-    args["transmission_lag_scale"] = gamma_scale  # only for lag type stochastic
+    args["time_to_infectivity"] = time_to_infectivity  # only lag == static
+    args["transmission_lag_shape"] = gamma_shape  # only lag == stochastic
+    args["transmission_lag_scale"] = gamma_scale  # only lag == stochastic
     args["random_seed"] = random_seed
     args["save_main_output"] = save_main_output
     args["save_metadata"] = save_metadata
