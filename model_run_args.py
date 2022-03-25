@@ -3,17 +3,19 @@ import os
 import multiprocessing
 from dotenv import load_dotenv
 import json
+
+from pandemic.multirun_helpers.multiple_runs import create_params, execute_model_runs
 from pandemic.create_config_params import create_config_args
-from multiple_runs import create_params, execute_model_runs
 
 if __name__ == "__main__":
-    alpha, beta, lamda_c_list, start_year, start_run, num_runs = [
+    alpha, beta, lamda_c_list, start_year, start_run, num_runs, run_type = [
         float(sys.argv[1]),
         float(sys.argv[2]),
         [float(sys.argv[3])],
         int(sys.argv[4]),
         int(sys.argv[5]),
         int(sys.argv[6]),
+        sys.argv[7]
     ]
 
     with open("config.json") as json_file:
@@ -48,7 +50,7 @@ if __name__ == "__main__":
     if model_files == "Temp":
         out_dir = f"{temp_dir}/samp{alpha}_{lamda_c_list[0]}_{start_year}"
     else:
-        out_dir = os.getenv("OUTPUT_PATH")
+        out_dir = f'{os.getenv("OUTPUT_PATH")}/{sim_name}_{run_type}'
 
     config_out_path = (
         rf"{out_dir}/config/"
@@ -57,6 +59,11 @@ if __name__ == "__main__":
         rf"_lamda{lamda_c_list[0]}"
         rf"_{commodity}/config.json"
     )
+
+    if run_type == "calibrate":
+        commodity_forecast_path = None
+    else: 
+        commodity_forecast_path=input_dir + f"/comtrade/trade_forecast/{timestep}_{trade_type}/",
 
     param_vals, config_file_path = create_config_args(
         config_out_path=config_out_path,
@@ -75,8 +82,7 @@ if __name__ == "__main__":
         save_estab=False,
         save_intro=False,
         save_country_intros=False,
-        commodity_forecast_path=input_dir
-        + f"/comtrade/trade_forecast/{timestep}_{trade_type}/",
+        commodity_forecast_path=commodity_forecast_path,
         season_dict=season_dict,
         transmission_lag_type=transmission_lag_type,
         time_to_infectivity=None,
@@ -102,6 +108,6 @@ if __name__ == "__main__":
         iteration_end=num_runs,
     )
 
-    p = multiprocessing.Pool(1)  # set this number to the cores per node to use
+    p = multiprocessing.Pool(4)  # set this number to the cores per node to use
     results = p.starmap(execute_model_runs, param_list)
     p.close()
