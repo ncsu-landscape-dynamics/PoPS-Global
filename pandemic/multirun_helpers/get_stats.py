@@ -10,12 +10,12 @@ from summary_stats import compute_stat_wrapper_func, mse, f1, fbeta, avg_std
 
 if __name__ == "__main__":
 
-    type = sys.argv[1] # Add an argument to get: calibrate or forecast 
+    run_type = sys.argv[1] # Add an argument to get: calibrate or forecast 
 
     with open("config.json") as json_file:
         config = json.load(json_file)
 
-    run_name = f'{config["sim_name"]}_{config["add_descript"]}_{type}'
+    run_name = f'{config["sim_name"]}_{run_type}'
     commodity = "-".join(str(elem) for elem in config["commodity_list"])
 
     coi = config["country_of_interest"]
@@ -181,7 +181,7 @@ if __name__ == "__main__":
 
     agg_dict = {**agg_dict, **prob_agg_dict, **countries_agg_dict}
     
-    if type == "forecast":
+    if run_type == "forecast":
         agg_df = data.groupby("run").agg(agg_dict)
     else:
         agg_df = data.groupby("sample").agg(agg_dict)

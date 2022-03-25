@@ -1,12 +1,13 @@
 import itertools
 import json
 
-def write_commands(params, start_run, end_run, model_files="Keep"):
+def write_commands(params, start_run, end_run, run_type, model_files="Keep"):
     # Name the script to be run
     if model_files == "Temp":
         script = "./hpc/wrapper_script.csh"
     else: 
-        script = "python pandemic/multirun_helpers/model_run_args.py"
+        # script = "python pandemic/multirun_helpers/model_run_args.py"
+        script = "python model_run_args.py"
     output = (
         " ".join(
             [
@@ -17,6 +18,7 @@ def write_commands(params, start_run, end_run, model_files="Keep"):
                 str(params[3]), # start year
                 str(start_run),
                 str(end_run),
+                run_type,
             ]
         )
         + "\n"
@@ -32,6 +34,9 @@ if __name__ == "__main__":
     alphas = config["alphas"]
     betas = config["betas"]
     lamdas = config["lamdas"]
+
+    run_type = "calibrate"
+
     try:
         model_files = config["model_files"]
     except: 
@@ -47,7 +52,7 @@ if __name__ == "__main__":
     file1 = open("commands.txt", "w")
     # Write to a text file    
     for params in param_sets:
-        file1.write(write_commands(model_files, params, start_run, end_run))
+        file1.write(write_commands(model_files, params, start_run, end_run, run_type))
 
     file1.close()
 
