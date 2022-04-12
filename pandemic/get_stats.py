@@ -5,17 +5,25 @@ import pandas as pd
 import multiprocessing
 from dotenv import load_dotenv
 import json
-from pandemic.summary_stats import compute_stat_wrapper_func, mse, f1, fbeta, avg_std
+from pandemic.multirun_helpers import compute_stat_wrapper_func, mse, f1, fbeta, avg_std
+
 
 if __name__ == "__main__":
 
+    run_type = sys.argv[1] # Add an argument to get: calibrate or forecast 
+
     with open("config.json") as json_file:
         config = json.load(json_file)
-    sim_name = config["sim_name"]
-    commodity = f"{config['start_commodity']}-{config['end_commodity']}"
+
+    run_name = f'{config["sim_name"]}_{run_type}'
+    commodity = "-".join(str(elem) for elem in config["commodity_list"])
+
     coi = config["country_of_interest"]
     native_countries_list = config["native_countries_list"]
-    model_files = config["model_files"]
+    try:
+        model_files = config["model_files"]
+    except: 
+        model_files = "Keep"
 
     load_dotenv(os.path.join(".env"))
     data_dir = os.getenv("DATA_PATH")
@@ -23,12 +31,13 @@ if __name__ == "__main__":
 
     if model_files == "Temp":
         out_dir = (
-            f'{os.getenv("TEMP_OUTPATH")}/samp{sys.argv[1]}_{sys.argv[2]}_{sys.argv[3]}'
+            f'{os.getenv("TEMP_OUTPATH")}/samp{sys.argv[2]}_{sys.argv[3]}_{sys.argv[4]}'
         )
     else:
         out_dir = os.getenv("OUTPUT_PATH")
 
-    param_samp = glob.glob(f"{out_dir}/{sim_name}/*{commodity}*")
+    param_samp = glob.glob(f"{out_dir}/{run_name}/*{commodity}*")
+
     validation_df = pd.read_csv(
         input_dir + "/first_records_validation.csv", header=0, index_col=0,
     )
@@ -53,8 +62,8 @@ if __name__ == "__main__":
             "run_num",
             "start",
             "alpha",
+            "beta",
             "lamda",
-            "samp_brier_score",
             "total_countries_intros_predicted",
             "diff_total_countries",
             "diff_total_countries_sqrd",
@@ -122,7 +131,7 @@ if __name__ == "__main__":
     )
 
     # summary_stat_path = f"{out_dir}/summary_stats/{os.path.split(sim)[-1]}/"
-    summary_stat_path = f'{os.getenv("OUTPUT_PATH")}/summary_stats/{sim_name}/'
+    summary_stat_path = f'{os.getenv("OUTPUT_PATH")}/summary_stats/{run_name}/'
     if not os.path.exists(summary_stat_path):
         os.makedirs(summary_stat_path)
     # data.to_csv(summary_stat_path + "/summary_stats_wPrecisionRecallF1FBetaAggProb.csv")
@@ -147,8 +156,8 @@ if __name__ == "__main__":
     agg_dict = {
         "start": ["max"],
         "alpha": ["max"],
+        "beta": ["max"],
         "lamda": ["max"],
-        "samp_brier_score": ["max"],
         "total_countries_intros_predicted": ["mean", "std"],
         "diff_total_countries": ["mean", "std"],
         "diff_total_countries_sqrd": [mse],
@@ -171,18 +180,11 @@ if __name__ == "__main__":
     )
 
     agg_dict = {**agg_dict, **prob_agg_dict, **countries_agg_dict}
-
-    agg_df = data.groupby("sample").agg(agg_dict)
+    
+    if run_type == "forecast":
+        agg_df = data.groupby("run").agg(agg_dict)
+    else:
+        agg_df = data.groupby("sample").agg(agg_dict)
 
     agg_df.columns = ["_".join(x) for x in agg_df.columns.values]
-    # agg_df.to_csv(summary_stat_path + "/summary_stats_bySample.csv")
-
-    if os.path.isfile(summary_stat_path + "/summary_stats_bySample.csv"):
-        agg_df.to_csv(
-            summary_stat_path + "/summary_stats_bySample.csv",
-            mode="a",
-            index=False,
-            header=False,
-        )
-    else:
-        agg_df.to_csv(summary_stat_path + "/summary_stats_bySample.csv", index=False)
+    agg_df.to_csv(summary_stat_path + "/summary_stats_bySample.csv")
