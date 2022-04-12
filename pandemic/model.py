@@ -39,6 +39,8 @@ from pandemic.output_files import (
     write_model_metadata,
 )
 
+print(sys.argv)
+
 # Read environmental variables
 load_dotenv(os.path.join(".env"))
 data_dir = os.getenv("DATA_PATH")
@@ -53,6 +55,7 @@ with open(path_to_config_json) as json_file:
 
 commodity_path = config["commodity_path"]
 commodity_forecast_path = config["commodity_forecast_path"]
+commodity_list = config["commodity_list"]
 native_countries_list = config["native_countries_list"]
 season_dict = config["season_dict"]
 alpha = config["alpha"]
@@ -113,12 +116,12 @@ for i in range(len(trades_list)):
 # Run Model for Selected Time Steps and Commodities
 print("Number of commodities: ", len([c for c in lamda_c_list if c > 0]))
 print("Number of time steps: ", trades_list[0].shape[0])
-for i in range(len(trades_list)):
-    if len(trades_list) > 1:
-        code = code_list[i]
+for i in range(len(lamda_c_list)):
+    if len(lamda_c_list) > 1:
+        code = commodity_list[i]
         print("\nRunning model for commodity: ", code)
     else:
-        code = code_list[0]
+        code = commodity_list[0]
         print(
             "\nRunning model for commodity: ",
             os.path.basename(commodities_available[0]),
@@ -181,6 +184,11 @@ for i in range(len(trades_list)):
         add_descript = sys.argv[3]
         run_num = sys.argv[4]
 
+        try:
+            run_suffix = f"_{str(sys.argv[5])}"
+        except: 
+            run_suffix = ""
+
         run_prefix = f"{add_descript}_{code}"
 
         arr_dict = {
@@ -190,7 +198,7 @@ for i in range(len(trades_list)):
             "country_introduction": "country_introduction",
         }
 
-        outpath = out_dir + f"/{sim_name}/{run_prefix}/run_{run_num}/"
+        outpath = out_dir + f"/{sim_name}{run_suffix}/{run_prefix}/run_{run_num}/"
         create_model_dirs(
             outpath=outpath,
             output_dict=arr_dict,
