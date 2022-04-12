@@ -119,6 +119,10 @@ def create_params(
         add_descript, ((iteration_end + 1) - iteration_start)
         )
     run_num = range(iteration_start, iteration_end + 1, 1)
+    run_type = np.repeat(
+        run_type, ((iteration_end + 1) - iteration_start)
+    )
+
     param_list = list(
         zip(
             model_script_path,
@@ -129,6 +133,7 @@ def create_params(
             run_type,
             )
     )
+    print(param_list)
     return param_list
 
 
@@ -149,6 +154,8 @@ def execute_model_runs(
         or parameter value (e.g., 3yrs)
     run_num : int
         Stochastic iteration of pandemic run (e.g., 0)
+    run_type: str
+        Type of runs ("test", "calibrate", or "forecast")
     """
     print(f"Simulation: {sim_name}\t{add_descript}\trun: {run_num}")
 
