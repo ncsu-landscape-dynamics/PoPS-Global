@@ -43,6 +43,8 @@ if __name__ == "__main__":
     commodity_list = config["commodity_list"]
     trade_type = config["trade_type"]
 
+    cores_to_use = config["cores"]
+
     commodity = "-".join(str(elem) for elem in commodity_list)
 
     load_dotenv(os.path.join(".env"))
@@ -111,6 +113,6 @@ if __name__ == "__main__":
         run_type=run_type,
     )
 
-    p = multiprocessing.Pool(4)  # set this number to the cores per node to use
+    p = multiprocessing.Pool(cores_to_use)  # set this number to the cores per node to use
     results = p.starmap(execute_model_runs, param_list)
     p.close()
