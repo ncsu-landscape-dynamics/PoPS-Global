@@ -133,7 +133,6 @@ def create_params(
             run_type,
             )
     )
-    print(param_list)
     return param_list
 
 
