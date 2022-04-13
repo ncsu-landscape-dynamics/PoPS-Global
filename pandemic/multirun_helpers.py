@@ -409,7 +409,7 @@ def compute_stat_wrapper_func(param_sample):
 
     with open("config.json") as json_file:
         config = json.load(json_file)
-    coi = config["country_of_interest"]
+    coi = config["coi"]
     native_countries_list = config["native_countries_list"]
     years_before_firstRecord = config["years_before_firstRecord"]
     years_after_firstRecord = config["years_after_firstRecord"]
@@ -514,3 +514,45 @@ def f1(precision, recall):
         return (2 * precision * recall) / (precision + recall)
     else:
         return 0
+
+
+# Forecast: Generating sampled parameter sets
+
+def generate_param_samples(agg_df, n_samples):
+
+    start_years = agg_df.start.unique()
+    param_samples_df = pd.DataFrame(columns=['alpha','beta','lamda','start'])
+
+    top_sets=(
+        agg_df
+        .loc[(agg_df['top']=="top")]
+        [["start","alpha","beta","lamda","fbeta"]]
+        .reset_index(drop=True)
+    )
+    top_count = len(top_sets.index)
+
+    year_counts = []
+
+    for year in start_years:
+        year_sets= top_sets.loc[top_sets['start'] == year].reset_index(drop=True)
+        year_counts.append(math.ceil(len(year_sets.index)*n_samples/top_count))
+
+        param_mean = np.mean(top_sets[["alpha","beta","lamda"]].values, axis=0)
+        param_cov = np.cov(top_sets[["alpha","beta","lamda"]].values, rowvar=0)
+        param_sample = np.random.multivariate_normal(param_mean, param_cov, int(n_samples*1.1))
+        alpha = param_sample[:,0]
+        beta = param_sample[:,1]
+        lamda = param_sample[:,2]
+        start = [year]*int(n_samples*1.1)
+        param_sample_df = pd.DataFrame({"alpha":alpha, "lamda":lamda, "beta":beta,"start":start})
+        param_sample_df.loc[param_sample_df['alpha']<=1].reset_index(drop=True)
+
+        param_samples_df = pd.concat([param_samples_df, param_sample_df]).reset_index(drop=True)
+
+        print(f"Year: {year}, Means: {param_mean}, Covariance Matrix: {param_cov}")
+
+    samp_runs = [item for sublist in [list(range(i*int(n_samples*1.1), int(n_samples*1.1)*i + year_count)) for i, year_count in enumerate(year_counts)] for item in sublist]
+
+    samples_to_run = param_samples_df.loc[samp_runs]
+
+    return samples_to_run 
