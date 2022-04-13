@@ -1,14 +1,15 @@
-import sys
-import os
-import glob
-import pandas as pd
-import multiprocessing
-from dotenv import load_dotenv
-import json
-from pandemic.multirun_helpers import compute_stat_wrapper_func, mse, f1, fbeta, avg_std
-
-
 if __name__ == "__main__":
+    import sys
+    import os
+    import glob
+    import pandas as pd
+    import multiprocessing
+    from dotenv import load_dotenv
+    import json
+
+    sys.path.append(os.getcwd())
+
+    from pandemic.multirun_helpers import compute_stat_wrapper_func, mse, f1, fbeta, avg_std
 
     run_type = sys.argv[1] # Add an argument to get: calibrate or forecast 
 
@@ -18,7 +19,7 @@ if __name__ == "__main__":
     run_name = f'{config["sim_name"]}_{run_type}'
     commodity = "-".join(str(elem) for elem in config["commodity_list"])
 
-    coi = config["country_of_interest"]
+    coi = config["coi"]
     native_countries_list = config["native_countries_list"]
     try:
         model_files = config["model_files"]
