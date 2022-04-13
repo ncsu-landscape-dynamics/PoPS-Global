@@ -88,6 +88,7 @@ climate_similarities = np.load(input_dir + "/climate_similarities.npy")
 trades_list, file_list_filtered, code_list, commodities_available = create_trades_list(
     commodity_path=commodity_path,
     commodity_forecast_path=commodity_forecast_path,
+    commodity_list=commodity_list,
     start_year=start_year,
     stop_year=stop_year,
     distances=distances,

@@ -138,6 +138,7 @@ def filter_trades_list(file_list, start_year, stop_year=None):
 def create_trades_list(
     commodity_path,
     commodity_forecast_path,
+    commodity_list,
     start_year,
     distances,
     stop_year=None,
@@ -153,6 +154,8 @@ def create_trades_list(
         path to all historical commodity trade data
     commodity_forecast_path : str
         path to forecasted commodity trade data
+    commodity_list: list
+        List of strings, each with a commodity code or aggregate
     start_year : int
         Simulation start year (YYYY) used to filter
         trade data files that are prior to that year
@@ -171,25 +174,35 @@ def create_trades_list(
     file_list_filtered : list
         list of filtered commodity (historical and forecast) file paths
     code_list : list
-        list of commodity codes available in commodity directory
+        list of commodity codes available in commodity directory,
+        that match the commodity list
     commodities_available : list
         list of all commodity file paths
 
     """
 
+    # commodities_available = glob.glob(commodity_path + commodity_list[0] + "/*")
+
+    # if len(commodity_list) > 1:
+    #     for commodity in commodity_list[1:]:
+    #         commodities_available += glob.glob(commodity_path + commodity + "/*")
+
     commodities_available = glob.glob(commodity_path + "*")
     commodities_available.sort()
+
+    codes_available = [os.path.split(f)[1] for f in commodities_available]
+    code_list = list(set(codes_available).intersection(set(commodity_list)))
+    
     trades_list = []
     print("Loading and formatting trade data...")
     # If trade data are aggregated (i.e., summed across
     # multiple commodity codes)
-    if len(commodities_available) == 1:
-        code_list = [os.path.split(f)[1] for f in commodities_available]
-        print("\t", commodities_available)
-        file_list_historical = glob.glob(commodity_path + "/*.csv")
+    if len(code_list) == 1:
+        print("\t", code_list[0])
+        file_list_historical = glob.glob(commodity_path + f"/{code_list[0]}/*.csv")
         file_list_historical.sort()
         if commodity_forecast_path is not None:
-            file_list_forecast = glob.glob(commodity_forecast_path + "/*.csv")
+            file_list_forecast = glob.glob(commodity_forecast_path + f"/{code_list[0]}/*.csv")
             file_list_forecast.sort()
             file_list = file_list_historical + file_list_forecast
         else:
@@ -210,10 +223,9 @@ def create_trades_list(
         trades_list.append(trades)
     # If trade data are stored by HS code
     else:
-        for i in range(len(commodities_available)):
-            code_list = [os.path.split(f)[1] for f in commodities_available]
+        for i in range(len(code_list)):
             code = code_list[i]
-            print("\t", commodities_available[i])
+            print("\t", code)
             file_list_historical = glob.glob(commodity_path + f"/{code}/*.csv")
             file_list_historical.sort()
 
