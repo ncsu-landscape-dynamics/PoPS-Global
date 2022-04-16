@@ -21,6 +21,9 @@ if __name__ == "__main__":
 
     coi = config["coi"]
     native_countries_list = config["native_countries_list"]
+
+    cores_to_use = config["cores_to_use"]
+
     try:
         model_files = config["model_files"]
     except: 
@@ -54,7 +57,7 @@ if __name__ == "__main__":
     for ISO3 in validation_df.index:
         countries_dict_keys.append(f"diff_obs_pred_metric_{ISO3}")
 
-    process_pool = multiprocessing.Pool()
+    process_pool = multiprocessing.Pool(cores_to_use)
     summary_dfs = process_pool.map(compute_stat_wrapper_func, param_samp)
     data = pd.concat(summary_dfs, ignore_index=True)
     data = data[

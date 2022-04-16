@@ -43,7 +43,7 @@ if __name__ == "__main__":
     commodity_list = config["commodity_list"]
     trade_type = config["trade_type"]
 
-    cores_to_use = config["cores"]
+    cores_to_use = config["cores_to_use"]
 
     commodity = "-".join(str(elem) for elem in commodity_list)
 
