@@ -485,12 +485,15 @@ def compute_stat_wrapper_func(param_sample):
 
 
 def mse(x):
+    """
+    Computes the mean when aggregating across runs of a parameter sample.
+    """
     return sum(x) / len(x)
 
 
 def avg_std(x):
     """
-    Compute average standard deviation when aggregating across runs
+    Computes average standard deviation when aggregating across runs
     of a parameter sample
     """
     return math.sqrt(sum(x ** 2) / len(x))
@@ -501,6 +504,9 @@ def mape(x):
 
 
 def fbeta(precision, recall, weight):
+    """
+    Computes the weighted harmonic mean of precision and recall (F-beta score).
+    """
     if (precision != 0) and (recall != 0):
         return ((1 + (weight ** 2)) * precision * recall) / (
             (weight ** 2) * precision + recall
@@ -510,6 +516,9 @@ def fbeta(precision, recall, weight):
 
 
 def f1(precision, recall):
+    """
+    Computes the harmonic mean of precision and recall (F1-score).
+    """
     if (precision != 0) and (recall != 0):
         return (2 * precision * recall) / (precision + recall)
     else:
@@ -519,6 +528,25 @@ def f1(precision, recall):
 # Forecast: Generating sampled parameter sets
 
 def generate_param_samples(agg_df, n_samples):
+    """
+    Generates a number of parameter sets sampled from a multivariate normal distribution
+    fit to the top performing samples of the calibration model runs. 
+
+    Parameters
+    -----------
+    agg_df : pandas dataframe
+        A dataframe of summary statistics returned from the model, including the following
+        named columns: "alpha" (model parameter), "beta" (model parameter), "lamba" (model parameter), 
+        "start" (model parameter), "top" (flag for samples above a pre-defined summary statistic threshold)/
+    n_samples : int
+        The number of sampled parameter sets to generate.
+
+    Returns
+    -------
+    samples_to_run : pandas dataframe
+        A pandas dataframe of parameter sets sampled from the 
+    
+    """
 
     start_years = agg_df.start.unique()
     param_samples_df = pd.DataFrame(columns=['alpha','beta','lamda','start'])
@@ -526,7 +554,7 @@ def generate_param_samples(agg_df, n_samples):
     top_sets=(
         agg_df
         .loc[(agg_df['top']=="top")]
-        [["start","alpha","beta","lamda","fbeta"]]
+        [["start","alpha","beta","lamda"]]
         .reset_index(drop=True)
     )
     top_count = len(top_sets.index)
