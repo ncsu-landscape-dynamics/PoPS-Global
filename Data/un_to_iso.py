@@ -4,8 +4,12 @@
 import pandas as pd
 import geopandas
 import os
+import dotenv
 
-dir_path = "Q:/Shared drives/APHIS  Projects/Pandemic/Data/"
+# Load variables and paths from .env
+dotenv.load_dotenv('.env')
+
+dir_path = os.getenv("DATA_PATH")
 
 countries_path = dir_path + "Country_list_shapefile/TM_WORLD_BORDERS-0.3"
 countries = geopandas.read_file(countries_path)
