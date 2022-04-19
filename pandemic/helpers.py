@@ -180,13 +180,6 @@ def create_trades_list(
         list of all commodity file paths
 
     """
-
-    # commodities_available = glob.glob(commodity_path + commodity_list[0] + "/*")
-
-    # if len(commodity_list) > 1:
-    #     for commodity in commodity_list[1:]:
-    #         commodities_available += glob.glob(commodity_path + commodity + "/*")
-
     commodities_available = glob.glob(commodity_path + "*")
     commodities_available.sort()
 

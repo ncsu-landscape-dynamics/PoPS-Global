@@ -39,8 +39,6 @@ from pandemic.output_files import (
     write_model_metadata,
 )
 
-print(sys.argv)
-
 # Read environmental variables
 load_dotenv(os.path.join(".env"))
 data_dir = os.getenv("DATA_PATH")
@@ -117,16 +115,10 @@ for i in range(len(trades_list)):
 # Run Model for Selected Time Steps and Commodities
 print("Number of commodities: ", len([c for c in lamda_c_list if c > 0]))
 print("Number of time steps: ", trades_list[0].shape[0])
-for i in range(len(lamda_c_list)):
-    if len(lamda_c_list) > 1:
-        code = commodity_list[i]
-        print("\nRunning model for commodity: ", code)
-    else:
-        code = commodity_list[0]
-        print(
-            "\nRunning model for commodity: ",
-            os.path.basename(commodities_available[0]),
-        )
+for code in range(len(lamda_c_list)):
+    code = commodity_list[i]
+    print("\nRunning model for commodity: ", code)
+    
     trades = trades_list[i]
     distances = distances
     locations = countries
