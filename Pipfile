@@ -8,6 +8,7 @@ black = "*"
 flake8 = "*"
 pytest = "*"
 pytest-cov = "*"
+ipykernel = "*"
 
 [pipenv]
 allow_prereleases = true

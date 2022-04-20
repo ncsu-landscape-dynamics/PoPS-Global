@@ -49,6 +49,7 @@ def create_config_args(
     random_seed=None,
     cols_to_drop=None,
     scenario_list=None,
+    lamda_weights_path=None,
 ):
     """
     Writes the configuration parameters to a JSON file.
@@ -151,6 +152,7 @@ def create_config_args(
     args["beta"] = beta
     args["mu"] = mu
     args["lamda_c_list"] = lamda_c_list
+    args["lamda_weights_path"] = lamda_weights_path
     args["phi"] = phi
     args["w_phi"] = w_phi
     args["start_year"] = start_year
