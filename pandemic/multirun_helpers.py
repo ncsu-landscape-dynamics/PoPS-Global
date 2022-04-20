@@ -181,7 +181,6 @@ def complete_run_check(param_sample):
     Parameters
     -----------
     param_sample : list
-        The 
 
     """
 
@@ -494,7 +493,7 @@ def mse(x):
 def avg_std(x):
     """
     Computes average standard deviation when aggregating across runs
-    of a parameter sample
+    of a parameter sample.
     """
     return math.sqrt(sum(x ** 2) / len(x))
 
@@ -544,8 +543,9 @@ def generate_param_samples(agg_df, n_samples):
     Returns
     -------
     samples_to_run : pandas dataframe
-        A pandas dataframe of parameter sets sampled from the 
-    
+        A pandas dataframe of parameter sets sampled from the multivariate normal distribution
+        of the top performing parameter samples from calibration.   
+
     """
 
     start_years = agg_df.start.unique()
