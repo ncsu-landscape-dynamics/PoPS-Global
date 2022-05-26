@@ -129,7 +129,7 @@ for code in range(len(lamda_c_list)):
     pres_ts0 = [False] * len(prob)
     infect_ts0 = np.empty(locations.shape[0], dtype="object")
     for country in native_countries_list:
-        country_index = countries.index[countries["NAME"] == country][0]
+        country_index = countries.index[countries["ISO3"] == country][0]
         pres_ts0[country_index] = True
         # if time steps are monthly and time to infectivity is in years
         if len(date_list[0]) > 4:
