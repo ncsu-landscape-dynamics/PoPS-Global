@@ -121,7 +121,7 @@ def download_trade_data(hs_str, freq_str, year_country_dict, auth_code_str):
                         print(f"\t\tRetry {retries} of 10 in {delay/60:.2f} minutes")
                     sys.stdout.flush()
                     time.sleep(delay)
-                    delay *= 2
+                    delay *= 1.1
                     retries += 1
 
             if "url" in locals():
