@@ -192,7 +192,7 @@ def create_trades_list(
     # multiple commodity codes)
     if len(code_list) == 1:
         print("\t", code_list[0])
-        file_list_historical = glob.glob(commodity_path + f"/{code_list[0]}/*.csv")
+        file_list_historical = glob.glob(f"{commodity_path}/{code_list[0]}/*.csv")
         file_list_historical.sort()
         if commodity_forecast_path is not None:
             file_list_forecast = glob.glob(f"{commodity_forecast_path}/{code_list[0]}/*.csv")
@@ -219,12 +219,12 @@ def create_trades_list(
         for i in range(len(code_list)):
             code = code_list[i]
             print("\t", code)
-            file_list_historical = glob.glob(commodity_path + f"/{code}/*.csv")
+            file_list_historical = glob.glob(f"{commodity_path}/{code}/*.csv")
             file_list_historical.sort()
 
             if commodity_forecast_path is not None:
                 file_list_forecast = glob.glob(
-                    commodity_forecast_path + f"/{code}/*.csv"
+                    f"{commodity_forecast_path}/{code}/*.csv"
                 )
                 file_list_forecast.sort()
                 file_list = file_list_historical + file_list_forecast
