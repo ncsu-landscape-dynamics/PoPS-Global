@@ -34,6 +34,7 @@ if __name__ == "__main__":
     transmission_lag_type = config["transmission_lag_type"]
     gamma_shape = config["gamma_shape"]
     gamma_scale = config["gamma_scale"]
+    mask = config["mask"]
     threshold_val = config["threshold_val"]
     scaled_min = config["scaled_min"]
     scaled_max = config["scaled_max"]
@@ -81,6 +82,8 @@ if __name__ == "__main__":
         phi=1,
         w_phi=1,
         start_year=start_year,
+        mask=mask,
+        threshold=threshold_val,
         stop_year=None,
         save_entry=False,
         save_estab=False,

@@ -37,6 +37,8 @@ def create_config_args(
     phi,
     w_phi,
     start_year,
+    mask,
+    threshold,
     stop_year=None,
     save_main_output=True,
     save_metadata=True,
@@ -167,6 +169,8 @@ def create_config_args(
     args["w_phi"] = w_phi
     args["start_year"] = start_year
     args["stop_year"] = stop_year
+    args["mask"] = mask
+    args["threshold"] = threshold
     args["transmission_lag_unit"] = "year"
     # Transmission lag type can be static, stochastic or none
     args["transmission_lag_type"] = transmission_lag_type
