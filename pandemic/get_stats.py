@@ -186,7 +186,7 @@ if __name__ == "__main__":
     agg_dict = {**agg_dict, **prob_agg_dict, **countries_agg_dict}
     
     if run_type == "forecast":
-        agg_df = data.groupby("run").agg(agg_dict)
+        agg_df = data.groupby("run_num").agg(agg_dict)
     else:
         agg_df = data.groupby("sample").agg(agg_dict)
 
