@@ -547,8 +547,6 @@ def generate_param_samples(agg_df, n_samples):
         of the top performing parameter samples from calibration.   
 
     """
-
-    start_years = agg_df.start.unique()
     param_samples_df = pd.DataFrame(columns=['alpha','beta','lamda','start'])
 
     top_sets=(
@@ -557,9 +555,11 @@ def generate_param_samples(agg_df, n_samples):
         [["start","alpha","beta","lamda"]]
         .reset_index(drop=True)
     )
+    start_years = top_sets.start.unique()
     top_count = len(top_sets.index)
 
     year_counts = []
+    set_counts = [0]
 
     for year in start_years:
         year_sets= top_sets.loc[top_sets['start'] == year].reset_index(drop=True)
@@ -567,20 +567,24 @@ def generate_param_samples(agg_df, n_samples):
 
         param_mean = np.mean(top_sets[["alpha","beta","lamda"]].values, axis=0)
         param_cov = np.cov(top_sets[["alpha","beta","lamda"]].values, rowvar=0)
-        param_sample = np.random.multivariate_normal(param_mean, param_cov, int(n_samples*1.1))
+        param_sample = np.random.multivariate_normal(param_mean, param_cov, int(n_samples*1.5))
         alpha = param_sample[:,0]
         beta = param_sample[:,1]
         lamda = param_sample[:,2]
-        start = [year]*int(n_samples*1.1)
+        start = [year]*int(n_samples*1.5)
         param_sample_df = pd.DataFrame({"alpha":alpha, "lamda":lamda, "beta":beta,"start":start})
-        param_sample_df.loc[param_sample_df['alpha']<=1].reset_index(drop=True)
+        param_sample_df = param_sample_df.loc[param_sample_df['alpha']<=1].reset_index(drop=True)
+        set_counts.append(set_counts[-1] + len(param_sample_df.index))
 
         param_samples_df = pd.concat([param_samples_df, param_sample_df]).reset_index(drop=True)
 
-        print(f"Year: {year}, Means: {param_mean}, Covariance Matrix: {param_cov}")
+        print(
+            f"Year: {year}, Count: {year_counts[-1]},\n"
+            f"Means: {param_mean},\n" 
+            f"Covariance Matrix: {param_cov}\n")
 
-    samp_runs = [item for sublist in [list(range(i*int(n_samples*1.1), int(n_samples*1.1)*i + year_count)) for i, year_count in enumerate(year_counts)] for item in sublist]
+    samp_runs = [item for sublist in [list(range(set_counts[i], set_counts[i] + year_count)) for i, year_count in enumerate(year_counts)] for item in sublist]
 
-    samples_to_run = param_samples_df.loc[samp_runs]
-
-    return samples_to_run 
+    samples_to_run = param_samples_df.loc[samp_runs].reset_index(drop=True) 
+ 
+    return samples_to_run
