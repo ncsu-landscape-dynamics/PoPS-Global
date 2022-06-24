@@ -20,7 +20,16 @@ if __name__ == "__main__":
         str(sys.argv[7])
     ]
 
-    with open("config.json") as json_file:
+
+    load_dotenv(os.path.join(".env"))
+    input_dir = os.getenv("INPUT_PATH")
+    temp_dir = os.getenv("TEMP_OUTPATH")
+    out_dir = os.getenv("OUTPUT_PATH")
+    sim_name = os.getenv("SIM_NAME")
+
+    config_json_path = f"{out_dir}/config_{sim_name}.json"
+
+    with open(config_json_path) as json_file:
         config = json.load(json_file)
 
     try:
@@ -28,7 +37,6 @@ if __name__ == "__main__":
     except: 
         model_files = "Keep"
         
-    sim_name = config["sim_name"]
     native_countries_list = config["native_countries_list"]
 
     transmission_lag_type = config["transmission_lag_type"]
@@ -48,17 +56,13 @@ if __name__ == "__main__":
 
     commodity = "-".join(str(elem) for elem in commodity_list)
 
-    load_dotenv(os.path.join(".env"))
-    input_dir = os.getenv("INPUT_PATH")
-    temp_dir = os.getenv("TEMP_OUTPATH")
-
     if model_files == "Temp":
-        out_dir = f"{temp_dir}/samp{alpha}_{lamda_c_list[0]}_{start_year}"
+        out_path = f"{temp_dir}/samp{alpha}_{lamda_c_list[0]}_{start_year}"
     else:
-        out_dir = f'{os.getenv("OUTPUT_PATH")}/{sim_name}_{run_type}'
+        out_path = f'{out_dir}/{sim_name}_{run_type}'
 
     config_out_path = (
-        rf"{out_dir}/config/"
+        rf"{out_path}/config/"
         rf"year{start_year}_alpha{alpha}"
         rf"_beta{beta}"
         rf"_lamda{lamda_c_list[0]}"

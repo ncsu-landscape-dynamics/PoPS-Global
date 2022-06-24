@@ -11,12 +11,23 @@ if __name__ == "__main__":
 
     from pandemic.multirun_helpers import compute_stat_wrapper_func, mse, f1, fbeta, avg_std
 
-    run_type = sys.argv[1] # Add an argument to get: calibrate or forecast 
+    run_type = sys.argv[1] # Argument to get: calibrate or forecast 
 
-    with open("config.json") as json_file:
+    # Read environmental variables
+    env_file = os.path.join(".env")
+    load_dotenv(env_file)
+
+    # Path to formatted model inputs
+    input_dir = os.getenv("INPUT_PATH")
+    out_dir = os.getenv("OUTPUT_PATH")
+    sim_name = os.getenv("SIM_NAME")
+
+    config_json_path = f"{out_dir}/config_{sim_name}.json"
+
+    with open(config_json_path) as json_file:
         config = json.load(json_file)
 
-    run_name = f'{config["sim_name"]}_{run_type}'
+    run_name = f'{sim_name}_{run_type}'
     commodity = "-".join(str(elem) for elem in config["commodity_list"])
 
     coi = config["coi"]
@@ -28,10 +39,6 @@ if __name__ == "__main__":
         model_files = config["model_files"]
     except: 
         model_files = "Keep"
-
-    load_dotenv(os.path.join(".env"))
-    data_dir = os.getenv("DATA_PATH")
-    input_dir = os.getenv("INPUT_PATH")
 
     if model_files == "Temp":
         out_dir = (

@@ -241,8 +241,15 @@ def pending_run_check(completed_runs, param_sets, full_set):
 
 def run_checker(param_sample):
     # Global parameters from config
-    with open("config.json") as json_file:
+    load_dotenv(os.path.join(".env"))
+    out_dir = os.getenv("OUTPUT_PATH")
+    sim_name = os.getenv("SIM_NAME")
+
+    config_json_path = f"{out_dir}/config_{sim_name}.json"
+    
+    with open(config_json_path) as json_file:
         config = json.load(json_file)
+
     alphas = config["alphas"]
     betas = config["betas"]
     lamdas = config["lamdas"]
@@ -405,8 +412,12 @@ def compute_summary_stats(
 def compute_stat_wrapper_func(param_sample):
     load_dotenv(os.path.join(".env"))
     input_dir = os.getenv("INPUT_PATH")
+    out_dir = os.getenv("OUTPUT_PATH")
+    sim_name = os.getenv("SIM_NAME")
 
-    with open("config.json") as json_file:
+    config_json_path = f"{out_dir}/config_{sim_name}.json"
+
+    with open(config_json_path) as json_file:
         config = json.load(json_file)
     coi = config["coi"]
     native_countries_list = config["native_countries_list"]
