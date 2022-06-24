@@ -10,7 +10,7 @@ from pandemic.multirun_helpers import create_params, execute_model_runs
 from pandemic.create_config_params import create_config_args
 
 if __name__ == "__main__":
-    alpha, beta, lamda_c_list, start_year, start_run, num_runs, run_type = [
+    alpha, beta, lamda_c_list, start_year, start_run, end_run, run_type = [
         float(sys.argv[1]),
         float(sys.argv[2]),
         [float(sys.argv[3])],
@@ -116,7 +116,7 @@ if __name__ == "__main__":
             rf"lamda{param_vals['lamda_c_list'][0]}"
         ),
         iteration_start=start_run,
-        iteration_end=num_runs,
+        iteration_end=end_run,
         run_type=run_type,
     )
 
