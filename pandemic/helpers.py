@@ -49,7 +49,7 @@ def distance_between(array_template, shapefile):
     """
 
     distance_array = np.zeros_like(array_template, dtype=float)
-    centroids = shapefile.centroid.geometry
+    centroids = shapefile.to_crs('+proj=cea').centroid.geometry.to_crs(shapefile.crs)
     shapefile["centroid_lon"] = centroids.x
     shapefile["centroid_lat"] = centroids.y
     centroids_array = shapefile.loc[:, ["centroid_lat", "centroid_lon"]].values
