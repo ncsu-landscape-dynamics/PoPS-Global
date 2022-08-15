@@ -435,7 +435,7 @@ def write_model_metadata(
     phyto_weights,
     outpath,
     run_num,
-    scenario_list=None,
+    scenario_list,
 ):
     """
     Write model parameters and configuration to metadata file
@@ -495,6 +495,8 @@ def write_model_metadata(
         Directory path to save json file
     run_num : int
         Stochastic run number
+    scenario_list : list
+        List of scenarios representing potential management actions or changes in drivers.
 
     Returns
     -------
