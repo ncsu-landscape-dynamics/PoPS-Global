@@ -7,7 +7,7 @@ import os
 import dotenv
 
 # Load variables and paths from .env
-dotenv.load_dotenv('.env')
+dotenv.load_dotenv(".env")
 
 dir_path = os.getenv("DATA_PATH")
 
