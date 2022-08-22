@@ -4,10 +4,11 @@ import multiprocessing
 from dotenv import load_dotenv
 import json
 
-sys.path.append(os.getcwd()) # noqa: E402
+sys.path.append(os.getcwd())
 
-from pandemic.multirun_helpers import create_params, execute_model_runs
-from pandemic.create_config_params import create_config_args
+from pandemic.multirun_helpers import create_params, execute_model_runs  # noqa: E402
+from pandemic.create_config_params import create_config_args  # noqa: E402
+
 
 if __name__ == "__main__":
     alpha, beta, lamda_c_list, start_year, start_run, end_run, run_type = [

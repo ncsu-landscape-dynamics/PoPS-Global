@@ -27,17 +27,17 @@ import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 
-sys.path.append(os.getcwd()) # noqa: E402
+sys.path.append(os.getcwd())
 
-from pandemic.helpers import create_trades_list
-from pandemic.model_equations import pandemic_multiple_time_steps
+from pandemic.helpers import create_trades_list  # noqa: E402
+from pandemic.model_equations import pandemic_multiple_time_steps  # noqa: E402
 from pandemic.output_files import (
     aggregate_monthly_output_to_annual,
     write_annual_output,
     create_model_dirs,
     save_model_output,
     write_model_metadata,
-)
+)  # noqa: E402
 
 
 # Read environmental variables
