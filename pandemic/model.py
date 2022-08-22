@@ -31,13 +31,13 @@ sys.path.append(os.getcwd())
 
 from pandemic.helpers import create_trades_list  # noqa: E402
 from pandemic.model_equations import pandemic_multiple_time_steps  # noqa: E402
-from pandemic.output_files import (
+from pandemic.output_files import (  # noqa: E402
     aggregate_monthly_output_to_annual,
     write_annual_output,
     create_model_dirs,
     save_model_output,
     write_model_metadata,
-)  # noqa: E402
+)
 
 
 # Read environmental variables
