@@ -20,7 +20,8 @@ def get_GBIF_key(species):
     return usageKey
 
 
-# GBIF API call: occurrence status = present, count for each species/year, for all countries
+# GBIF API call: occurrence status = present, 
+# count for each species/year, for all countries
 
 
 def gbif_counts_api(usageKey, year):
@@ -90,7 +91,8 @@ def get_GBIF_records(species, year_list):
     )[["ISO3", "ObsFirstIntro"]]
 
     print(
-        f"First recorded observations ({len(first_records.index)} countries) processed successfully!"
+        f"First recorded observations ({len(first_records.index)}"
+        " countries) processed successfully!"
     )
 
     return first_records

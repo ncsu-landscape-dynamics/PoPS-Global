@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     try:
         model_files = config["model_files"]
-    except:
+    except KeyError:
         model_files = "Keep"
     if model_files == "Temp":
         out_dir = (
