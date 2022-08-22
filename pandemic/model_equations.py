@@ -51,6 +51,7 @@ def pandemic_single_time_step(
     gamma_shape,
     gamma_scale,
     scenario_list=None,
+    lamda_weights=None,
 ):
     """
     Returns the probability of establishment, probability of entry, and
@@ -91,7 +92,7 @@ def pandemic_single_time_step(
     mu : float
         The mortality rate of the pest or pathogen during transport
     lamda_c : float
-        The commodity importance [0,1] of commodity (c) in transporting the
+        The commodity importance of commodity (c) in transporting the
         pest or pathogen
     phi : int
         The degree of polyphagy of the pest of interest described as the number
@@ -128,6 +129,11 @@ def pandemic_single_time_step(
         Nested list of scenarios, with elements ordered as: year (YYYY),
         origin ISO3 code, destination ISO3 code, adjustment type (e.g.,
         "increase", "decrease"), and adjustment percent.
+    lamda_weights : data frame (optional)
+        Dataframe of weights applied to lamda when the commodity of interest
+        is aggregated with others in the HS code (e.g., tomato seed grouped
+        with vegetable seed in Comtrade data). Value can be the proportion
+        of the import thought to be the commodity of interest.
 
     Returns
     -------
@@ -169,6 +175,7 @@ def pandemic_single_time_step(
         # and populating output matrices
         i = locations.index[locations["ISO3"] == loc_pair[0]][0]
         origin = locations.iloc[i, :]
+
         # check that Phytosanitary capacity data is available if not
         # set value to 0 to remove this aspect of the equation
         if "Phytosanitary Capacity" in origin:
@@ -232,6 +239,13 @@ def pandemic_single_time_step(
             if T_ijct == 0:
                 probability_of_entry_ijct = 0
             else:
+                if lamda_weights is not None:
+                    lamda_c_weight = lamda_weights[
+                        lamda_weights["ISO3"] == destination["ISO3"]
+                    ]["lamda_weight_scaled"].values[0]
+                else:
+                    lamda_c_weight = 0
+
                 probability_of_entry_ijct = probability_of_entry(
                     rho_i,
                     rho_j,
@@ -243,7 +257,9 @@ def pandemic_single_time_step(
                     mu,
                     d_ij,
                     chi_it,
+                    lamda_c_weight,
                 )
+
             probability_of_establishment_ijt = probability_of_establishment(
                 alpha,
                 beta,
@@ -387,6 +403,7 @@ def pandemic_multiple_time_steps(
     gamma_shape,
     gamma_scale,
     scenario_list=None,
+    lamda_weights=None,
 ):
     """
     Returns the probability of establishment, probability of entry, and
@@ -528,6 +545,7 @@ def pandemic_multiple_time_steps(
             gamma_shape=gamma_shape,
             gamma_scale=gamma_scale,
             scenario_list=scenario_list,
+            lamda_weights=lamda_weights,
         )
 
         establishment_probabilities[t] = ts_out[1]

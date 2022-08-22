@@ -6,7 +6,6 @@ from pandemic.probability_calculations import (
 
 
 def test_probability_of_entry():
-
     assert (
         probability_of_entry(
             rho_i=1,
@@ -19,6 +18,7 @@ def test_probability_of_entry():
             mu=0.02,
             d_ij=150,
             chi_it=1,
+            lamda_c_weight=0.2,
         )
         == 0
     )
@@ -35,14 +35,15 @@ def test_probability_of_entry():
             mu=0.02,
             d_ij=150,
             chi_it=1,
+            lamda_c_weight=0,
         )
         == 0
     )
 
     assert (
         probability_of_entry(
-            rho_i=0,
-            rho_j=0,
+            rho_i=1,
+            rho_j=1,
             zeta_it=0,
             lamda_c=1,
             T_ijct=500,
@@ -51,14 +52,15 @@ def test_probability_of_entry():
             mu=0.02,
             d_ij=150,
             chi_it=1,
+            lamda_c_weight=0.5,
         )
         == 0
     )
 
     assert (
         probability_of_entry(
-            rho_i=0,
-            rho_j=0,
+            rho_i=1,
+            rho_j=1,
             zeta_it=1,
             lamda_c=1,
             T_ijct=500,
@@ -67,8 +69,27 @@ def test_probability_of_entry():
             mu=0.02,
             d_ij=150,
             chi_it=0,
+            lamda_c_weight=0.2,
         )
         == 0
+    )
+
+    assert (
+        0
+        < probability_of_entry(
+            rho_i=0,
+            rho_j=0.5,
+            zeta_it=1,
+            lamda_c=1,
+            T_ijct=500,
+            min_Tc=0,
+            max_Tc=10000,
+            mu=0.02,
+            d_ij=150,
+            chi_it=1,
+            lamda_c_weight=0.2,
+        )
+        <= 1
     )
 
 

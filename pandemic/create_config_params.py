@@ -56,6 +56,7 @@ def create_config_args(
     cols_to_drop=None,
     lamda_weights_path=None,
     scenario_list=None,
+    lamda_weights_path=None,
 ):
     """
     Writes the configuration parameters to a JSON file.

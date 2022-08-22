@@ -3,7 +3,7 @@ name: Conda
 on:
   push:
     branches:
-    - main
+      - main
   pull_request:
 
 jobs:
@@ -33,5 +33,5 @@ jobs:
       - name: Run pytest
         shell: bash -l {0}
         run: |
-            conda install pytest
-            pytest tests
+          conda install pytest
+          pytest tests
