@@ -27,7 +27,7 @@ import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 
-sys.path.append(os.getcwd())
+sys.path.append(os.getcwd()) # noqa: E402
 
 from pandemic.helpers import create_trades_list
 from pandemic.model_equations import pandemic_multiple_time_steps

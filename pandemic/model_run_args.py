@@ -4,7 +4,7 @@ import multiprocessing
 from dotenv import load_dotenv
 import json
 
-sys.path.append(os.getcwd())
+sys.path.append(os.getcwd()) # noqa: E402
 
 from pandemic.multirun_helpers import create_params, execute_model_runs
 from pandemic.create_config_params import create_config_args
