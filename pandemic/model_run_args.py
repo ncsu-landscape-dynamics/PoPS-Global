@@ -32,7 +32,7 @@ if __name__ == "__main__":
         config = json.load(json_file)
     try:
         model_files = config["model_files"]
-    except:
+    except KeyError:
         model_files = "Keep"
     native_countries_list = config["native_countries_list"]
 
