@@ -39,7 +39,7 @@ def write_commands(params, start_run, end_run, run_type, model_files="Keep"):
     Parameters
     -----------
     params : list
-        A list with the key model parameters, ordered: 
+        A list with the key model parameters, ordered:
             [alpha, beta, lamba, start year]
     start_run : int
         Integer denoting the starting stochastic run number(e.g., 0).
@@ -48,7 +48,7 @@ def write_commands(params, start_run, end_run, run_type, model_files="Keep"):
     run_type : str
         The type of run being conducted. Options are "calibrate" or "forecast".
     model_files : str
-        Default is "Keep". If you are running on HPC and do not wish to 
+        Default is "Keep". If you are running on HPC and do not wish to
         save model outputs (only summary stats), you can use "Temp".
 
     """
@@ -175,7 +175,7 @@ def execute_model_runs(
 
 def complete_run_check(param_sample):
     """
-    Generates a list of completed model runs by checking for their outputs. 
+    Generates a list of completed model runs by checking for their outputs.
     Used to check for run completeness when calibrating.
 
     Parameters
@@ -513,7 +513,7 @@ def mape(x):
 
 def fbeta(precision, recall, weight):
     """
-    Computes the weighted harmonic mean of precision and recall 
+    Computes the weighted harmonic mean of precision and recall
     (F-beta score).
     """
     if (precision != 0) and (recall != 0):
@@ -539,17 +539,17 @@ def f1(precision, recall):
 
 def generate_param_samples(agg_df, n_samples):
     """
-    Generates a number of parameter sets sampled from a multivariate 
-    normal distribution fit to the top performing samples of the 
+    Generates a number of parameter sets sampled from a multivariate
+    normal distribution fit to the top performing samples of the
     calibration model runs.
 
     Parameters
     -----------
     agg_df : pandas dataframe
-        A dataframe of summary statistics returned from the model, 
-        including the following named columns: "alpha" (model parameter), 
-        "beta" (model parameter), "lamba" (model parameter), "start" 
-        (model parameter), "top" (flag for samples above a pre-defined 
+        A dataframe of summary statistics returned from the model,
+        including the following named columns: "alpha" (model parameter),
+        "beta" (model parameter), "lamba" (model parameter), "start"
+        (model parameter), "top" (flag for samples above a pre-defined
         summary statistic threshold)
     n_samples : int
         The number of sampled parameter sets to generate.
@@ -557,8 +557,8 @@ def generate_param_samples(agg_df, n_samples):
     Returns
     -------
     samples_to_run : pandas dataframe
-        A pandas dataframe of parameter sets sampled from the multivariate 
-        normal distribution of the top performing parameter samples 
+        A pandas dataframe of parameter sets sampled from the multivariate
+        normal distribution of the top performing parameter samples
         from calibration.
 
     """

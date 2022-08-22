@@ -489,7 +489,7 @@ def write_model_metadata(
     run_num : int
         Stochastic run number
     scenario_list : list
-        List of scenarios representing potential management actions or 
+        List of scenarios representing potential management actions or
         changes in drivers.
 
     Returns

@@ -46,7 +46,7 @@ def distance_between(array_template, shapefile):
     """
 
     distance_array = np.zeros_like(array_template, dtype=float)
-    centroids = shapefile.to_crs('+proj=cea').centroid.geometry.to_crs(shapefile.crs)
+    centroids = shapefile.to_crs("+proj=cea").centroid.geometry.to_crs(shapefile.crs)
     shapefile["centroid_lon"] = centroids.x
     shapefile["centroid_lat"] = centroids.y
     centroids_array = shapefile.loc[:, ["centroid_lat", "centroid_lon"]].values
@@ -56,7 +56,6 @@ def distance_between(array_template, shapefile):
             origin = centroids_array[i]
             distance = haversine(origin, destination)
             distance_array[j, i] = distance
-
     return distance_array
 
 
@@ -182,7 +181,7 @@ def create_trades_list(
 
     codes_available = [os.path.split(f)[1] for f in commodities_available]
     code_list = list(set(codes_available).intersection(set(commodity_list)))
-    
+
     trades_list = []
     print("Loading and formatting trade data...")
     # If trade data are aggregated (i.e., summed across
@@ -194,12 +193,11 @@ def create_trades_list(
         if commodity_forecast_path is not None:
             file_list_forecast = glob.glob(
                 f"{commodity_forecast_path}/{code_list[0]}/*.csv"
-                )
+            )
             file_list_forecast.sort()
             file_list = file_list_historical + file_list_forecast
         else:
             file_list = file_list_historical
-
         file_list_filtered = filter_trades_list(
             file_list=file_list,
             start_year=start_year,
@@ -229,7 +227,6 @@ def create_trades_list(
                 file_list = file_list_historical + file_list_forecast
             else:
                 file_list = file_list_historical
-
             file_list_filtered = filter_trades_list(
                 file_list=file_list, start_year=start_year
             )
@@ -245,7 +242,6 @@ def create_trades_list(
                     encoding="latin1",
                 ).values
             trades_list.append(trades)
-
     return trades_list, file_list_filtered, code_list, commodities_available
 
 
