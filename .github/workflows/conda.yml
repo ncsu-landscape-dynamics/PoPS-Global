@@ -30,6 +30,9 @@ jobs:
           environment-file: popsglobal_env.yml
           python-version: ${{ matrix.python-version }}
           auto-activate-base: false
+          mamba-version: "*"
+          channels: conda-forge
+          channel-priority: true
       - name: Run pytest
         shell: bash -l {0}
         run: |
