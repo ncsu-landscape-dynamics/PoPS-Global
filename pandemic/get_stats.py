@@ -9,9 +9,15 @@ if __name__ == "__main__":
 
     sys.path.append(os.getcwd())
 
-    from pandemic.multirun_helpers import compute_stat_wrapper_func, mse, f1, fbeta, avg_std
+    from pandemic.multirun_helpers import (
+        compute_stat_wrapper_func,
+        mse,
+        f1,
+        fbeta,
+        avg_std,
+    )
 
-    run_type = sys.argv[1] # Argument to get: calibrate or forecast 
+    run_type = sys.argv[1]  # Argument to get: calibrate or forecast
 
     # Read environmental variables
     env_file = os.path.join(".env")
@@ -26,8 +32,7 @@ if __name__ == "__main__":
 
     with open(config_json_path) as json_file:
         config = json.load(json_file)
-
-    run_name = f'{sim_name}_{run_type}'
+    run_name = f"{sim_name}_{run_type}"
     commodity = "-".join(str(elem) for elem in config["commodity_list"])
 
     coi = config["coi"]
@@ -37,20 +42,20 @@ if __name__ == "__main__":
 
     try:
         model_files = config["model_files"]
-    except: 
+    except:
         model_files = "Keep"
-
     if model_files == "Temp":
         out_dir = (
             f'{os.getenv("TEMP_OUTPATH")}/samp{sys.argv[2]}_{sys.argv[3]}_{sys.argv[4]}'
         )
     else:
         out_dir = os.getenv("OUTPUT_PATH")
-
     param_samp = glob.glob(f"{out_dir}/{run_name}/*{commodity}*")
 
     validation_df = pd.read_csv(
-        input_dir + "/first_records_validation.csv", header=0, index_col=0,
+        input_dir + "/first_records_validation.csv",
+        header=0,
+        index_col=0,
     )
 
     # Set up probability by year dictionary keys (column names)
@@ -58,12 +63,10 @@ if __name__ == "__main__":
     year_probs_dict_keys = []
     for year in sim_years:
         year_probs_dict_keys.append(f"prob_by_{year}_{coi}")
-
     # Set up difference by recorded country dictionary keys (column names)
     countries_dict_keys = []
     for ISO3 in validation_df.index:
         countries_dict_keys.append(f"diff_obs_pred_metric_{ISO3}")
-
     process_pool = multiprocessing.Pool(cores_to_use)
     summary_dfs = process_pool.map(compute_stat_wrapper_func, param_samp)
     data = pd.concat(summary_dfs, ignore_index=True)
@@ -103,7 +106,6 @@ if __name__ == "__main__":
         data[f"diff_obs_pred_metric_{ISO3}"] = data[
             f"diff_obs_pred_metric_{ISO3}"
         ].astype(float)
-
     # TP / (TP + FN)
     data["count_known_countries_time_window_recall"] = data[
         "count_known_countries_time_window"
@@ -141,11 +143,9 @@ if __name__ == "__main__":
         axis=1,
     )
 
-    # summary_stat_path = f"{out_dir}/summary_stats/{os.path.split(sim)[-1]}/"
     summary_stat_path = f'{os.getenv("OUTPUT_PATH")}/summary_stats/{run_name}/'
     if not os.path.exists(summary_stat_path):
         os.makedirs(summary_stat_path)
-    # data.to_csv(summary_stat_path + "/summary_stats_wPrecisionRecallF1FBetaAggProb.csv")
 
     if os.path.isfile(
         summary_stat_path + "/summary_stats_wPrecisionRecallF1FBetaAggProb.csv"
@@ -161,7 +161,6 @@ if __name__ == "__main__":
             summary_stat_path + "/summary_stats_wPrecisionRecallF1FBetaAggProb.csv",
             index=False,
         )
-
     process_pool.close()
 
     agg_dict = {
@@ -191,11 +190,10 @@ if __name__ == "__main__":
     )
 
     agg_dict = {**agg_dict, **prob_agg_dict, **countries_agg_dict}
-    
+
     if run_type == "forecast":
         agg_df = data.groupby("run_num").agg(agg_dict)
     else:
         agg_df = data.groupby("sample").agg(agg_dict)
-
     agg_df.columns = ["_".join(x) for x in agg_df.columns.values]
     agg_df.to_csv(summary_stat_path + "/summary_stats_bySample.csv")

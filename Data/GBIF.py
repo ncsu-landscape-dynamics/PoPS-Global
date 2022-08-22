@@ -1,4 +1,3 @@
-
 import requests
 from time import sleep
 
@@ -6,6 +5,7 @@ import pandas as pd
 import itertools
 
 # GBIF Match API call: exact and fuzzy matching of species name to GBIF codes
+
 
 def get_GBIF_key(species):
     call = f"https://api.gbif.org/v1/species/match?verbose=true&name={species}"
@@ -22,8 +22,13 @@ def get_GBIF_key(species):
 
 # GBIF API call: occurrence status = present, count for each species/year, for all countries
 
+
 def gbif_counts_api(usageKey, year):
-    call = f"https://api.gbif.org/v1/occurrence/search?year={year}&occurrence_status=present&taxonKey={usageKey}&facet=country&facetlimit=300&limit=0"
+    call = (
+        f"https://api.gbif.org/v1/occurrence/search?year={year}"
+        f"&occurrence_status=present&taxonKey={usageKey}"
+        f"&facet=country&facetlimit=300&limit=0"
+    )
     return call
 
 
@@ -55,10 +60,12 @@ def get_GBIF_records(species, year_list):
     species_years = list(itertools.product(*species_year))
 
     api_calls_df = pd.DataFrame(species_years, columns=["species", "years"])
-    api_calls_df["api_call"] = api_calls_df.apply(lambda x: gbif_counts_api(x.species, x.years), axis=1)
+    api_calls_df["api_call"] = api_calls_df.apply(
+        lambda x: gbif_counts_api(x.species, x.years), axis=1
+    )
 
     # Sending API calls - response of [[countries],[counts]]
-    
+
     api_calls_df["result"] = api_calls_df.api_call.apply(call_gbif_api)
 
     # Expanding the results into lists of countries and counts
@@ -69,22 +76,21 @@ def get_GBIF_records(species, year_list):
         api_calls_df.drop(columns="result")
         .set_index(["species", "years", "api_call"])
         .apply(pd.Series.explode)
-        .reset_index()
-        [["years","country"]] # Extracting just country year
-        .groupby("country").min().years
-        .reset_index() # as first records
+        .reset_index()[["years", "country"]]  # Extracting just country year
+        .groupby("country")
+        .min()
+        .years.reset_index()  # as first records
         # Match ISO2 to ISO3
-        .rename(columns={"country":"ISO2","years":"ObsFirstIntro"})
+        .rename(columns={"country": "ISO2", "years": "ObsFirstIntro"})
     )
 
     iso_map = pd.read_csv("Data/un_to_iso.csv")
-    first_records = (
-        first_records.merge(
-            iso_map[["ISO2","ISO3"]]
-            .drop_duplicates(), on="ISO2")
-        [["ISO3","ObsFirstIntro"]]
+    first_records = first_records.merge(
+        iso_map[["ISO2", "ISO3"]].drop_duplicates(), on="ISO2"
+    )[["ISO3", "ObsFirstIntro"]]
+
+    print(
+        f"First recorded observations ({len(first_records.index)} countries) processed successfully!"
     )
 
-    print(f"First recorded observations ({len(first_records.index)} countries) processed successfully!")
-
-    return first_records 
+    return first_records

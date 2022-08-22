@@ -17,9 +17,8 @@ if __name__ == "__main__":
         int(sys.argv[4]),
         int(sys.argv[5]),
         int(sys.argv[6]),
-        str(sys.argv[7])
+        str(sys.argv[7]),
     ]
-
 
     load_dotenv(os.path.join(".env"))
     input_dir = os.getenv("INPUT_PATH")
@@ -31,12 +30,10 @@ if __name__ == "__main__":
 
     with open(config_json_path) as json_file:
         config = json.load(json_file)
-
     try:
         model_files = config["model_files"]
-    except: 
+    except:
         model_files = "Keep"
-        
     native_countries_list = config["native_countries_list"]
 
     transmission_lag_type = config["transmission_lag_type"]
@@ -59,8 +56,7 @@ if __name__ == "__main__":
     if model_files == "Temp":
         out_path = f"{temp_dir}/samp{alpha}_{lamda_c_list[0]}_{start_year}"
     else:
-        out_path = f'{out_dir}/{sim_name}_{run_type}'
-
+        out_path = f"{out_dir}/{sim_name}_{run_type}"
     config_out_path = (
         rf"{out_path}/config/"
         rf"year{start_year}_alpha{alpha}"
@@ -71,9 +67,10 @@ if __name__ == "__main__":
 
     if run_type == "calibrate":
         commodity_forecast_path = None
-    else: 
-        commodity_forecast_path=input_dir + f"/comtrade/trade_forecast/{timestep}_{trade_type}/",
-
+    else:
+        commodity_forecast_path = (
+            input_dir + f"/comtrade/trade_forecast/{timestep}_{trade_type}/",
+        )
     param_vals, config_file_path = create_config_args(
         config_out_path=config_out_path,
         commodity_list=commodity_list,
@@ -120,6 +117,8 @@ if __name__ == "__main__":
         run_type=run_type,
     )
 
-    p = multiprocessing.Pool(cores_to_use)  # set this number to the cores per node to use
+    p = multiprocessing.Pool(
+        cores_to_use
+    )  # set this number to the cores per node to use
     results = p.starmap(execute_model_runs, param_list)
     p.close()

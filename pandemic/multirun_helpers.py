@@ -35,6 +35,7 @@ import os
 import math
 from dotenv import load_dotenv
 
+
 def write_commands(params, start_run, end_run, run_type, model_files="Keep"):
     """
     Writes a command to run the multiple runs of the model the command line
@@ -51,24 +52,24 @@ def write_commands(params, start_run, end_run, run_type, model_files="Keep"):
     run_type : str
         The type of run being conducted. Options are "calibrate" or "forecast".
     model_files : str
-        Default is "Keep". If you are running on HPC and do not wish to save model outputs 
+        Default is "Keep". If you are running on HPC and do not wish to save model outputs
         (only summary stats), you can use "Temp".
 
     """
     # Name the script to be run
     if model_files == "Temp":
         script = "./hpc/wrapper_script.csh"
-    else: 
+    else:
         script = "python pandemic/model_run_args.py"
         # script = "python model_run_args.py"
     output = (
         " ".join(
             [
                 script,
-                str(params[0]), # alpha
-                str(params[1]), # beta
-                str(params[2]), # lamda
-                str(params[3]), # start year
+                str(params[0]),  # alpha
+                str(params[1]),  # beta
+                str(params[2]),  # lamda
+                str(params[3]),  # start year
                 str(start_run),
                 str(end_run),
                 run_type,
@@ -76,7 +77,7 @@ def write_commands(params, start_run, end_run, run_type, model_files="Keep"):
         )
         + "\n"
     )
-    return output 
+    return output
 
 
 def create_params(
@@ -115,13 +116,9 @@ def create_params(
         config_file_path, ((iteration_end + 1) - iteration_start)
     )
     sim_name = np.repeat(sim_name, ((iteration_end + 1) - iteration_start))
-    add_descript = np.repeat(
-        add_descript, ((iteration_end + 1) - iteration_start)
-        )
+    add_descript = np.repeat(add_descript, ((iteration_end + 1) - iteration_start))
     run_num = range(iteration_start, iteration_end + 1, 1)
-    run_type = np.repeat(
-        run_type, ((iteration_end + 1) - iteration_start)
-    )
+    run_type = np.repeat(run_type, ((iteration_end + 1) - iteration_start))
 
     param_list = list(
         zip(
@@ -131,7 +128,7 @@ def create_params(
             add_descript,
             run_num,
             run_type,
-            )
+        )
     )
     return param_list
 
@@ -170,13 +167,20 @@ def execute_model_runs(
         ],
         shell=False,
     )
-    return model_script_path, config_file_path, sim_name, add_descript, run_num, run_type
+    return (
+        model_script_path,
+        config_file_path,
+        sim_name,
+        add_descript,
+        run_num,
+        run_type,
+    )
 
 
 def complete_run_check(param_sample):
     """
     Generates a list of completed model runs by checking for their outputs. Used
-    to check for run completeness when calibrating. 
+    to check for run completeness when calibrating.
 
     Parameters
     -----------
@@ -205,13 +209,15 @@ def complete_run_check(param_sample):
             runs.append(int(indiv))
         for run in runs:
             completed_runs = completed_runs.append(
-                pd.Series({
-                    "start": start,
-                    "alpha": alpha,
-                    "beta": beta,
-                    "lamda": lamda,
-                    "run": run
-                }),
+                pd.Series(
+                    {
+                        "start": start,
+                        "alpha": alpha,
+                        "beta": beta,
+                        "lamda": lamda,
+                        "run": run,
+                    }
+                ),
                 ignore_index=True,
             )
     # Write it to a .csv for safe keeping
@@ -246,10 +252,9 @@ def run_checker(param_sample):
     sim_name = os.getenv("SIM_NAME")
 
     config_json_path = f"{out_dir}/config_{sim_name}.json"
-    
+
     with open(config_json_path) as json_file:
         config = json.load(json_file)
-
     alphas = config["alphas"]
     betas = config["betas"]
     lamdas = config["lamdas"]
@@ -271,7 +276,6 @@ def run_checker(param_sample):
         complete_run_check(param_sample)
         completed_runs = pd.read_csv("completed_runs.csv")
         pending_runs = pending_run_check(completed_runs, param_sets, full_set)
-
     # 2. from summary stats (model_files = "Temp")
     if model_files == "Temp":
         pending_runs = []
@@ -285,7 +289,6 @@ def run_checker(param_sample):
             ]
             if len(completed.index) == 0:
                 pending_runs.append([param_set, set([start_run, end_run])])
-
     return pending_runs
 
 
@@ -360,7 +363,7 @@ def compute_summary_stats(
     ].sum() - len(native_countries_list)
 
     total_intros_diff = validation_df.shape[0] - total_intros_predicted
-    total_intros_diff_sqrd = total_intros_diff ** 2
+    total_intros_diff_sqrd = total_intros_diff**2
 
     # Compute prob of introduction happening at least once in
     # country of interest for each year in simulation
@@ -384,7 +387,6 @@ def compute_summary_stats(
         countries_dict[f"diff_obs_pred_metric_{ISO3}"] = model_output.loc[ISO3][
             "obs-pred_metric"
         ]
-
     # Save results in dictionary from which to build the dataframe
     summary_stats_dict = {
         "total_countries_intros_predicted": total_intros_predicted,
@@ -506,7 +508,7 @@ def avg_std(x):
     Computes average standard deviation when aggregating across runs
     of a parameter sample.
     """
-    return math.sqrt(sum(x ** 2) / len(x))
+    return math.sqrt(sum(x**2) / len(x))
 
 
 def mape(x):
@@ -518,8 +520,8 @@ def fbeta(precision, recall, weight):
     Computes the weighted harmonic mean of precision and recall (F-beta score).
     """
     if (precision != 0) and (recall != 0):
-        return ((1 + (weight ** 2)) * precision * recall) / (
-            (weight ** 2) * precision + recall
+        return ((1 + (weight**2)) * precision * recall) / (
+            (weight**2) * precision + recall
         )
     else:
         return 0
@@ -537,16 +539,17 @@ def f1(precision, recall):
 
 # Forecast: Generating sampled parameter sets
 
+
 def generate_param_samples(agg_df, n_samples):
     """
     Generates a number of parameter sets sampled from a multivariate normal distribution
-    fit to the top performing samples of the calibration model runs. 
+    fit to the top performing samples of the calibration model runs.
 
     Parameters
     -----------
     agg_df : pandas dataframe
         A dataframe of summary statistics returned from the model, including the following
-        named columns: "alpha" (model parameter), "beta" (model parameter), "lamba" (model parameter), 
+        named columns: "alpha" (model parameter), "beta" (model parameter), "lamba" (model parameter),
         "start" (model parameter), "top" (flag for samples above a pre-defined summary statistic threshold)/
     n_samples : int
         The number of sampled parameter sets to generate.
@@ -555,17 +558,14 @@ def generate_param_samples(agg_df, n_samples):
     -------
     samples_to_run : pandas dataframe
         A pandas dataframe of parameter sets sampled from the multivariate normal distribution
-        of the top performing parameter samples from calibration.   
+        of the top performing parameter samples from calibration.
 
     """
-    param_samples_df = pd.DataFrame(columns=['alpha','beta','lamda','start'])
+    param_samples_df = pd.DataFrame(columns=["alpha", "beta", "lamda", "start"])
 
-    top_sets=(
-        agg_df
-        .loc[(agg_df['top']=="top")]
-        [["start","alpha","beta","lamda"]]
-        .reset_index(drop=True)
-    )
+    top_sets = agg_df.loc[(agg_df["top"] == "top")][
+        ["start", "alpha", "beta", "lamda"]
+    ].reset_index(drop=True)
     start_years = top_sets.start.unique()
     top_count = len(top_sets.index)
 
@@ -573,29 +573,44 @@ def generate_param_samples(agg_df, n_samples):
     set_counts = [0]
 
     for year in start_years:
-        year_sets= top_sets.loc[top_sets['start'] == year].reset_index(drop=True)
-        year_counts.append(math.ceil(len(year_sets.index)*n_samples/top_count))
+        year_sets = top_sets.loc[top_sets["start"] == year].reset_index(drop=True)
+        year_counts.append(math.ceil(len(year_sets.index) * n_samples / top_count))
 
-        param_mean = np.mean(top_sets[["alpha","beta","lamda"]].values, axis=0)
-        param_cov = np.cov(top_sets[["alpha","beta","lamda"]].values, rowvar=0)
-        param_sample = np.random.multivariate_normal(param_mean, param_cov, int(n_samples*1.5))
-        alpha = param_sample[:,0]
-        beta = param_sample[:,1]
-        lamda = param_sample[:,2]
-        start = [year]*int(n_samples*1.5)
-        param_sample_df = pd.DataFrame({"alpha":alpha, "lamda":lamda, "beta":beta,"start":start})
-        param_sample_df = param_sample_df.loc[param_sample_df['alpha']<=1].reset_index(drop=True)
+        param_mean = np.mean(top_sets[["alpha", "beta", "lamda"]].values, axis=0)
+        param_cov = np.cov(top_sets[["alpha", "beta", "lamda"]].values, rowvar=0)
+        param_sample = np.random.multivariate_normal(
+            param_mean, param_cov, int(n_samples * 1.5)
+        )
+        alpha = param_sample[:, 0]
+        beta = param_sample[:, 1]
+        lamda = param_sample[:, 2]
+        start = [year] * int(n_samples * 1.5)
+        param_sample_df = pd.DataFrame(
+            {"alpha": alpha, "lamda": lamda, "beta": beta, "start": start}
+        )
+        param_sample_df = param_sample_df.loc[
+            param_sample_df["alpha"] <= 1
+        ].reset_index(drop=True)
         set_counts.append(set_counts[-1] + len(param_sample_df.index))
 
-        param_samples_df = pd.concat([param_samples_df, param_sample_df]).reset_index(drop=True)
+        param_samples_df = pd.concat([param_samples_df, param_sample_df]).reset_index(
+            drop=True
+        )
 
         print(
             f"Year: {year}, Count: {year_counts[-1]},\n"
-            f"Means: {param_mean},\n" 
-            f"Covariance Matrix: {param_cov}\n")
+            f"Means: {param_mean},\n"
+            f"Covariance Matrix: {param_cov}\n"
+        )
+    samp_runs = [
+        item
+        for sublist in [
+            list(range(set_counts[i], set_counts[i] + year_count))
+            for i, year_count in enumerate(year_counts)
+        ]
+        for item in sublist
+    ]
 
-    samp_runs = [item for sublist in [list(range(set_counts[i], set_counts[i] + year_count)) for i, year_count in enumerate(year_counts)] for item in sublist]
+    samples_to_run = param_samples_df.loc[samp_runs].reset_index(drop=True)
 
-    samples_to_run = param_samples_df.loc[samp_runs].reset_index(drop=True) 
- 
     return samples_to_run
