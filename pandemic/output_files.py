@@ -73,7 +73,6 @@ def create_model_dirs(
         del output_dict["prob_intro"]
     if write_country_intros is False:
         del output_dict["country_introduction"]
-
     for key in output_dict.keys():
         os.makedirs(outpath + key, exist_ok=True)
 
@@ -125,8 +124,8 @@ def save_model_output(
         represent the origin-destination probability of
         introduction. Default is False.
     columns_to_drop : list
-        Optional list of columns used or created by the model that are to drop
-        from the final output (e.g., Koppen climate classifications)
+        Optional list of columns used or created by the model that are to
+        drop from the final output (e.g., Koppen climate classifications)
 
     Returns
     -------
@@ -171,7 +170,6 @@ def save_model_output(
                 float_format="%.4f",
                 na_rep="NAN!",
             )
-
         if write_entry_probs is True:
             pro_entry_pd = pd.DataFrame(prob_entry[i])
             pro_entry_pd.columns = example_trade_matrix.columns
@@ -181,7 +179,6 @@ def save_model_output(
                 float_format="%.4f",
                 na_rep="NAN!",
             )
-
         if write_estab_probs is True:
             pro_est_pd = pd.DataFrame(prob_est[i])
             pro_est_pd.columns = example_trade_matrix.columns
@@ -191,7 +188,6 @@ def save_model_output(
                 float_format="%.4f",
                 na_rep="NAN!",
             )
-
         if write_intro_probs is True:
             pro_intro_pd = pd.DataFrame(prob_intro[i])
             pro_intro_pd.columns = example_trade_matrix.columns
@@ -201,7 +197,6 @@ def save_model_output(
                 float_format="%.4f",
                 na_rep="NAN!",
             )
-
     return model_output_gdf
 
 
@@ -304,7 +299,6 @@ def create_feature_dict(geojson_obj, column_list, chars_to_strip):
     d = geojson_obj[column_list].to_dict("index")
     for key in d.keys():
         d[key] = {k.strip(chars_to_strip): v for k, v in d[key].items()}
-
     return d
 
 
@@ -370,7 +364,6 @@ def aggregate_monthly_output_to_annual(formatted_geojson, outpath):
             lambda row: agg_prob(row=row, column_list=prob_cols), axis=1
         )
         formatted_geojson[f"Presence {year}"] = formatted_geojson[f"Presence {year}12"]
-
     out_csv = pd.DataFrame(formatted_geojson)
     out_csv.drop(["geometry"], axis=1, inplace=True)
     out_csv.to_csv(
@@ -403,7 +396,6 @@ def write_annual_output(formatted_geojson, outpath):
         formatted_geojson[f"Agg Prob Intro {year}"] = formatted_geojson[
             f"Probability of introduction {year}"
         ]
-
     out_csv = pd.DataFrame(formatted_geojson)
     out_csv.drop(["geometry"], axis=1, inplace=True)
     out_csv.to_csv(
@@ -435,7 +427,7 @@ def write_model_metadata(
     phyto_weights,
     outpath,
     run_num,
-    scenario_list=None,
+    scenario_list,
     lamda_weights_path=None,
 ):
     """
@@ -496,6 +488,9 @@ def write_model_metadata(
         Directory path to save json file
     run_num : int
         Stochastic run number
+    scenario_list : list
+        List of scenarios representing potential management actions or
+        changes in drivers.
 
     Returns
     -------

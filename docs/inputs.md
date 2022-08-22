@@ -116,7 +116,7 @@ settings:
 * Time to infectivity - number of lag units (months or years)
   * Only used for the static lag type
 * Lag shape and scale - numerical
-  * Beta probability distribution parameters
+  * Gamma probability distribution parameters
   * Only used for the stochastic lag type
 * Random seed - numerical
   * For reproducibility

@@ -121,7 +121,7 @@ def download_trade_data(hs_str, freq_str, year_country_dict, auth_code_str):
                         print(f"\t\tRetry {retries} of 10 in {delay/60:.2f} minutes")
                     sys.stdout.flush()
                     time.sleep(delay)
-                    delay *= 2
+                    delay *= 1.1
                     retries += 1
 
             if "url" in locals():
@@ -294,6 +294,9 @@ def query_comtrade(
     none
 
     """
+
+    # Get current working directory
+    current_dir = os.getcwd()
 
     # Set time step for trade data
     years = np.arange(start_year, end_year + 1, 1)
@@ -485,3 +488,6 @@ def query_comtrade(
                 save_hs_timestep_matrices(
                     str(hs), timesteps, monthly_data, crosswalk[["UN"]], crosswalk_dict
                 )
+
+    # Return to original working directory
+    os.chdir(current_dir)

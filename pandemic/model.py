@@ -27,9 +27,11 @@ import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 
-from pandemic.helpers import create_trades_list
-from pandemic.model_equations import pandemic_multiple_time_steps
-from pandemic.output_files import (
+sys.path.append(os.getcwd())
+
+from pandemic.helpers import create_trades_list  # noqa: E402
+from pandemic.model_equations import pandemic_multiple_time_steps  # noqa: E402
+from pandemic.output_files import (  # noqa: E402
     aggregate_monthly_output_to_annual,
     write_annual_output,
     create_model_dirs,
@@ -49,9 +51,9 @@ countries_path = os.getenv("COUNTRIES_PATH")
 path_to_config_json = sys.argv[1]
 with open(path_to_config_json) as json_file:
     config = json.load(json_file)
-
 commodity_path = config["commodity_path"]
 commodity_forecast_path = config["commodity_forecast_path"]
+commodity_list = config["commodity_list"]
 native_countries_list = config["native_countries_list"]
 season_dict = config["season_dict"]
 alpha = config["alpha"]
@@ -75,16 +77,21 @@ save_estab = config["save_estab"]
 save_intro = config["save_intro"]
 save_country_intros = config["save_country_intros"]
 scenario_list = config["scenario_list"]
+mask = config["mask"]
+threshold = config["threshold"]
 lamda_weights_path = config["lamda_weights_path"]
 
 countries = geopandas.read_file(countries_path, driver="GPKG")
 distances = np.load(input_dir + "/distance_matrix.npy")
-climate_similarities = np.load(input_dir + "/climate_similarities.npy")
+climate_similarities = np.load(
+    input_dir + f"/climate_similarities_{mask}Mask{threshold}.npy"
+)
 
 # Read & format trade data
 trades_list, file_list_filtered, code_list, commodities_available = create_trades_list(
     commodity_path=commodity_path,
     commodity_forecast_path=commodity_forecast_path,
+    commodity_list=commodity_list,
     start_year=start_year,
     stop_year=stop_year,
     distances=distances,
@@ -108,21 +115,13 @@ traded = pd.read_csv(
 print("Length of trades list: ", len(trades_list))
 for i in range(len(trades_list)):
     print("\tcommodity array shape: ", trades_list[i].shape)
-
-
 # Run Model for Selected Time Steps and Commodities
 print("Number of commodities: ", len([c for c in lamda_c_list if c > 0]))
 print("Number of time steps: ", trades_list[0].shape[0])
-for i in range(len(trades_list)):
-    if len(trades_list) > 1:
-        code = code_list[i]
-        print("\nRunning model for commodity: ", code)
-    else:
-        code = code_list[0]
-        print(
-            "\nRunning model for commodity: ",
-            os.path.basename(commodities_available[0]),
-        )
+for code in range(len(lamda_c_list)):
+    code = commodity_list[i]
+    print("\nRunning model for commodity: ", code)
+
     trades = trades_list[i]
     distances = distances
     locations = countries
@@ -130,7 +129,7 @@ for i in range(len(trades_list)):
     pres_ts0 = [False] * len(prob)
     infect_ts0 = np.empty(locations.shape[0], dtype="object")
     for country in native_countries_list:
-        country_index = countries.index[countries["NAME"] == country][0]
+        country_index = countries.index[countries["ISO3"] == country][0]
         pres_ts0[country_index] = True
         # if time steps are monthly and time to infectivity is in years
         if len(date_list[0]) > 4:
@@ -138,7 +137,6 @@ for i in range(len(trades_list)):
         # else if time steps are annual and time to infectivity is in years
         else:
             infect_ts0[country_index] = str(start_year)
-
     locations["Presence"] = pres_ts0
     locations["Infective"] = infect_ts0
 
@@ -149,14 +147,12 @@ for i in range(len(trades_list)):
     else:
         iu1 = np.triu_indices(climate_similarities.shape[0], 1)
         sigma_kappa = np.std(1 - climate_similarities[iu1])
-
     np.random.seed(random_seed)
     lamda_c = lamda_c_list[i]
     if lamda_weights_path is not None:
         lamda_weights = pd.read_csv(lamda_weights_path)
     else:
         lamda_weights = None
-
     if lamda_c > 0:
         e = pandemic_multiple_time_steps(
             trades=trades,
@@ -185,6 +181,10 @@ for i in range(len(trades_list)):
         add_descript = sys.argv[3]
         run_num = sys.argv[4]
 
+        try:
+            run_suffix = f"_{str(sys.argv[5])}"
+        except KeyError:
+            run_suffix = ""
         run_prefix = f"{add_descript}_{code}"
 
         arr_dict = {
@@ -194,7 +194,7 @@ for i in range(len(trades_list)):
             "country_introduction": "country_introduction",
         }
 
-        outpath = out_dir + f"/{sim_name}/{run_prefix}/run_{run_num}/"
+        outpath = out_dir + f"/{sim_name}{run_suffix}/{run_prefix}/run_{run_num}/"
         create_model_dirs(
             outpath=outpath,
             output_dict=arr_dict,
