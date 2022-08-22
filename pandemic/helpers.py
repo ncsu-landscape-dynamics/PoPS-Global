@@ -192,7 +192,9 @@ def create_trades_list(
         file_list_historical = glob.glob(f"{commodity_path}/{code_list[0]}/*.csv")
         file_list_historical.sort()
         if commodity_forecast_path is not None:
-            file_list_forecast = glob.glob(f"{commodity_forecast_path}/{code_list[0]}/*.csv")
+            file_list_forecast = glob.glob(
+                f"{commodity_forecast_path}/{code_list[0]}/*.csv"
+                )
             file_list_forecast.sort()
             file_list = file_list_historical + file_list_forecast
         else:

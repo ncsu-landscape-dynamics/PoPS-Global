@@ -14,13 +14,13 @@ def get_GBIF_key(species):
         usageKey = response["usageKey"]
         scientificName = response["scientificName"]
         print(f"Match found for {species}: {scientificName} ({usageKey})!")
-    except:
+    except KeyError:
         usageKey = None
         print(f"No match was found for: {species}")
     return usageKey
 
 
-# GBIF API call: occurrence status = present, 
+# GBIF API call: occurrence status = present,
 # count for each species/year, for all countries
 
 

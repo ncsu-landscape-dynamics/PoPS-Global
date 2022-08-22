@@ -84,7 +84,9 @@ lamda_weights_path = config["lamda_weights_path"]
 
 countries = geopandas.read_file(countries_path, driver="GPKG")
 distances = np.load(input_dir + "/distance_matrix.npy")
-climate_similarities = np.load(input_dir + f"/climate_similarities_{mask}Mask{threshold}.npy")
+climate_similarities = np.load(
+    input_dir + f"/climate_similarities_{mask}Mask{threshold}.npy"
+    )
 
 # Read & format trade data
 trades_list, file_list_filtered, code_list, commodities_available = create_trades_list(

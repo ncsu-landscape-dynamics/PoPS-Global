@@ -53,7 +53,7 @@ def create_config_args(
     cols_to_drop=None,
     lamda_weights_path=None,
     scenario_list=None,
-    ):
+):
     """
     Writes the configuration parameters to a JSON file.
 
@@ -188,10 +188,8 @@ def create_config_args(
     config_json_path = config_out_path
     if not os.path.exists(os.path.split(config_json_path)[0]):
         os.makedirs(os.path.split(config_json_path)[0])
-
     with open(config_json_path, "w") as file:
         json.dump(args, file, indent=4)
-
     print("\tSaved ", config_json_path)
 
     return args, config_out_path

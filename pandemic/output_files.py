@@ -124,8 +124,8 @@ def save_model_output(
         represent the origin-destination probability of
         introduction. Default is False.
     columns_to_drop : list
-        Optional list of columns used or created by the model that are to drop
-        from the final output (e.g., Koppen climate classifications)
+        Optional list of columns used or created by the model that are to
+        drop from the final output (e.g., Koppen climate classifications)
 
     Returns
     -------
@@ -489,7 +489,8 @@ def write_model_metadata(
     run_num : int
         Stochastic run number
     scenario_list : list
-        List of scenarios representing potential management actions or changes in drivers.
+        List of scenarios representing potential management actions or 
+        changes in drivers.
 
     Returns
     -------

@@ -19,18 +19,13 @@
 Global simulations.
 """
 
-import itertools
-import json
 import numpy as np
 import subprocess
-
 import glob
 import pandas as pd
 import itertools
 import json
 import re
-
-
 import os
 import math
 from dotenv import load_dotenv
