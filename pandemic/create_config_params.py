@@ -21,9 +21,6 @@ PoPS Global simulation.
 import json
 import os
 
-import os
-import json
-
 
 def create_config_args(
     config_out_path,
@@ -56,8 +53,7 @@ def create_config_args(
     cols_to_drop=None,
     lamda_weights_path=None,
     scenario_list=None,
-    lamda_weights_path=None,
-):
+    ):
     """
     Writes the configuration parameters to a JSON file.
 
