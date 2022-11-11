@@ -99,9 +99,7 @@ if __name__ == "__main__":
         "total_countries_intros_predicted"
     ].astype(int)
     data["diff_total_countries"] = data["diff_total_countries"].astype(int)
-    data["diff_total_countries_sqrd"] = data[
-        "diff_total_countries_sqrd"
-    ].astype(float)
+    data["diff_total_countries_sqrd"] = data["diff_total_countries_sqrd"].astype(float)
     data["count_known_countries_predicted"] = data[
         "count_known_countries_predicted"
     ].astype(int)
@@ -111,17 +109,13 @@ if __name__ == "__main__":
 
     # Compute precision, recall, and F scores using all known intro data
     # TP / (TP + FN)
-    data["recall"] = data[
-        "count_known_countries_time_window"
-    ] / (
+    data["recall"] = data["count_known_countries_time_window"] / (
         data["count_known_countries_time_window"]
         + (validation_df.shape[0] - data["count_known_countries_time_window"])
     )
 
     # TP / (TP + FP)
-    data["precision"] = data[
-        "count_known_countries_time_window"
-    ] / (
+    data["precision"] = data["count_known_countries_time_window"] / (
         data["count_known_countries_time_window"]
         + (
             data["total_countries_intros_predicted"]
@@ -173,9 +167,10 @@ if __name__ == "__main__":
             f"count_known_countries_time_window_no{ISO3}"
         ] / (
             data[f"count_known_countries_time_window_no{ISO3}"]
-            + (validation_df_loo.shape[0] - data[
-                f"count_known_countries_time_window_no{ISO3}"
-            ])
+            + (
+                validation_df_loo.shape[0]
+                - data[f"count_known_countries_time_window_no{ISO3}"]
+            )
         )
 
         # TP / (TP + FP)
@@ -247,24 +242,48 @@ if __name__ == "__main__":
         zip(year_probs_dict_keys, ["mean" for i in range(len(year_probs_dict_keys))])
     )
     countries_agg_dict = dict(
-        list(zip(
-            [x for x in countries_dict_keys if ~x.startswith(
-                "diff_total_countries_sqrd")],
-            [["mean", "std"] for i in range(len([
-                x for x in countries_dict_keys if ~x.startswith(
-                    "diff_total_countries_sqrd"
-                )
-            ]))]
-        )) + list(zip(
-            [x for x in countries_dict_keys if x.startswith(
-                "diff_total_countries_sqrd"
-            )],
-            [[mse] for i in range(len([
-                x for x in countries_dict_keys if x.startswith(
-                    "diff_total_countries_sqrd"
-                )
-            ]))]
-        ))
+        list(
+            zip(
+                [
+                    x
+                    for x in countries_dict_keys
+                    if ~x.startswith("diff_total_countries_sqrd")
+                ],
+                [
+                    ["mean", "std"]
+                    for i in range(
+                        len(
+                            [
+                                x
+                                for x in countries_dict_keys
+                                if ~x.startswith("diff_total_countries_sqrd")
+                            ]
+                        )
+                    )
+                ],
+            )
+        )
+        + list(
+            zip(
+                [
+                    x
+                    for x in countries_dict_keys
+                    if x.startswith("diff_total_countries_sqrd")
+                ],
+                [
+                    [mse]
+                    for i in range(
+                        len(
+                            [
+                                x
+                                for x in countries_dict_keys
+                                if x.startswith("diff_total_countries_sqrd")
+                            ]
+                        )
+                    )
+                ],
+            )
+        )
     )
 
     agg_dict = {**agg_dict, **prob_agg_dict, **countries_agg_dict}

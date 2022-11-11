@@ -393,16 +393,18 @@ def compute_summary_stats(
         ] = total_intros_predicted_loo
         total_intros_diff_loo = validation_df_loo.shape[0] - total_intros_predicted_loo
         countries_dict[f"diff_total_countries_no{ISO3}"] = total_intros_diff_loo
-        countries_dict[f"diff_total_countries_sqrd_no{ISO3}"] = total_intros_diff_loo**2
+        countries_dict[f"diff_total_countries_sqrd_no{ISO3}"] = (
+            total_intros_diff_loo**2
+        )
         known_countries_pred_loo = (
             model_output.loc[validation_df_loo.index]["PredFirstIntro"] != 9999
         ).sum()
         countries_dict[
             f"count_known_countries_predicted_no{ISO3}"
         ] = known_countries_pred_loo
-        known_countries_time_window_loo = (
-            model_output.loc[validation_df_loo.index]["temp_acc"].sum()
-        )
+        known_countries_time_window_loo = model_output.loc[validation_df_loo.index][
+            "temp_acc"
+        ].sum()
         countries_dict[
             f"count_known_countries_time_window_no{ISO3}"
         ] = known_countries_time_window_loo
