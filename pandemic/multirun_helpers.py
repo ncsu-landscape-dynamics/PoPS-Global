@@ -380,9 +380,33 @@ def compute_summary_stats(
 
     countries_dict = {}
     for ISO3 in validation_df.index:
+        validation_df_loo = validation_df.loc[validation_df.index != ISO3]
         countries_dict[f"diff_obs_pred_metric_{ISO3}"] = model_output.loc[ISO3][
             "obs-pred_metric"
         ]
+        # Total introductions predicted
+        total_intros_predicted_loo = model_output.loc[
+            model_output.index != ISO3, f"Presence {str(end_valid_year)}"
+        ].sum() - len(native_countries_list)
+        countries_dict[
+            f"total_countries_intros_predicted_no{ISO3}"
+        ] = total_intros_predicted_loo
+        total_intros_diff_loo = validation_df_loo.shape[0] - total_intros_predicted_loo
+        countries_dict[f"diff_total_countries_no{ISO3}"] = total_intros_diff_loo
+        countries_dict[f"diff_total_countries_sqrd_no{ISO3}"] = total_intros_diff_loo**2
+        known_countries_pred_loo = (
+            model_output.loc[validation_df_loo.index]["PredFirstIntro"] != 9999
+        ).sum()
+        countries_dict[
+            f"count_known_countries_predicted_no{ISO3}"
+        ] = known_countries_pred_loo
+        known_countries_time_window_loo = (
+            model_output.loc[validation_df_loo.index]["temp_acc"].sum()
+        )
+        countries_dict[
+            f"count_known_countries_time_window_no{ISO3}"
+        ] = known_countries_time_window_loo
+
     # Save results in dictionary from which to build the dataframe
     summary_stats_dict = {
         "total_countries_intros_predicted": total_intros_predicted,
@@ -435,10 +459,15 @@ def compute_stat_wrapper_func(param_sample):
     year_probs_dict_keys = []
     for year in sim_years:
         year_probs_dict_keys.append(f"prob_by_{year}_{coi}")
-    # Set up difference by recorded country dictionary keys (column names)
+    # Set up country specific stats dictionary keys (column names)
     countries_dict_keys = []
     for ISO3 in validation_df.index:
         countries_dict_keys.append(f"diff_obs_pred_metric_{ISO3}")
+        countries_dict_keys.append(f"total_countries_intros_predicted_no{ISO3}")
+        countries_dict_keys.append(f"diff_total_countries_no{ISO3}")
+        countries_dict_keys.append(f"diff_total_countries_sqrd_no{ISO3}")
+        countries_dict_keys.append(f"count_known_countries_predicted_no{ISO3}")
+        countries_dict_keys.append(f"count_known_countries_time_window_no{ISO3}")
     summary_stat_df = pd.DataFrame(
         columns=[
             "sample",
@@ -487,7 +516,8 @@ def compute_stat_wrapper_func(param_sample):
         summary_stat_dict["alpha"] = alpha
         summary_stat_dict["beta"] = beta
         summary_stat_dict["lamda"] = lamda
-        summary_stat_df = summary_stat_df.append(summary_stat_dict, ignore_index=True)
+        run_summary_stat_df = pd.DataFrame(summary_stat_dict, index=[0])
+        summary_stat_df = pd.concat([summary_stat_df, run_summary_stat_df])
     # summary_stat_df = pd.DataFrame(summary_stat_dict, index=[0])
     return summary_stat_df
 
