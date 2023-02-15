@@ -38,6 +38,8 @@ if __name__ == "__main__":
     coi = config["coi"]
     native_countries_list = config["native_countries_list"]
 
+    validation_method = config["validation_method"]
+
     cores_to_use = config["cores_to_use"]
 
     try:
@@ -65,13 +67,17 @@ if __name__ == "__main__":
         year_probs_dict_keys.append(f"prob_by_{year}_{coi}")
     # Set up difference by recorded country dictionary keys (column names)
     countries_dict_keys = []
+
     for ISO3 in validation_df.index:
         countries_dict_keys.append(f"diff_obs_pred_metric_{ISO3}")
-        countries_dict_keys.append(f"total_countries_intros_predicted_no{ISO3}")
-        countries_dict_keys.append(f"diff_total_countries_no{ISO3}")
-        countries_dict_keys.append(f"diff_total_countries_sqrd_no{ISO3}")
-        countries_dict_keys.append(f"count_known_countries_predicted_no{ISO3}")
-        countries_dict_keys.append(f"count_known_countries_time_window_no{ISO3}")
+        # The no_ISO3 columns are for leave one out validation
+        if validation_method == "loo":
+            countries_dict_keys.append(f"total_countries_intros_predicted_no{ISO3}")
+            countries_dict_keys.append(f"diff_total_countries_no{ISO3}")
+            countries_dict_keys.append(f"diff_total_countries_sqrd_no{ISO3}")
+            countries_dict_keys.append(f"count_known_countries_predicted_no{ISO3}")
+            countries_dict_keys.append(f"count_known_countries_time_window_no{ISO3}")
+
     process_pool = multiprocessing.Pool(cores_to_use)
     summary_dfs = process_pool.map(compute_stat_wrapper_func, param_samp)
     data = pd.concat(summary_dfs, ignore_index=True)
@@ -147,60 +153,67 @@ if __name__ == "__main__":
         data[f"diff_obs_pred_metric_{ISO3}"] = data[
             f"diff_obs_pred_metric_{ISO3}"
         ].astype(float)
-        data[f"total_countries_intros_predicted_no{ISO3}"] = data[
-            f"total_countries_intros_predicted_no{ISO3}"
-        ].astype(int)
-        data[f"diff_total_countries_no{ISO3}"] = data[
-            f"diff_total_countries_no{ISO3}"
-        ].astype(int)
-        data[f"diff_total_countries_sqrd_no{ISO3}"] = data[
-            f"diff_total_countries_sqrd_no{ISO3}"
-        ].astype(float)
-        data[f"count_known_countries_predicted_no{ISO3}"] = data[
-            f"count_known_countries_predicted_no{ISO3}"
-        ].astype(int)
-        data[f"count_known_countries_time_window_no{ISO3}"] = data[
-            f"count_known_countries_time_window_no{ISO3}"
-        ].astype(int)
-        # TP / (TP + FN)
-        data[f"recall_no{ISO3}"] = data[
-            f"count_known_countries_time_window_no{ISO3}"
-        ] / (
-            data[f"count_known_countries_time_window_no{ISO3}"]
-            + (
-                validation_df_loo.shape[0]
-                - data[f"count_known_countries_time_window_no{ISO3}"]
+        # The no_ISO3 columns are for leave one out validation
+        if validation_method == "loo":
+            data[f"total_countries_intros_predicted_no{ISO3}"] = data[
+                f"total_countries_intros_predicted_no{ISO3}"
+            ].astype(int)
+
+            data[f"diff_total_countries_no{ISO3}"] = data[
+                f"diff_total_countries_no{ISO3}"
+            ].astype(int)
+            data[f"diff_total_countries_sqrd_no{ISO3}"] = data[
+                f"diff_total_countries_sqrd_no{ISO3}"
+            ].astype(float)
+            data[f"count_known_countries_predicted_no{ISO3}"] = data[
+                f"count_known_countries_predicted_no{ISO3}"
+            ].astype(int)
+            data[f"count_known_countries_time_window_no{ISO3}"] = data[
+                f"count_known_countries_time_window_no{ISO3}"
+            ].astype(int)
+            # TP / (TP + FN)
+            data[f"recall_no{ISO3}"] = data[
+                f"count_known_countries_time_window_no{ISO3}"
+            ] / (
+                data[f"count_known_countries_time_window_no{ISO3}"]
+                + (
+                    validation_df_loo.shape[0]
+                    - data[f"count_known_countries_time_window_no{ISO3}"]
+                )
             )
-        )
+            countries_dict_keys.append(f"recall_no{ISO3}")
 
-        # TP / (TP + FP)
-        data[f"precision_no{ISO3}"] = data[
-            f"count_known_countries_time_window_no{ISO3}"
-        ] / (
-            data[f"count_known_countries_time_window_no{ISO3}"]
-            + (
-                data[f"total_countries_intros_predicted_no{ISO3}"]
-                - data[f"count_known_countries_time_window_no{ISO3}"]
+            # TP / (TP + FP)
+            data[f"precision_no{ISO3}"] = data[
+                f"count_known_countries_time_window_no{ISO3}"
+            ] / (
+                data[f"count_known_countries_time_window_no{ISO3}"]
+                + (
+                    data[f"total_countries_intros_predicted_no{ISO3}"]
+                    - data[f"count_known_countries_time_window_no{ISO3}"]
+                )
             )
-        )
+            countries_dict_keys.append(f"precision_no{ISO3}")
 
-        # 2 * (precision * recall / precision + recall)
-        data[f"f1_no{ISO3}"] = data.apply(
-            lambda x: f1(
-                x[f"precision_no{ISO3}"],
-                x[f"recall_no{ISO3}"],
-            ),
-            axis=1,
-        )
+            # 2 * (precision * recall / precision + recall)
+            data[f"f1_no{ISO3}"] = data.apply(
+                lambda x: f1(
+                    x[f"precision_no{ISO3}"],
+                    x[f"recall_no{ISO3}"],
+                ),
+                axis=1,
+            )
+            countries_dict_keys.append(f"f1_no{ISO3}")
 
-        data[f"fbeta_no{ISO3}"] = data.apply(
-            lambda x: fbeta(
-                x[f"precision_no{ISO3}"],
-                x[f"recall_no{ISO3}"],
-                2,
-            ),
-            axis=1,
-        )
+            data[f"fbeta_no{ISO3}"] = data.apply(
+                lambda x: fbeta(
+                    x[f"precision_no{ISO3}"],
+                    x[f"recall_no{ISO3}"],
+                    2,
+                ),
+                axis=1,
+            )
+            countries_dict_keys.append(f"fbeta_no{ISO3}")
 
     summary_stat_path = f'{os.getenv("OUTPUT_PATH")}/summary_stats/{run_name}/'
     if not os.path.exists(summary_stat_path):
