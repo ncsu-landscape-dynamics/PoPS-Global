@@ -393,7 +393,9 @@ def compute_summary_stats(
             countries_dict[
                 f"total_countries_intros_predicted_no{ISO3}"
             ] = total_intros_predicted_loo
-            total_intros_diff_loo = validation_df_loo.shape[0] - total_intros_predicted_loo
+            total_intros_diff_loo = (
+                validation_df_loo.shape[0] - total_intros_predicted_loo
+                )
             countries_dict[f"diff_total_countries_no{ISO3}"] = total_intros_diff_loo
             countries_dict[f"diff_total_countries_sqrd_no{ISO3}"] = (
                 total_intros_diff_loo**2
