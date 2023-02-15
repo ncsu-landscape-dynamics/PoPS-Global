@@ -203,8 +203,8 @@ def complete_run_check(param_sample):
             # "\\" to run locally, "/" on HPC or with multiprocess
             runs.append(int(indiv))
         for run in runs:
-            completed_runs = completed_runs.append(
-                pd.Series(
+            completed_runs = pd.concat([completed_runs,
+                pd.DataFrame(
                     {
                         "start": start,
                         "alpha": alpha,
@@ -212,7 +212,9 @@ def complete_run_check(param_sample):
                         "lamda": lamda,
                         "run": run,
                     }
-                ),
+                    )
+                    ]
+                ,
                 ignore_index=True,
             )
     # Write it to a .csv for safe keeping

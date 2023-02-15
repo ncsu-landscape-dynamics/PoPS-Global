@@ -353,11 +353,12 @@ def pandemic_single_time_step(
                     columns=["Origin", "Destination"],
                 )
             else:
-                origin_destination = origin_destination.append(
+                origin_destination = pd.concat([origin_destination,
                     pd.DataFrame(
                         [[origin["NAME"], destination["NAME"]]],
                         columns=["Origin", "Destination"],
-                    ),
+                    )
+                ],
                     ignore_index=True,
                 )
         else:
@@ -558,8 +559,8 @@ def pandemic_multiple_time_steps(
         if origin_destination.empty:
             origin_destination = origin_destination_ts
         else:
-            origin_destination = origin_destination.append(
-                origin_destination_ts, ignore_index=True
+            origin_destination = pd.concat([origin_destination,
+                origin_destination_ts], ignore_index=True
             )
         locations["Presence " + str(ts)] = locations["Presence"]
         locations["Probability of introduction " + str(ts)] = locations[
