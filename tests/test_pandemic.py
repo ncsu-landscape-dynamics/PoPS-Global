@@ -5,7 +5,6 @@ from pandemic.model_equations import pandemic_single_time_step
 
 
 def test_pandemic_runs():
-
     trade = np.array([[0, 500, 15], [50, 0, 10], [20, 30, 0]])
     min_Tc = np.min(trade)
     max_Tc = np.max(trade)
