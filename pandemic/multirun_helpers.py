@@ -590,9 +590,9 @@ def generate_param_samples(top_samples, n_samples):
     Parameters
     -----------
     top_samples : pandas dataframe
-        A dataframe of the top performing summary statistics returned 
-        from the model, including the following named columns: 
-        "alpha" (model parameter), "beta" (model parameter), 
+        A dataframe of the top performing summary statistics returned
+        from the model, including the following named columns:
+        "alpha" (model parameter), "beta" (model parameter),
         "lamba" (model parameter), "start" (model parameter)
     n_samples : int
         The number of sampled parameter sets to generate.
