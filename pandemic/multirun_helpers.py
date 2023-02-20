@@ -132,7 +132,6 @@ def create_params(
 def execute_model_runs(
     model_script_path, config_file_path, sim_name, add_descript, run_num, run_type
 ):
-
     """
     Executes a run of the pandemic based on the pandemic script
     location and configuration file location
