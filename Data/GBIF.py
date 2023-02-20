@@ -56,7 +56,6 @@ def call_gbif_api(call):
 
 
 def get_GBIF_records(species, year_list):
-
     species_year = [[species], year_list]
     species_years = list(itertools.product(*species_year))
 
