@@ -203,16 +203,19 @@ def complete_run_check(param_sample):
             # "\\" to run locally, "/" on HPC or with multiprocess
             runs.append(int(indiv))
         for run in runs:
-            completed_runs = completed_runs.append(
-                pd.Series(
-                    {
-                        "start": start,
-                        "alpha": alpha,
-                        "beta": beta,
-                        "lamda": lamda,
-                        "run": run,
-                    }
-                ),
+            completed_runs = pd.concat(
+                [
+                    completed_runs,
+                    pd.DataFrame(
+                        {
+                            "start": start,
+                            "alpha": alpha,
+                            "beta": beta,
+                            "lamda": lamda,
+                            "run": run,
+                        }
+                    ),
+                ],
                 ignore_index=True,
             )
     # Write it to a .csv for safe keeping
@@ -311,6 +314,7 @@ def compute_summary_stats(
     year_probs_dict_keys,
     sim_years,
     coi,
+    validation_method,
 ):
     presence_cols = [
         c
@@ -382,6 +386,35 @@ def compute_summary_stats(
         countries_dict[f"diff_obs_pred_metric_{ISO3}"] = model_output.loc[ISO3][
             "obs-pred_metric"
         ]
+        if validation_method == "loo":
+            validation_df_loo = validation_df.loc[validation_df.index != ISO3]
+            # Total introductions predicted
+            total_intros_predicted_loo = model_output.loc[
+                model_output.index != ISO3, f"Presence {str(end_valid_year)}"
+            ].sum() - len(native_countries_list)
+            countries_dict[
+                f"total_countries_intros_predicted_no{ISO3}"
+            ] = total_intros_predicted_loo
+            total_intros_diff_loo = (
+                validation_df_loo.shape[0] - total_intros_predicted_loo
+            )
+            countries_dict[f"diff_total_countries_no{ISO3}"] = total_intros_diff_loo
+            countries_dict[f"diff_total_countries_sqrd_no{ISO3}"] = (
+                total_intros_diff_loo**2
+            )
+            known_countries_pred_loo = (
+                model_output.loc[validation_df_loo.index]["PredFirstIntro"] != 9999
+            ).sum()
+            countries_dict[
+                f"count_known_countries_predicted_no{ISO3}"
+            ] = known_countries_pred_loo
+            known_countries_time_window_loo = model_output.loc[validation_df_loo.index][
+                "temp_acc"
+            ].sum()
+            countries_dict[
+                f"count_known_countries_time_window_no{ISO3}"
+            ] = known_countries_time_window_loo
+
     # Save results in dictionary from which to build the dataframe
     summary_stats_dict = {
         "total_countries_intros_predicted": total_intros_predicted,
@@ -422,6 +455,7 @@ def compute_stat_wrapper_func(param_sample):
     years_after_firstRecord = config["years_after_firstRecord"]
     end_valid_year = config["end_valid_year"]
     sim_years = config["sim_years"]
+    validation_method = config["validation_method"]
 
     validation_df = pd.read_csv(
         input_dir + "/first_records_validation.csv",
@@ -434,10 +468,21 @@ def compute_stat_wrapper_func(param_sample):
     year_probs_dict_keys = []
     for year in sim_years:
         year_probs_dict_keys.append(f"prob_by_{year}_{coi}")
-    # Set up difference by recorded country dictionary keys (column names)
+    # Set up country specific stats dictionary keys (column names)
     countries_dict_keys = []
     for ISO3 in validation_df.index:
         countries_dict_keys.append(f"diff_obs_pred_metric_{ISO3}")
+        if validation_method == "loo":
+            countries_dict_keys.append(f"total_countries_intros_predicted_no{ISO3}")
+            countries_dict_keys.append(f"diff_total_countries_no{ISO3}")
+            countries_dict_keys.append(f"diff_total_countries_sqrd_no{ISO3}")
+            countries_dict_keys.append(f"count_known_countries_predicted_no{ISO3}")
+            countries_dict_keys.append(f"count_known_countries_time_window_no{ISO3}")
+            countries_dict_keys.append(f"recall_no{ISO3}")
+            countries_dict_keys.append(f"precision_no{ISO3}")
+            countries_dict_keys.append(f"f1_no{ISO3}")
+            countries_dict_keys.append(f"fbeta_no{ISO3}")
+
     summary_stat_df = pd.DataFrame(
         columns=[
             "sample",
@@ -479,6 +524,7 @@ def compute_stat_wrapper_func(param_sample):
             year_probs_dict_keys,
             sim_years,
             coi,
+            validation_method,
         )
         summary_stat_dict["run_num"] = run_num
         summary_stat_dict["sample"] = param_sample
@@ -486,7 +532,8 @@ def compute_stat_wrapper_func(param_sample):
         summary_stat_dict["alpha"] = alpha
         summary_stat_dict["beta"] = beta
         summary_stat_dict["lamda"] = lamda
-        summary_stat_df = summary_stat_df.append(summary_stat_dict, ignore_index=True)
+        run_summary_stat_df = pd.DataFrame(summary_stat_dict, index=[0])
+        summary_stat_df = pd.concat([summary_stat_df, run_summary_stat_df])
     # summary_stat_df = pd.DataFrame(summary_stat_dict, index=[0])
     return summary_stat_df
 
@@ -536,7 +583,7 @@ def f1(precision, recall):
 # Forecast: Generating sampled parameter sets
 
 
-def generate_param_samples(agg_df, n_samples):
+def generate_param_samples(top_samples, n_samples):
     """
     Generates a number of parameter sets sampled from a multivariate
     normal distribution fit to the top performing samples of the
@@ -544,12 +591,11 @@ def generate_param_samples(agg_df, n_samples):
 
     Parameters
     -----------
-    agg_df : pandas dataframe
-        A dataframe of summary statistics returned from the model,
-        including the following named columns: "alpha" (model parameter),
-        "beta" (model parameter), "lamba" (model parameter), "start"
-        (model parameter), "top" (flag for samples above a pre-defined
-        summary statistic threshold)
+    top_samples : pandas dataframe
+        A dataframe of the top performing summary statistics returned
+        from the model, including the following named columns:
+        "alpha" (model parameter), "beta" (model parameter),
+        "lamba" (model parameter), "start" (model parameter)
     n_samples : int
         The number of sampled parameter sets to generate.
 
@@ -563,21 +609,18 @@ def generate_param_samples(agg_df, n_samples):
     """
     param_samples_df = pd.DataFrame(columns=["alpha", "beta", "lamda", "start"])
 
-    top_sets = agg_df.loc[(agg_df["top"] == "top")][
-        ["start", "alpha", "beta", "lamda"]
-    ].reset_index(drop=True)
-    start_years = top_sets.start.unique()
-    top_count = len(top_sets.index)
+    start_years = top_samples.start.unique()
+    top_count = len(top_samples.index)
 
     year_counts = []
     set_counts = [0]
 
     for year in start_years:
-        year_sets = top_sets.loc[top_sets["start"] == year].reset_index(drop=True)
+        year_sets = top_samples.loc[top_samples["start"] == year].reset_index(drop=True)
         year_counts.append(math.ceil(len(year_sets.index) * n_samples / top_count))
 
-        param_mean = np.mean(top_sets[["alpha", "beta", "lamda"]].values, axis=0)
-        param_cov = np.cov(top_sets[["alpha", "beta", "lamda"]].values, rowvar=0)
+        param_mean = np.mean(top_samples[["alpha", "beta", "lamda"]].values, axis=0)
+        param_cov = np.cov(top_samples[["alpha", "beta", "lamda"]].values, rowvar=0)
         param_sample = np.random.multivariate_normal(
             param_mean, param_cov, int(n_samples * 1.5)
         )
